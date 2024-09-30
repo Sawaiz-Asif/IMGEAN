@@ -1,39 +1,66 @@
+from PyQt5 import QtWidgets
+from frontend.main_window_ui import Ui_MainWindow  # Import the UI class
+from temp.generator_window import Ui_genrate_images  # Import the external screen UI
+from frontend.settings import SettingsWindow
+from frontend.img_quality_check import CheckImgQuality
+from frontend.annotate_img import AnnotateImg  # Import Annotate Image logic
+from frontend.generator_window import GeneratorWindow  # Import the logic class
 
-from PyQt5 import QtCore, QtGui, QtWidgets
+class MainWindow(QtWidgets.QMainWindow, Ui_MainWindow):
+    def __init__(self):
+        super(MainWindow, self).__init__()
+        self.setupUi(self)  # Set up the UI
 
-class Ui_MainWindow(object):
-    def setupUi(self, MainWindow):
-        MainWindow.setObjectName("MainWindow")
-        MainWindow.resize(800, 600)
-        self.centralwidget = QtWidgets.QWidget(MainWindow)
-        self.centralwidget.setObjectName("centralwidget")
+        # Set up the additional screens
+        self.setup_screens()
+
+        # Connect button clicks to screen navigation methods
+        self.pushButton.clicked.connect(self.goToGenerateImages)  # Button 1 (set as Go to Main)
+        self.pushButton_2.clicked.connect(self.goToImgQualityCheckScreen)   # Button 2 (navigate to Screen 2)
+        self.pushButton_3.clicked.connect(self.goToAnnotateImgSelectScreen)  # Button 3 (go to Generate Images)
+        self.pushButton_4.clicked.connect(self.goToSettingScreen)  # Button 4 (go back to Main)
+
+    def setup_screens(self):
+        """Add additional screens to the QStackedWidget."""
+
+        # Generate Images Screen
+        self.generator_window = GeneratorWindow(self.stackedWidget)
+
+        # Img Quality Check Screen
+        self.imgQualityCheckScreen = CheckImgQuality(self.stackedWidget)  # Pass the stacked widget
+        # Annotate image Screen
+        self.annotateImgSelectScreen = AnnotateImg(self.stackedWidget)  # Pass the stacked widget
+
+        # Setting Screen
+        self.settingsScreen = SettingsWindow(self.stackedWidget)
+
+        # Add the third screen (Generate Images) to the stacked widget
         
-        # Create a label with text "Main Window"
-        self.label = QtWidgets.QLabel(self.centralwidget)
-        self.label.setGeometry(QtCore.QRect(200, 250, 400, 100))  # Set label size and position
-        font = QtGui.QFont()
-        font.setPointSize(24)
-        font.setBold(True)
-        self.label.setFont(font)
-        self.label.setAlignment(QtCore.Qt.AlignCenter)
-        self.label.setObjectName("label")
-        self.label.setText("Main Window")
+        self.stackedWidget.addWidget(self.generator_window)  # Index 2 for Generate Images screen
+        self.stackedWidget.addWidget(self.imgQualityCheckScreen)
+        self.stackedWidget.addWidget(self.annotateImgSelectScreen)  # Add Annotate Image Select screen
+        self.stackedWidget.addWidget(self.settingsScreen)
 
-        MainWindow.setCentralWidget(self.centralwidget)
+    def goToGenerateImages(self):
+        # Switch to the second screen
+        self.stackedWidget.setCurrentIndex(1)
 
-        self.retranslateUi(MainWindow)
-        QtCore.QMetaObject.connectSlotsByName(MainWindow)
+    def goToImgQualityCheckScreen(self):
+        # Switch back to the main screen
+        self.stackedWidget.setCurrentIndex(2)
 
-    def retranslateUi(self, MainWindow):
-        _translate = QtCore.QCoreApplication.translate
-        MainWindow.setWindowTitle(_translate("MainWindow", "MainWindow"))
+    def goToAnnotateImgSelectScreen(self):
+        # Switch back to the main screen
+        self.stackedWidget.setCurrentIndex(3)
 
-# To test the UI without any additional logic
+    def goToSettingScreen(self):
+        # Switch to the 'Generate Images' screen
+        self.stackedWidget.setCurrentIndex(4)
+
+# Run the application
 if __name__ == "__main__":
     import sys
     app = QtWidgets.QApplication(sys.argv)
-    MainWindow = QtWidgets.QMainWindow()
-    ui = Ui_MainWindow()
-    ui.setupUi(MainWindow)
-    MainWindow.show()
+    mainWin = MainWindow()
+    mainWin.show()
     sys.exit(app.exec_())
