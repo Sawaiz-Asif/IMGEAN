@@ -1,0 +1,32 @@
+PROJECT_NAME: 'PAR for zs'
+
+DATASET:
+  TYPE: 'pedes'
+  NAME: 'RAP2'
+  TRAIN_SPLIT: 'trainval'
+  VAL_SPLIT: 'test'
+  ZERO_SHOT: True
+  LABEL: 'eval'
+  HEIGHT: 256
+  WIDTH: 192
+
+FILES:
+  BASE_DIR: &base_dir ./data
+  GENERATED_DIR: !join [*base_dir, /generated]
+  DISCARDED_DIR: !join [*base_dir, /discarded]
+  CHECKING_DIR: !join [*base_dir, /checking]
+  LABELING_DIR: !join [*base_dir, /labeling]
+  DISCARDED_TRACKER: !join [*base_dir, /discarded, /reasons_tracker.txt]
+  
+
+GENERATION:
+  IP_CONFY: ''
+  MODEL_SD3:
+    BASE_DIR: ''
+
+CHECKER:
+  BASE_DIR: ''
+  FUNCTION_BYW:
+    FILENAME: ''
+
+ANNOTATION:
