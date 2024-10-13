@@ -20,7 +20,7 @@ FILES:
   
 
 GENERATION:
-  IP_CONFY: ''
+  IP_COMFY: ''
   MODEL_SD3:
     BASE_DIR: ''
 
@@ -30,3 +30,15 @@ CHECKER:
     FILENAME: ''
 
 ANNOTATION:
+  BASE_DIR: './data/labeling'
+  PAR_MODEL:
+    PATH: './models/img_par_model/ckpt_max_2024-03-02_18:01:07.pth'
+    BACKBONE_TYPE: 'resnet50'
+    CLASSIFIER:
+      NAME: 'linear'
+      BN: False
+      POOLING: 'avg'
+      SCALE: 1
+    DATASET:
+      HEIGHT: 256
+      WIDTH: 192
