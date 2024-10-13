@@ -1,0 +1,11 @@
+# Ignore the models directory
+/models/
+
+# Ignore the data directory
+/data/
+
+# Ignore all __pycache__ directories
+**/__pycache__/
+
+# Ignore the env directory
+/env/

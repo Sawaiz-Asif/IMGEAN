@@ -1,0 +1,21 @@
+HOW TO ADD NEW MODELS
+
+1. On custom_models implement a function to get the model (reading it to a variable) and another for loadig it (getting its weights and everything)
+    1.1 For that probably additional functions/classes are needed, everything should be added inside model_definitions/<MODEL_NAME>
+    1.2 On custom_models every needed function for get/load the model can be imported, but for avoiding overwritting them they shoudl be imported as <MODEL_NAME>_<FUNCTION_NAME>
+
+2. On automatic_labeling.py add the new function to the model_mapping. The name of the key has to be the name of the model on the config file
+
+3. On the config file add the model with the same format as the current one
+
+
+
+NOTES FOR ESCALATING IT 
+
+As it is right now it seems to be the easiest way to escalate it with other models, now the question is how much do we want the user to do?
+
+The user will always have to provide how to read its architecture, so it has to be a developer
+
+From the gui, technically i guess we could add everything, but we would have to check how to inject code (or how to do it without injection), and also is not really mantenable in the way that afterwards the code couldn't be changed
+
+As it is right now, the user could add its model following the instructions on the top of this document, and afterwards select its model
