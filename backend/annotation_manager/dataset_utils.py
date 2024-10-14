@@ -286,6 +286,10 @@ class DatasetManager:
             # For additional images, append the labels
             self.annotation.label = np.row_stack((self.annotation.label, np.array(labels, dtype=int)))
 
+        # Add to partitions if specified
+        self.annotation.partition.train.append(len(self.annotation.image_name) - 1)
+        self.annotation.partition.trainval.append(len(self.annotation.image_name) - 1)
+
         # Attempt to save the updated annotation
         try:
             self.save_annotation()
@@ -312,6 +316,20 @@ class DatasetManager:
                     print("Resetting label array to empty since last image was removed.")
                 elif self.annotation.label.shape[0] > index:
                     self.annotation.label = np.delete(self.annotation.label, index, axis=0)
+
+                # Remove from partitions
+                if index in self.annotation.partition.train:
+                    self.annotation.partition.train.remove(index)
+                if index in self.annotation.partition.trainval:
+                    self.annotation.partition.trainval.remove(index)
+                
+                 # Update partitions to reflect the new indices after removal
+                self.annotation.partition.train = [
+                    i if i < index else i - 1 for i in self.annotation.partition.train
+                ]
+                self.annotation.partition.trainval = [
+                    i if i < index else i - 1 for i in self.annotation.partition.trainval
+                ]
 
                 self.save_annotation()
             else:
