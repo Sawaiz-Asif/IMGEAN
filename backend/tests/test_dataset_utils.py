@@ -286,145 +286,7 @@ def test_special_character_in_file_names(temp_dir):
     annotation = dataset_manager.load_annotation()
     assert annotation['key'] == 'value', "The content of the special character file should be loaded correctly."
 
-# ---------------------------------------------------
-# Test Group: Integration Testing (End-to-End)
-# ---------------------------------------------------
 
-@pytest.fixture
-def temp_pickle_file():
-    """Creates a temporary pickle file for testing."""
-    with tempfile.TemporaryDirectory() as temp_dir:
-        pickle_file = os.path.join(temp_dir, 'test_dataset.pkl')
-        yield pickle_file
-
-def test_dataset_manager_integration(temp_pickle_file):
-    """Comprehensive integration test for the DatasetManager class."""
-
-    # Step 1: Initialize the DatasetManager
-    manager = DatasetManager(temp_pickle_file)
-    print("\n--- Step 1: Initialized DatasetManager ---")
-    print(f"Description: {manager.annotation.description}")
-    print(f"Attributes (before adding any): {manager.annotation.attr_name}")
-    print(f"Images (before adding any): {manager.annotation.image_name}")
-    
-    assert manager.annotation.description == 'New Dataset'
-    assert len(manager.annotation.attr_name) == 0
-    assert len(manager.annotation.image_name) == 0
-
-    # Step 2: Add Images without Labels
-    print("\n--- Step 2: Adding Images Without Labels ---")
-    
-    # Add three images without labels
-    manager.add_image('image1.jpg')
-    manager.add_image('image2.jpg')
-    manager.add_image('image3.jpg')
-    
-    print(f"Images after adding three images without labels: {manager.annotation.image_name}")
-    assert manager.annotation.image_name == ['image1.jpg', 'image2.jpg', 'image3.jpg']
-    
-       # Check that labels are empty arrays with correct shape
-    expected_labels = np.empty((3, 0), dtype=object)  # No attributes, labels are empty for each image
-    np.testing.assert_array_equal(manager.annotation.label, expected_labels)
-    print(f"Labels after adding three images without labels (should be empty):\n{manager.annotation.label}")
-
-
-    # Step 3: Add First Label and Verify
-    print("\n--- Step 3: Adding First Label ---")
-    manager.add_label('Label1')
-    
-    # Check if label is added to all images
-    expected_labels = np.zeros((3, 1))  # 3 images, 1 label initialized to 0
-    np.testing.assert_array_equal(manager.annotation.label, expected_labels)
-    print(f"Labels after adding 'Label1':\n{manager.annotation.label}")
-
-    # Step 4: Add Second Label and Verify
-    print("\n--- Step 4: Adding Second Label ---")
-    manager.add_label('Label2')
-
-    # Check if second label is added to all images
-    expected_labels = np.zeros((3, 2))  # 3 images, 2 labels initialized to 0
-    np.testing.assert_array_equal(manager.annotation.label, expected_labels)
-    print(f"Labels after adding 'Label2':\n{manager.annotation.label}")
-
-    # Step 5: Remove Middle Image and Verify
-    print("\n--- Step 5: Removing Middle Image ---")
-    print(f"Images before removing 'image2.jpg': {manager.annotation.image_name}")
-    manager.remove_image(1)
-    
-    # Check that the middle image ('image2.jpg') and its labels are removed
-    expected_labels = np.zeros((2, 2))  # 2 images left, both with 2 labels
-    np.testing.assert_array_equal(manager.annotation.label, expected_labels)
-    assert manager.annotation.image_name == ['image1.jpg', 'image3.jpg']
-    print(f"Images after removing 'image2.jpg': {manager.annotation.image_name}")
-    print(f"Labels after removing 'image2.jpg':\n{manager.annotation.label}")
-
-    # Step 6: Remove All Labels and Verify
-    print("\n--- Step 6: Removing All Labels ---")
-    print(f"Attributes before removing all labels: {manager.annotation.attr_name}")
-
-    # Remove 'Label2' first, then 'Label1'
-    manager.remove_label(1)
-    manager.remove_label(0)
-    
-    # Check that all labels are removed
-    assert len(manager.annotation.attr_name) == 0
-    assert manager.annotation.label.size == 0
-    print(f"Attributes after removing all labels: {manager.annotation.attr_name}")
-    print(f"Labels after removing all labels (should be empty):\n{manager.annotation.label}")
-
-    # Step 7: Add New Label and Check Configuration
-    print("\n--- Step 7: Adding New Label After Removing All ---")
-    manager.add_label('NewLabel')
-
-    # Check that the new label is added to both images
-    expected_labels = np.zeros((2, 1))  # 2 images, 1 new label
-    np.testing.assert_array_equal(manager.annotation.label, expected_labels)
-    print(f"Labels after adding 'NewLabel':\n{manager.annotation.label}")
-
-    # Step 8: Edit Labels for Both Images
-    print("\n--- Step 8: Editing Labels ---")
-    manager.edit_label_for_image(0, [1])  # Set the first image label to [1]
-    manager.edit_label_for_image(1, [0])  # Set the second image label to [0]
-
-    expected_labels = np.array([[1], [0]])
-    np.testing.assert_array_equal(manager.annotation.label, expected_labels)
-    print(f"Labels after editing:\n{manager.annotation.label}")
-
-    # Step 9: Error Handling (Before label removal)
-    print("\n--- Step 9: Error Handling ---")
-    with pytest.raises(ValueError):
-        print("Testing error for adding 'image4.jpg' with invalid label length")
-        manager.add_image('image4.jpg', labels=[1, 1])  # Invalid label length
-
-    with pytest.raises(IndexError):
-        print("Testing error for editing labels for a non-existent image")
-        manager.edit_label_for_image(5, [0])  # Invalid image index
-
-    with pytest.raises(IndexError):
-        print("Testing error for removing a non-existent label")
-        manager.remove_label(10)  # Invalid label index
-
-    # Step 10: Fetch Images
-    print("\n--- Step 10: Fetching Images ---")
-    image_name = manager.fetch_image(0)
-    print(f"Fetched image at index 0: {image_name}")
-    assert image_name == 'image1.jpg'
-
-    all_images = manager.fetch_all_images()
-    print(f"All images fetched: {all_images}")
-    assert all_images == ['image1.jpg', 'image3.jpg']
-
-    # Step 11: Persistence
-    print("\n--- Step 11: Testing Persistence ---")
-    print("Reloading the manager and verifying state")
-    new_manager = DatasetManager(temp_pickle_file)
-    print(f"Reloaded manager state: attr_name={new_manager.annotation.attr_name}, image_name={new_manager.annotation.image_name}")
-    assert new_manager.annotation.attr_name == ['NewLabel']
-    assert new_manager.annotation.image_name == ['image1.jpg', 'image3.jpg']
-    expected_labels = np.array([[1], [0]])
-    print(type(new_manager.annotation.label))
-    np.testing.assert_array_equal(new_manager.annotation.label, expected_labels)
-    print(f"Labels after reloading manager:\n{new_manager.annotation.label}")
 
 
 # ---------------------------------------------------
@@ -587,6 +449,151 @@ def test_fetch_all_images_empty_dataset(dataset_manager):
     """Test fetching all images when no images exist."""
     all_images = dataset_manager.fetch_all_images()
     assert all_images == [], "Should return an empty list when no images are in the dataset."
+
+
+
+# ---------------------------------------------------
+# Test Group: Integration Testing (End-to-End)
+# ---------------------------------------------------
+
+@pytest.fixture
+def temp_pickle_file():
+    """Creates a temporary pickle file for testing."""
+    with tempfile.TemporaryDirectory() as temp_dir:
+        pickle_file = os.path.join(temp_dir, 'test_dataset.pkl')
+        yield pickle_file
+
+def test_dataset_manager_integration(temp_pickle_file):
+    """Comprehensive integration test for the DatasetManager class."""
+
+    # Step 1: Initialize the DatasetManager
+    manager = DatasetManager(temp_pickle_file)
+    print("\n--- Step 1: Initialized DatasetManager ---")
+    print(f"Description: {manager.annotation.description}")
+    print(f"Attributes (before adding any): {manager.annotation.attr_name}")
+    print(f"Images (before adding any): {manager.annotation.image_name}")
+    
+    assert manager.annotation.description == 'New Dataset'
+    assert len(manager.annotation.attr_name) == 0
+    assert len(manager.annotation.image_name) == 0
+
+    # Step 2: Add Images without Labels
+    print("\n--- Step 2: Adding Images Without Labels ---")
+    
+    # Add three images without labels
+    manager.add_image('image1.jpg')
+    manager.add_image('image2.jpg')
+    manager.add_image('image3.jpg')
+
+    print("After adding three images",manager.annotation.partition.train)
+    
+    print(f"Images after adding three images without labels: {manager.annotation.image_name}")
+    assert manager.annotation.image_name == ['image1.jpg', 'image2.jpg', 'image3.jpg']
+    
+       # Check that labels are empty arrays with correct shape
+    expected_labels = np.empty((3, 0), dtype=object)  # No attributes, labels are empty for each image
+    np.testing.assert_array_equal(manager.annotation.label, expected_labels)
+    print(f"Labels after adding three images without labels (should be empty):\n{manager.annotation.label}")
+
+
+    # Step 3: Add First Label and Verify
+    print("\n--- Step 3: Adding First Label ---")
+    manager.add_label('Label1')
+    
+    # Check if label is added to all images
+    expected_labels = np.zeros((3, 1))  # 3 images, 1 label initialized to 0
+    np.testing.assert_array_equal(manager.annotation.label, expected_labels)
+    print(f"Labels after adding 'Label1':\n{manager.annotation.label}")
+
+    # Step 4: Add Second Label and Verify
+    print("\n--- Step 4: Adding Second Label ---")
+    manager.add_label('Label2')
+
+    # Check if second label is added to all images
+    expected_labels = np.zeros((3, 2))  # 3 images, 2 labels initialized to 0
+    np.testing.assert_array_equal(manager.annotation.label, expected_labels)
+    print(f"Labels after adding 'Label2':\n{manager.annotation.label}")
+
+    # Step 5: Remove Middle Image and Verify
+    print("\n--- Step 5: Removing Middle Image ---")
+    print(f"Images before removing 'image2.jpg': {manager.annotation.image_name}")
+    manager.remove_image(1)
+    print("train After removing one image",manager.annotation.partition.train)
+
+    # Check that the middle image ('image2.jpg') and its labels are removed
+    expected_labels = np.zeros((2, 2))  # 2 images left, both with 2 labels
+    np.testing.assert_array_equal(manager.annotation.label, expected_labels)
+    assert manager.annotation.image_name == ['image1.jpg', 'image3.jpg']
+    print(f"Images after removing 'image2.jpg': {manager.annotation.image_name}")
+    print(f"Labels after removing 'image2.jpg':\n{manager.annotation.label}")
+
+    # Step 6: Remove All Labels and Verify
+    print("\n--- Step 6: Removing All Labels ---")
+    print(f"Attributes before removing all labels: {manager.annotation.attr_name}")
+
+    # Remove 'Label2' first, then 'Label1'
+    manager.remove_label(1)
+    manager.remove_label(0)
+    
+    # Check that all labels are removed
+    assert len(manager.annotation.attr_name) == 0
+    assert manager.annotation.label.size == 0
+    print(f"Attributes after removing all labels: {manager.annotation.attr_name}")
+    print(f"Labels after removing all labels (should be empty):\n{manager.annotation.label}")
+
+    # Step 7: Add New Label and Check Configuration
+    print("\n--- Step 7: Adding New Label After Removing All ---")
+    manager.add_label('NewLabel')
+
+    # Check that the new label is added to both images
+    expected_labels = np.zeros((2, 1))  # 2 images, 1 new label
+    np.testing.assert_array_equal(manager.annotation.label, expected_labels)
+    print(f"Labels after adding 'NewLabel':\n{manager.annotation.label}")
+
+    # Step 8: Edit Labels for Both Images
+    print("\n--- Step 8: Editing Labels ---")
+    manager.edit_label_for_image(0, [1])  # Set the first image label to [1]
+    manager.edit_label_for_image(1, [0])  # Set the second image label to [0]
+
+    expected_labels = np.array([[1], [0]])
+    np.testing.assert_array_equal(manager.annotation.label, expected_labels)
+    print(f"Labels after editing:\n{manager.annotation.label}")
+
+    # Step 9: Error Handling (Before label removal)
+    print("\n--- Step 9: Error Handling ---")
+    with pytest.raises(ValueError):
+        print("Testing error for adding 'image4.jpg' with invalid label length")
+        manager.add_image('image4.jpg', labels=[1, 1])  # Invalid label length
+
+    with pytest.raises(IndexError):
+        print("Testing error for editing labels for a non-existent image")
+        manager.edit_label_for_image(5, [0])  # Invalid image index
+
+    with pytest.raises(IndexError):
+        print("Testing error for removing a non-existent label")
+        manager.remove_label(10)  # Invalid label index
+
+    # Step 10: Fetch Images
+    print("\n--- Step 10: Fetching Images ---")
+    image_name = manager.fetch_image(0)
+    print(f"Fetched image at index 0: {image_name}")
+    assert image_name == 'image1.jpg'
+
+    all_images = manager.fetch_all_images()
+    print(f"All images fetched: {all_images}")
+    assert all_images == ['image1.jpg', 'image3.jpg']
+
+    # Step 11: Persistence
+    print("\n--- Step 11: Testing Persistence ---")
+    print("Reloading the manager and verifying state")
+    new_manager = DatasetManager(temp_pickle_file)
+    print(f"Reloaded manager state: attr_name={new_manager.annotation.attr_name}, image_name={new_manager.annotation.image_name}")
+    assert new_manager.annotation.attr_name == ['NewLabel']
+    assert new_manager.annotation.image_name == ['image1.jpg', 'image3.jpg']
+    expected_labels = np.array([[1], [0]])
+    print(type(new_manager.annotation.label))
+    np.testing.assert_array_equal(new_manager.annotation.label, expected_labels)
+    print(f"Labels after reloading manager:\n{new_manager.annotation.label}")
 # ---------------------------------------------------
 # END OF TEST CASES
 # ---------------------------------------------------
