@@ -1,3 +1,5 @@
+.gitignore
+
 # Ignore the models directory
 /models/
 
@@ -9,3 +11,6 @@
 
 # Ignore the env directory
 /env/
+
+/imgean-dev
+
