@@ -1,6 +1,6 @@
 from PyQt5 import QtWidgets
 from frontend.main_window_ui import Ui_MainWindow  # Import the UI class
-from temp.generator_window import Ui_genrate_images  # Import the external screen UI
+
 from frontend.settings import SettingsWindow
 from frontend.img_quality_check import CheckImgQuality
 from frontend.annotate_img import AnnotateImg  # Import Annotate Image logic
