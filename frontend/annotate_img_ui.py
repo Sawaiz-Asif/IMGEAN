@@ -57,14 +57,26 @@ class Ui_AnnotateImg(object):
         self.openImageGridButton.setText("Images")
 
         # Image grid overlay (initially hidden)
-        # Now spans the left half of the screen (including image area and below)
-        self.imageGridOverlay = QtWidgets.QListWidget(AnnotateImg)
+        scroll_area = QtWidgets.QScrollArea(AnnotateImg)
+        scroll_area.setGeometry(QtCore.QRect(20, 100, 380, 380))  # Covering left half of the screen
+        scroll_area.setWidgetResizable(True)
+
+        # Scroll widget to contain the grid layout
+        scroll_widget = QtWidgets.QWidget()
+        self.imageGridLayout = QtWidgets.QGridLayout(scroll_widget)  # Use grid layout for the images
+        scroll_area.setWidget(scroll_widget)
+        scroll_area.setHidden(True)  # Initially hidden
+
+        self.imageGridOverlay = scroll_area
+
+
+        """ self.imageGridOverlay = QtWidgets.QListWidget(AnnotateImg)
         self.imageGridOverlay.setGeometry(QtCore.QRect(20, 100, 380, 380))  # Covering left half of the screen
         self.imageGridOverlay.setSelectionMode(QtWidgets.QAbstractItemView.SingleSelection)
-        self.imageGridOverlay.setHidden(True)  # Initially hidden
-        for i in range(1, 25):
+        self.imageGridOverlay.setHidden(True)  # Initially hidden """
+        """ for i in range(1, 25):
             item = QtWidgets.QListWidgetItem(f"Img {i}")
-            self.imageGridOverlay.addItem(item)
+            self.imageGridOverlay.addItem(item) """
 
     def retranslateUi(self, AnnotateImg):
         _translate = QtCore.QCoreApplication.translate

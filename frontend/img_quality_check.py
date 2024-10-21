@@ -200,6 +200,20 @@ class CheckImgQuality(QtWidgets.QMainWindow):
     
     def get_discarded_images(self):
         return [f for f in os.listdir(self.images_discarded_dir) if f.endswith(('.png', '.jpg', '.jpeg'))]
+    
+    def refresh_window_info(self):
+        #self.current_checking_index = 0  # Tracks the current image being displayed
+        #self.current_discarded_index = 0
+        self.images_to_check =  self.get_checking_images()
+        self.discarded_images = self.get_discarded_images()
+
+
+        # Populate both tabs with images
+        self.populate_image_grid(self.ui.gridLayoutToCheck, self.images_to_check, is_discarded=False)
+        self.populate_image_grid(self.ui.gridLayoutDiscarded, self.discarded_images, is_discarded=True)
+
+        # Initially load the first image in the image preview area
+        self.load_current_image()
 
 # Run the application
 if __name__ == "__main__":

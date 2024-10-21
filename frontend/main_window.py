@@ -8,6 +8,7 @@ from frontend.generator_window import GeneratorWindow  # Import the logic class
 FILES = 'FILES'
 CHECKING_DIR = 'CHECKING_DIR'
 DISCARDED_DIR = 'DISCARDED_DIR'
+LABELING_DIR = 'LABELING_DIR'
 
 class MainWindow(QtWidgets.QMainWindow, Ui_MainWindow):
     def __init__(self, config):
@@ -37,7 +38,7 @@ class MainWindow(QtWidgets.QMainWindow, Ui_MainWindow):
         # Img Quality Check Screen
         self.imgQualityCheckScreen = CheckImgQuality(self.stackedWidget, self.config, images_checking_dir=cfg[CHECKING_DIR],  images_discarded_dir=cfg[DISCARDED_DIR])  # Pass the stacked widget
         # Annotate image Screen
-        self.annotateImgSelectScreen = AnnotateImg(self.stackedWidget)  # Pass the stacked widget
+        self.annotateImgSelectScreen = AnnotateImg(self.stackedWidget, self.config, images_labeling_dir=cfg[LABELING_DIR])  # Pass the stacked widget
 
         # Setting Screen
         self.settingsScreen = SettingsWindow(self.stackedWidget)
@@ -55,10 +56,14 @@ class MainWindow(QtWidgets.QMainWindow, Ui_MainWindow):
 
     def goToImgQualityCheckScreen(self):
         # Switch back to the main screen
+        self.imgQualityCheckScreen.refresh_window_info()
+
         self.stackedWidget.setCurrentIndex(2)
 
     def goToAnnotateImgSelectScreen(self):
         # Switch back to the main screen
+        self.annotateImgSelectScreen.refresh_window_info()
+
         self.stackedWidget.setCurrentIndex(3)
 
     def goToSettingScreen(self):
