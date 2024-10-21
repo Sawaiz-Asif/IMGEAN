@@ -241,3 +241,34 @@ def accept_all_checking(config):
     """
     filenames = [os.path.basename(file) for file in glob.glob(os.path.join(config[FILES][CHECKING_DIR], '*'))]
     move_checking_labeling(config, filenames)
+
+def delete_single_discarded(config, filename):
+    """
+    Deletes a single discarded image from the discarded directory and removes its entry from the discarded tracker.
+
+    Args:
+        config (dict): Configuration settings loaded from config.yaml.
+        filename (str): The name of the file to be deleted.
+
+    Returns:
+        None
+    """
+    file_path = os.path.join(config[FILES][DISCARDED_DIR], filename)
+    
+    # Check if the file exists in the discarded directory
+    if os.path.exists(file_path):
+        os.remove(file_path)
+    
+    # Remove the entry from the discarded tracker
+    discarded_tracker_path = config[FILES][DISCARDED_TRACKER]
+    
+    with open(discarded_tracker_path, 'r') as file:
+        discarded_entries = file.readlines()
+
+    discarded_entries = [entry.strip() for entry in discarded_entries]
+    updated_entries = [entry for entry in discarded_entries if entry.split('\t')[0] != filename]
+
+    # Write the updated tracker back
+    with open(discarded_tracker_path, 'w') as file:
+        for entry in updated_entries:
+            file.write(f"{entry}\n")

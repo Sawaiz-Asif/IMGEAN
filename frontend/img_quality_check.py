@@ -1,6 +1,7 @@
 import os
 from PyQt5 import QtWidgets, QtGui, QtCore
 from frontend.img_quality_check_ui import Ui_CheckImgQuality  # Import the UI file
+import backend.file_utils as fu
 
 # Custom QLabel to handle image clicks
 class ClickableLabel(QtWidgets.QLabel):
@@ -11,17 +12,24 @@ class ClickableLabel(QtWidgets.QLabel):
         super().mousePressEvent(event)
 
 class CheckImgQuality(QtWidgets.QMainWindow):
-    def __init__(self, stacked_widget, images_folder="data"):
+    def __init__(self, stacked_widget, config, images_checking_dir="data", images_discarded_dir="data"):
         super(CheckImgQuality, self).__init__()
         self.stacked_widget = stacked_widget  # Reference to the QStackedWidget for navigation
-        self.images_folder = images_folder  # Folder where the images are stored
+        self.images_checking_dir = images_checking_dir  # Folder where the images are stored
+        self.images_discarded_dir = images_discarded_dir
         self.ui = Ui_CheckImgQuality()  # Initialize the UI
         self.ui.setupUi(self)
 
+        self.config = config
+
+        self.current_tab_index = self.ui.tab_widget.currentIndex()
+
         # Load image file names from the dataset folder
-        self.images_to_check = [f for f in os.listdir(self.images_folder) if f.endswith(('.png', '.jpg', '.jpeg'))]
-        self.discarded_images = []  # Discarded image pool
-        self.current_image_index = 0  # Tracks the current image being displayed
+        self.current_checking_index = 0  # Tracks the current image being displayed
+        self.current_discarded_index = 0
+        self.images_to_check =  self.get_checking_images()
+        self.discarded_images = self.get_discarded_images()
+
 
         # Populate both tabs with images
         self.populate_image_grid(self.ui.gridLayoutToCheck, self.images_to_check, is_discarded=False)
@@ -31,11 +39,15 @@ class CheckImgQuality(QtWidgets.QMainWindow):
         self.load_current_image()
 
         # Connect navigation buttons to their respective methods
+        for tab_name in self.ui.tab_components:
+            tab = self.ui.tab_components[tab_name]
+            tab["prev_button"].clicked.connect(self.on_prev_click)
+            tab["next_button"].clicked.connect(self.on_next_click)
+            tab["first_button"].clicked.connect(self.on_first_action_click)  # Discard/Delete
+            tab["second_button"].clicked.connect(self.on_accept_click)  # Accept action
+        
         self.ui.returnButton.clicked.connect(self.on_return_click)  # Return button to go back to previous screen
-        self.ui.prevBtn.clicked.connect(self.on_prev_click)
-        self.ui.nextBtn.clicked.connect(self.on_next_click)
-        self.ui.firstBtn.clicked.connect(self.on_first_action_click)  # This will be "Discard" or "Delete"
-        self.ui.secondBtn.clicked.connect(self.on_accept_click)  # This will be "Accept" in both tabs
+        self.ui.tab_widget.currentChanged.connect(self.on_tab_change)
 
     # Populates the grid with image thumbnails
     def populate_image_grid(self, grid_layout, image_list, is_discarded):
@@ -53,7 +65,10 @@ class CheckImgQuality(QtWidgets.QMainWindow):
 
         # Populate the grid with images
         for i, image_name in enumerate(image_list):
-            image_path = os.path.join(self.images_folder, image_name)
+            if is_discarded == False:
+                image_path = os.path.join(self.images_checking_dir, image_name)
+            else:
+                image_path = os.path.join(self.images_discarded_dir, image_name)
             pixmap = QtGui.QPixmap(image_path)
 
             # Create a ClickableLabel to display the image
@@ -69,51 +84,61 @@ class CheckImgQuality(QtWidgets.QMainWindow):
 
     # Loads the current image into the image preview area
     def load_current_image(self):
-        current_tab_index = self.ui.tab_widget.currentIndex()
-
-        if current_tab_index == 1:  # "Images to Check" tab
+        if self.current_tab_index == 1:  # "Images to Check" tab
             if self.images_to_check:
-                image_name = self.images_to_check[self.current_image_index]
-                image_path = os.path.join(self.images_folder, image_name)
+                image_name = self.images_to_check[self.current_checking_index]
+                image_path = os.path.join(self.images_checking_dir, image_name)
                 pixmap = QtGui.QPixmap(image_path)
-                self.ui.imagePreview.setPixmap(
-                    pixmap.scaled(self.ui.imagePreview.size(), QtCore.Qt.KeepAspectRatio, QtCore.Qt.SmoothTransformation)
+                self.ui.tab_components["checking"]["image_preview"].setPixmap(
+                    pixmap.scaled(self.ui.tab_components["checking"]["image_preview"].size(), QtCore.Qt.KeepAspectRatio, QtCore.Qt.SmoothTransformation)
                 )
             else:
-                self.ui.imagePreview.setText("No images to display")  # Display message if no images
+                self.ui.tab_components["checking"]["image_preview"].setText("No images to display")  # Display message if no images
         else:  # "Discarded" tab
             if self.discarded_images:
-                image_name = self.discarded_images[self.current_image_index]
-                image_path = os.path.join(self.images_folder, image_name)
+                image_name = self.discarded_images[self.current_discarded_index]
+                image_path = os.path.join(self.images_discarded_dir, image_name)
                 pixmap = QtGui.QPixmap(image_path)
-                self.ui.imagePreview.setPixmap(
-                    pixmap.scaled(self.ui.imagePreview.size(), QtCore.Qt.KeepAspectRatio, QtCore.Qt.SmoothTransformation)
+                self.ui.tab_components["discarded"]["image_preview"].setPixmap(
+                    pixmap.scaled(self.ui.tab_components["discarded"]["image_preview"].size(), QtCore.Qt.KeepAspectRatio, QtCore.Qt.SmoothTransformation)
                 )
             else:
-                self.ui.imagePreview.setText("No discarded images")
+                self.ui.tab_components["discarded"]["image_preview"].setText("No discarded images")
 
     # Slot for when an image is clicked in the grid
     def on_image_clicked(self, index, is_discarded):
         # Update current_image_index based on the clicked image
-        if is_discarded:
-            self.current_image_index = index
+        if self.current_tab_index == 1:
+            self.current_checking_index = index
         else:
-            self.current_image_index = index
+            self.current_discarded_index = index
 
         # Display the clicked image in the preview area
         self.load_current_image()
 
     # Button logic: Move to the previous image
     def on_prev_click(self):
-        if self.current_image_index > 0:
-            self.current_image_index -= 1
-            self.load_current_image()
+        if self.current_tab_index == 1:
+            if self.current_checking_index > 0:
+                self.current_checking_index -= 1
+        elif self.current_tab_index == 0:
+            if self.current_discarded_index > 0:
+                self.current_discarded_index -= 1
+ 
+        self.load_current_image()
 
     # Button logic: Move to the next image
     def on_next_click(self):
-        if self.current_image_index < len(self.images_to_check) - 1:
-            self.current_image_index += 1
-            self.load_current_image()
+
+        if self.current_tab_index == 1:
+            if self.current_checking_index < len(self.images_to_check) - 1:
+                self.current_checking_index += 1
+        elif self.current_tab_index == 0:
+            if self.current_discarded_index < len(self.discarded_images) - 1:
+                self.current_discarded_index += 1
+ 
+        self.load_current_image()
+
 
     # Button logic: First action (Discard/Delete based on the tab)
     def on_first_action_click(self):
@@ -121,14 +146,20 @@ class CheckImgQuality(QtWidgets.QMainWindow):
 
         if current_tab_index == 1:  # "Images to Check" tab (Discard action)
             if self.images_to_check:
-                discarded_image = self.images_to_check.pop(self.current_image_index)
+                discarded_image = self.images_to_check.pop(self.current_checking_index)
+                if (self.current_checking_index>0):
+                    self.current_checking_index -= 1
                 self.discarded_images.append(discarded_image)
+                fu.move_checking_discard(self.config, discarded_image)
                 self.populate_image_grid(self.ui.gridLayoutToCheck, self.images_to_check, is_discarded=False)
                 self.populate_image_grid(self.ui.gridLayoutDiscarded, self.discarded_images, is_discarded=True)
                 self.load_current_image()
         else:  # "Discarded" tab (Delete action)
             if self.discarded_images:
-                self.discarded_images.pop(self.current_image_index)
+                discarded_image = self.discarded_images.pop(self.current_discarded_index)
+                if (self.current_discarded_index>0):
+                    self.current_discarded_index -= 1
+                fu.delete_single_discarded(self.config, discarded_image)
                 self.populate_image_grid(self.ui.gridLayoutDiscarded, self.discarded_images, is_discarded=True)
                 self.load_current_image()
 
@@ -138,14 +169,18 @@ class CheckImgQuality(QtWidgets.QMainWindow):
 
         if current_tab_index == 1:  # "Images to Check" tab (Accept action)
             if self.images_to_check:
-                accepted_image = self.images_to_check.pop(self.current_image_index)
+                accepted_image = self.images_to_check.pop(self.current_checking_index)
+                if (self.current_checking_index>0):
+                    self.current_checking_index -= 1
+                fu.move_checking_labeling(self.config, accepted_image)
                 self.populate_image_grid(self.ui.gridLayoutToCheck, self.images_to_check, is_discarded=False)
                 self.load_current_image()
         else:  # "Discarded" tab (Re-accept action)
             if self.discarded_images:
-                reaccepted_image = self.discarded_images.pop(self.current_image_index)
-                self.images_to_check.append(reaccepted_image)
-                self.populate_image_grid(self.ui.gridLayoutToCheck, self.images_to_check, is_discarded=False)
+                reaccepted_image = self.discarded_images.pop(self.current_discarded_index)
+                if (self.current_discarded_index>0):
+                    self.current_discarded_index -= 1
+                fu.move_discarded_labeling(self.config, reaccepted_image)
                 self.populate_image_grid(self.ui.gridLayoutDiscarded, self.discarded_images, is_discarded=True)
                 self.load_current_image()
 
@@ -154,6 +189,17 @@ class CheckImgQuality(QtWidgets.QMainWindow):
         # You can modify this logic depending on what screen the user should return to
         # Example: Move to the main screen of the stacked widget
         self.stacked_widget.setCurrentIndex(0)
+
+    def on_tab_change(self, index):
+        self.current_tab_index = self.ui.tab_widget.currentIndex()
+        self.load_current_image()
+ 
+
+    def get_checking_images(self):
+        return [f for f in os.listdir(self.images_checking_dir) if f.endswith(('.png', '.jpg', '.jpeg'))]
+    
+    def get_discarded_images(self):
+        return [f for f in os.listdir(self.images_discarded_dir) if f.endswith(('.png', '.jpg', '.jpeg'))]
 
 # Run the application
 if __name__ == "__main__":

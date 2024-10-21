@@ -5,6 +5,7 @@
 
 # Ignore the data directory
 /data/
+/data_start/
 
 # Ignore all __pycache__ directories
 **/__pycache__/

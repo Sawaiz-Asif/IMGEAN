@@ -31,13 +31,18 @@ class Ui_CheckImgQuality(object):
         self.tabToCheck = QtWidgets.QWidget()
         self.tab_widget.addTab(self.tabDiscarded, "Discarded")
         self.tab_widget.addTab(self.tabToCheck, "Images to Check")
+        self.tab_widget.setCurrentIndex(1)
         self.main_layout.addWidget(self.tab_widget, 1)  # Stretch factor 1
+
+        self.tab_components = {}
+        self.tab_components["discarded"] = {}
+        self.tab_components["checking"] = {}
 
         # ===================== Tab: Discarded Images ============================
         self.setupTab(self.tabDiscarded, "Delete", "Accept", "Reason: Automatic filtering (B&W)", "gridLayoutDiscarded")
 
         # ===================== Tab: Images to Check =============================
-        self.setupTab(self.tabToCheck, "Discard", "Accept", "", "gridLayoutToCheck")
+        self.setupTab(self.tabToCheck, "Discard", "Accept", None, "gridLayoutToCheck")
 
         # Set the central widget
         CheckImgQuality.setCentralWidget(self.centralwidget)
@@ -70,27 +75,42 @@ class Ui_CheckImgQuality(object):
         #yellow_container.setStyleSheet("background-color: lightyellow;")  # Yellow container
         yellow_layout = QtWidgets.QVBoxLayout(yellow_container)
         
+        if reason_text==None:
+            current_components = self.tab_components["checking"]
+        else:
+            current_components = self.tab_components["discarded"]
+
         # Image Preview in yellow container
-        self.imagePreview = QtWidgets.QLabel()
-        self.imagePreview.setFixedSize(400, 380)
-        self.imagePreview.setFrameShape(QtWidgets.QFrame.Box)
-        self.imagePreview.setAlignment(QtCore.Qt.AlignCenter)
-        yellow_layout.addWidget(self.imagePreview)
+        image_preview = QtWidgets.QLabel()
+        image_preview.setFixedSize(400, 380)
+        image_preview.setFrameShape(QtWidgets.QFrame.Box)
+        image_preview.setAlignment(QtCore.Qt.AlignCenter)
+        current_components["image_preview"] = image_preview
+        yellow_layout.addWidget(image_preview)
 
         # Reason Label (in yellow container)
-        self.reasonLabel = QtWidgets.QLabel(reason_text)
-        self.reasonLabel.setAlignment(QtCore.Qt.AlignCenter)
-        yellow_layout.addWidget(self.reasonLabel)
+        if reason_text != None:
+            self.reasonLabel = QtWidgets.QLabel(reason_text)
+            self.reasonLabel.setAlignment(QtCore.Qt.AlignCenter)
+            yellow_layout.addWidget(self.reasonLabel)
 
         # Add spacer to push the buttons down to the bottom
         yellow_layout.addItem(QtWidgets.QSpacerItem(20, 40, QtWidgets.QSizePolicy.Minimum, QtWidgets.QSizePolicy.Expanding))
 
         # Navigation Buttons in yellow container (in a single row)
         nav_layout = QtWidgets.QHBoxLayout()
-        self.prevBtn = QtWidgets.QPushButton("Prev")
-        self.firstBtn = QtWidgets.QPushButton(first_button_text)  # First button (Discard or Delete)
-        self.secondBtn = QtWidgets.QPushButton(second_button_text)  # Second button (Always Accept)
-        self.nextBtn = QtWidgets.QPushButton("Next")
+        prev_button = QtWidgets.QPushButton("Prev")
+        self.prevBtn = prev_button
+        current_components["prev_button"] = prev_button
+        first_button = QtWidgets.QPushButton(first_button_text)  # First button (Discard or Delete)
+        self.firstBtn = first_button
+        current_components["first_button"] = first_button
+        second_button = QtWidgets.QPushButton(second_button_text)  # Second button (Always Accept)
+        self.secondBtn = second_button
+        current_components["second_button"] = second_button
+        next_button = QtWidgets.QPushButton("Next")
+        self.nextBtn = next_button
+        current_components["next_button"] = next_button
 
         nav_layout.addWidget(self.prevBtn)
         nav_layout.addWidget(self.firstBtn)
