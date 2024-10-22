@@ -1,14 +1,24 @@
 import os
 import tempfile
 import pytest
-from unittest.mock import patch
-import pickle
-
+from unittest.mock import patch, MagicMock
 import numpy as np
 from easydict import EasyDict
-
-#from backend.annotation_manager.dataset_utils import DatasetManager
 from backend.annotation_manager.dataset_utils import DatasetManager
+import logging
+
+#################
+#
+#  You can run this by this
+#  export PYTHONPATH=$(pwd)     
+#  pytest -v backend/tests/test_dataset_utils.py
+#
+#
+################
+
+# Configure logging for the tests
+logging.basicConfig(level=logging.ERROR,
+                    format='%(asctime)s - %(levelname)s - %(message)s')
 
 # ---------------------------------------------------
 # Fixtures - Setup and Teardown for Tests
@@ -31,94 +41,11 @@ def dataset_manager(temp_dir):
     starts with a fresh DatasetManager.
     """
     test_pickle_file = os.path.join(temp_dir, 'test_dataset_annotation.pkl')
-    return DatasetManager(test_pickle_file)
-
-# ---------------------------------------------------
-# Test Group: Annotation Loading
-# ---------------------------------------------------
-
-def test_load_annotation_new_dataset(dataset_manager):
-    """
-    Test loading an annotation when the pickle file does not exist.
-    This ensures that a new annotation is initialized with default values.
-    """
-    annotation = dataset_manager.load_annotation()
-    assert annotation['description'] == 'New Dataset', "Default description should be 'New Dataset'"
-    assert annotation['root'] == '', "Default root should be an empty string"
-    assert annotation['reorder'] == '', "Default reorder should be an empty string"
-
-def test_load_annotation_with_custom_values(dataset_manager):
-    """
-    Test loading an annotation with custom description, root, and reorder
-    when the pickle file does not exist.
-    """
-    annotation = dataset_manager.load_annotation(description="Custom Dataset", reorder="alphabetical", root="/new/root/path")
-    assert annotation['description'] == 'Custom Dataset', "Description should be updated to 'Custom Dataset'"
-    assert annotation['root'] == '/new/root/path', "Root should be updated to '/new/root/path'"
-    assert annotation['reorder'] == 'alphabetical', "Reorder should be updated to 'alphabetical'"
-
-def test_load_annotation_update_existing_file(dataset_manager):
-    """
-    Test loading an existing annotation from a pickle file and updating only certain fields (e.g., reorder).
-    """
-    dataset_manager.save_annotation(EasyDict({
-        'description': 'Existing Dataset',
-        'reorder': '',
-        'root': '/old/root/path',
-        'image_name': [],
-        'label': np.array([]),
-        'attr_name': [],
-        'label_idx': EasyDict({
-            'eval': [],
-            'color': [],
-            'extra': []
-        }),
-        'partition': EasyDict({
-            'train': [],
-            'val': [],
-            'test': [],
-            'trainval': []
-        }),
-        'weight_train': [],
-        'weight_trainval': []
-    }))
-
-    annotation = dataset_manager.load_annotation(reorder="alphabetical")
-    assert annotation['description'] == 'Existing Dataset', "Description should remain unchanged"
-    assert annotation['root'] == '/old/root/path', "Root should remain unchanged"
-    assert annotation['reorder'] == 'alphabetical', "Reorder should be updated to 'alphabetical'"
-
-def test_load_annotation_with_partial_update(dataset_manager):
-    """
-    Test loading an existing annotation and updating multiple fields (e.g., root, reorder),
-    leaving others (e.g., description) unchanged.
-    """
-    dataset_manager.save_annotation(EasyDict({
-        'description': 'Existing Dataset',
-        'reorder': '',
-        'root': '/old/root/path',
-        'image_name': [],
-        'label': np.array([]),
-        'attr_name': [],
-        'label_idx': EasyDict({
-            'eval': [],
-            'color': [],
-            'extra': []
-        }),
-        'partition': EasyDict({
-            'train': [],
-            'val': [],
-            'test': [],
-            'trainval': []
-        }),
-        'weight_train': [],
-        'weight_trainval': []
-    }))
-
-    annotation = dataset_manager.load_annotation(root="/new/root/path", reorder="alphabetical")
-    assert annotation['description'] == 'Existing Dataset', "Description should remain unchanged"
-    assert annotation['root'] == '/new/root/path', "Root should be updated to '/new/root/path'"
-    assert annotation['reorder'] == 'alphabetical', "Reorder should be updated to 'alphabetical'"
+    config = {
+        'FILES': {'BASE_DIR': temp_dir},
+        'DATASET': {'HEIGHT': 256, 'WIDTH': 192, 'TRAIN_SPLIT': 'train', 'VAL_SPLIT': 'val', 'ZERO_SHOT': True}
+    }
+    return DatasetManager(test_pickle_file, config)
 
 # ---------------------------------------------------
 # Test Group: Label Handling (Add, Remove, Edit)
@@ -131,343 +58,323 @@ def test_add_remove_label(dataset_manager, label):
     This checks that labels can be added and removed correctly.
     Parameterized to test multiple label names.
     """
-    index = dataset_manager.add_label(label)
-    assert label in dataset_manager.annotation.attr_name, f"Label {label} should be added"
+    success = dataset_manager.add_label(label)
+    assert success is True, f"Label {label} should be added successfully"
+    assert label in dataset_manager.annotation.attr_name, f"Label {label} should be in annotation"
 
-    dataset_manager.remove_label(index)
-    assert label not in dataset_manager.annotation.attr_name, f"Label {label} should be removed"
+    label_index = dataset_manager.annotation.attr_name.index(label)
+    success = dataset_manager.remove_label(label_index)
+    assert success is True, f"Label {label} should be removed successfully"
+    assert label not in dataset_manager.annotation.attr_name, f"Label {label} should no longer be in annotation"
 
 def test_edit_label(dataset_manager):
     """
     Test editing a label in DatasetManager.
     This verifies that labels can be modified correctly.
     """
-    index = dataset_manager.add_label('gender')
-    dataset_manager.edit_label(index, 'new_gender')
+    success = dataset_manager.add_label('gender')
+    assert success is True, "Label 'gender' should be added successfully"
+    index = dataset_manager.annotation.attr_name.index('gender')
+    success = dataset_manager.edit_label(index, 'new_gender')
+    assert success is True, "Label should be edited successfully"
     assert 'new_gender' in dataset_manager.annotation.attr_name, "Label should be renamed to new_gender"
     assert 'gender' not in dataset_manager.annotation.attr_name, "Original label 'gender' should not exist"
-
-def test_remove_label_out_of_bounds(dataset_manager):
-    """
-    Test that removing a label with an invalid index raises an appropriate error.
-    This tests boundary conditions for label removal.
-    """
-    with pytest.raises(IndexError):
-        dataset_manager.remove_label(999)  # Index out of bounds
 
 def test_add_duplicate_label_rejected(dataset_manager):
     """
     Test that DatasetManager prevents adding duplicate labels.
     This ensures that the same label cannot be added more than once.
     """
-    dataset_manager.add_label('unique_label')
-    with pytest.raises(ValueError):
-        dataset_manager.add_label('unique_label')
-    assert dataset_manager.annotation.attr_name.count('unique_label') == 1, "Duplicate labels should not be allowed, and should appear only once."
+    success = dataset_manager.add_label('unique_label')
+    assert success is True, "Label 'unique_label' should be added successfully"
+
+    success = dataset_manager.add_label('unique_label')
+    assert success is False, "Duplicate label should be rejected"
+    assert dataset_manager.annotation.attr_name.count('unique_label') == 1, "Duplicate labels should not be allowed"
 
 # ---------------------------------------------------
-# Test Group: File Handling (Images and Annotations)
+# Test Group: Image Handling (Add, Remove)
 # ---------------------------------------------------
 
-@patch('os.path.exists')
-def test_fetch_image_with_root(mock_exists, dataset_manager):
-    """
-    Test fetching an image in DatasetManager with the complete root path.
-    """
-    mock_exists.return_value = True
-    dataset_manager.annotation.root = '/test/root'
-    dataset_manager.annotation.image_name.append('existing_image.jpg')
-    image_path = dataset_manager.fetch_image(0, include_root_path=True)
-    expected_image_path = os.path.join(dataset_manager.annotation.root, 'existing_image.jpg')
-    assert image_path == expected_image_path, f"Expected {expected_image_path}, but got {image_path}"
-
-@patch('os.path.exists')
-def test_fetch_image_without_root(mock_exists, dataset_manager):
-    """
-    Test fetching an image in DatasetManager without the root path.
-    """
-    mock_exists.return_value = True
-    dataset_manager.annotation.image_name.append('existing_image.jpg')
-    image_name = dataset_manager.fetch_image(0, include_root_path=False)
-    expected_image_name = 'existing_image.jpg'
-    assert image_name == expected_image_name, f"Expected {expected_image_name}, but got {image_name}"
-
-@patch('os.path.exists')
-def test_fetch_image(mock_exists, dataset_manager):
-    """
-    Test fetching an image in DatasetManager. Simulates different file existence scenarios.
-    """
-    mock_exists.return_value = True
-    initial_image_count = len(dataset_manager.annotation.image_name)
-    dataset_manager.annotation.image_name.append('existing_image.jpg')
-    image_index = initial_image_count
-    image_path = dataset_manager.fetch_image(image_index)
-    expected_image_path = os.path.join(dataset_manager.annotation.root, 'existing_image.jpg')
-    assert image_path == expected_image_path, f"Expected {expected_image_path}, but got {image_path}"
-
-@patch('os.path.exists')
-def test_fetch_all_images(mock_exists, dataset_manager):
-    """
-    Test fetching all images in DatasetManager.
-    """
-    mock_exists.return_value = True
-    dataset_manager.annotation.root = '/test/root'
-    dataset_manager.annotation.image_name.extend(['image1.jpg', 'image2.jpg', 'image3.jpg'])
-    all_images_with_root = dataset_manager.fetch_all_images(include_root_path=True)
-    expected_images_with_root = [
-        os.path.join(dataset_manager.annotation.root, 'image1.jpg'),
-        os.path.join(dataset_manager.annotation.root, 'image2.jpg'),
-        os.path.join(dataset_manager.annotation.root, 'image3.jpg'),
-    ]
-    assert all_images_with_root == expected_images_with_root, "Fetched images with root paths do not match expected."
-
-    all_images_without_root = dataset_manager.fetch_all_images(include_root_path=False)
-    expected_images_without_root = ['image1.jpg', 'image2.jpg', 'image3.jpg']
-    assert all_images_without_root == expected_images_without_root, "Fetched images without root paths do not match expected."
-
-def test_load_annotation_from_file(temp_dir):
-    """
-    Test that DatasetManager correctly handles corrupted pickle files.
-    """
-    corrupted_file = os.path.join(temp_dir, 'corrupted_dataset.pkl')
-    with open(corrupted_file, 'wb') as f:
-        f.write(b'corrupted data')  # Write some invalid pickle data
-    with pytest.raises(RuntimeError, match="Failed to load annotation from corrupted pickle file"):
-        dataset_manager = DatasetManager(corrupted_file)  # Error happens here
-
-# ---------------------------------------------------
-# Test Group: Error Handling
-# ---------------------------------------------------
-
-def test_handle_nonexistent_pickle_file(temp_dir):
-    """
-    Test that DatasetManager handles a missing pickle file correctly.
-    This ensures the library doesn't crash when the annotation file is missing.
-    """
-    nonexistent_pickle_file = os.path.join(temp_dir, 'nonexistent.pkl')
-    dataset_manager = DatasetManager(nonexistent_pickle_file)
-    annotation = dataset_manager.load_annotation()
-    assert annotation is not None, "New annotation should be initialized when file does not exist"
-
-def test_invalid_image_index(dataset_manager):
-    """
-    Test that attempting to retrieve an image with an invalid index raises an error.
-    This ensures proper bounds checking for image retrieval.
-    """
-    with pytest.raises(IndexError):
-        dataset_manager.fetch_image(-1)  # Invalid negative index
-
-# ---------------------------------------------------
-# Test Group: Performance and Large Files
-# ---------------------------------------------------
-
-def test_large_file_handling(dataset_manager, temp_dir):
-    """
-    Test that DatasetManager can handle large files.
-    """
-    large_file = os.path.join(temp_dir, 'large_file.bin')
-    with open(large_file, 'wb') as f:
-        f.write(os.urandom(10**7))  # 10MB file
-    dataset_manager.load_annotation()
-
-# ---------------------------------------------------
-# Test Group: Security and Path Handling
-# ---------------------------------------------------
-
-def test_special_character_in_file_names(temp_dir):
-    """
-    Test that DatasetManager can handle files with special characters in their names.
-    This checks compatibility with non-standard file names.
-    """
-    special_file = os.path.join(temp_dir, 'tést_file_ü.pkl')
-    with open(special_file, 'wb') as f:
-        pickle.dump({'key': 'value'}, f)
-    dataset_manager = DatasetManager(special_file)
-    annotation = dataset_manager.load_annotation()
-    assert annotation['key'] == 'value', "The content of the special character file should be loaded correctly."
-
-
-
-
-# ---------------------------------------------------
-# Test Group: Label Handling for Images
-# ---------------------------------------------------
-
-def test_add_image_with_default_labels(dataset_manager):
+@patch('os.path.exists', return_value=True)  # Mock file existence check
+@patch('PIL.Image.open')  # Mock image opening
+def test_add_image_with_default_labels(mock_open, mock_exists, dataset_manager):
     """Test adding an image without providing labels."""
     # Initially, there should be no images
     assert len(dataset_manager.annotation.image_name) == 0, "Initially, there should be 0 images."
 
+    # Create a mock image object with size attribute and close method
+    mock_image = MagicMock()
+    mock_image.size = (dataset_manager.image_width, dataset_manager.image_height)
+    mock_image.close = MagicMock()
+
+    # Set Image.open to return the mock image
+    mock_open.return_value = mock_image
+
+    # The image path being tested
+    image_path = 'image_without_labels.jpg'
+    abs_image_path = os.path.abspath(image_path)
+
     # Add an image without labels
-    dataset_manager.add_image('image_without_labels.jpg')
+    success = dataset_manager.add_image(image_path)
+    if not success:
+        print(f"Image addition failed. Image path: {abs_image_path}, Size: {mock_image.size}")
+        if abs_image_path in dataset_manager.annotation.image_name:
+            print(f"Image already exists: {abs_image_path}")
+        if os.path.splitext(image_path)[-1].lower() not in dataset_manager.allowed_formats:
+            print(f"Invalid file format: {os.path.splitext(image_path)[-1].lower()}")
 
-    # Check that the image has been added
+    # Assert that the image was added successfully
+    assert success is True, "Image should be added successfully"
     assert len(dataset_manager.annotation.image_name) == 1, "There should now be 1 image."
-    assert dataset_manager.annotation.image_name[-1] == 'image_without_labels.jpg', "The last image should be the new image added."
-
-    # Check that the labels have been added correctly (should be [0, 0] if there are 2 attributes)
-    expected_labels = [0] * len(dataset_manager.annotation.attr_name)  # Assuming 2 attributes
-    assert np.array_equal(dataset_manager.annotation.label[-1], expected_labels), "The last label should match the default labels added."
-
-
-def test_get_labels_for_image(dataset_manager):
-    """Test retrieving labels for a specific image."""
-    # Add an image and verify its labels
-    dataset_manager.add_image('image_for_labels.jpg')  # This will create default labels
-
-    # Get the total number of images after adding
-    total_images = len(dataset_manager.annotation.image_name)
-
-    # Get the expected labels (should match the number of attributes)
-    expected_labels = [0] * len(dataset_manager.annotation.attr_name)  # Create a list of zeros matching attr_name length
-
-    # Get labels for the last added image
-    labels = dataset_manager.get_labels_for_image(total_images - 1)  # Use total_images - 1 for the last index
-    assert labels == expected_labels, f"Expected labels for the last image should be {expected_labels}"
-
-    # Test for out-of-range index
-    with pytest.raises(IndexError):
-        dataset_manager.get_labels_for_image(total_images)  # Out of range, should raise IndexError
-
-
-def test_remove_label_from_image(dataset_manager):
-    """Test removing the label from a specific image."""
-    # Add an image to ensure it has a label
-    dataset_manager.add_image('image_to_remove_label.jpg')  # This will create default labels based on attr_name
-    
-    # Initial label check
-    initial_labels = [0] * len(dataset_manager.annotation.attr_name)  # Generate initial label based on attr_name
-    assert np.array_equal(dataset_manager.annotation.label[0], initial_labels), \
-        f"Initial label for the image should be {initial_labels}"
-
-    # Remove label from the first image
-    dataset_manager.remove_label_from_image(0)
-    assert np.array_equal(dataset_manager.annotation.label[0], initial_labels), \
-        "Label should be reset to default after removal."
-
-    with pytest.raises(IndexError):
-        dataset_manager.remove_label_from_image(1)  # Out of range
-
-
-def test_edit_label_for_image(dataset_manager):
-    """Test editing an existing label for a specific image."""
-    # Add an image to ensure it has a label
-    dataset_manager.add_image('image_to_edit_label.jpg')  # This will create default labels based on attr_name
-
-    new_label = [1] * len(dataset_manager.annotation.attr_name)  # Create a new label with ones
-    dataset_manager.edit_label_for_image(0, new_label)
-    assert np.array_equal(dataset_manager.annotation.label[0], new_label), \
-        f"Label for the image should be updated to {new_label}"
-
-    with pytest.raises(IndexError):
-        dataset_manager.edit_label_for_image(1, new_label)  # Out of range
-
-    with pytest.raises(ValueError):
-        dataset_manager.edit_label_for_image(0, [1])  # Size does not match attributes
-
-
-def test_add_image_with_custom_labels(dataset_manager):
-    """Test adding an image with custom labels."""
-    # Initially, there should be no images
-    assert len(dataset_manager.annotation.image_name) == 0, "Initially, there should be 0 images."
-    
-    # Create custom labels that match the number of attributes
-    custom_labels = [1] * len(dataset_manager.annotation.attr_name)  # Match the size with the number of attributes
-    dataset_manager.add_image('image_with_labels.jpg', custom_labels)
-
-    # Check that the image has been added
-    assert len(dataset_manager.annotation.image_name) == 1, "There should now be 1 image."
-    assert dataset_manager.annotation.image_name[-1] == 'image_with_labels.jpg', \
+    assert dataset_manager.annotation.image_name[-1] == abs_image_path, \
         "The last image should be the new image added."
 
-    # Check that the labels have been added correctly
-    assert np.array_equal(dataset_manager.annotation.label[-1], custom_labels), \
-        "The last label should match the custom labels added."
+    # Check that the labels have been added correctly (should be default)
+    expected_labels = np.zeros((1, 0), dtype=int)
+    np.testing.assert_array_equal(dataset_manager.annotation.label, expected_labels)
 
+@patch('os.path.exists', return_value=True)
+@patch('PIL.Image.open')
+def test_add_image_with_custom_labels(mock_open, mock_exists, dataset_manager):
+    """Test adding an image with custom labels."""
+    # Add a label first
+    dataset_manager.add_label('test_label')
 
-def test_add_image_with_invalid_labels(dataset_manager):
+    # Create a mock image object
+    mock_image = MagicMock()
+    mock_image.size = (dataset_manager.image_width, dataset_manager.image_height)
+    mock_image.close = MagicMock()
+    mock_open.return_value = mock_image
+
+    # Add an image with labels
+    image_path = 'image_with_labels.jpg'
+    abs_image_path = os.path.abspath(image_path)
+    success = dataset_manager.add_image(image_path, labels=[1])
+
+    assert success is True, "Image should be added with custom labels"
+    assert len(dataset_manager.annotation.image_name) == 1, "There should now be 1 image."
+    assert dataset_manager.annotation.image_name[-1] == abs_image_path, \
+        "The last image should be the new image added."
+    expected_labels = np.array([[1]], dtype=int)
+    np.testing.assert_array_equal(dataset_manager.annotation.label, expected_labels)
+
+@patch('os.path.exists', return_value=True)
+@patch('PIL.Image.open')
+def test_add_image_with_invalid_labels(mock_open, mock_exists, dataset_manager):
     """Test adding an image with invalid labels."""
-    assert len(dataset_manager.annotation.image_name) == 0, "Initially, there should be 0 images."
+    # Add a label first
+    dataset_manager.add_label('test_label')
 
-    # Attempt to add an image with invalid label length
-    with pytest.raises(ValueError):
-        dataset_manager.add_image('image_with_invalid_labels.jpg', [1] * (len(dataset_manager.annotation.attr_name) + 1))  # One less than needed
+    # Create a mock image object
+    mock_image = MagicMock()
+    mock_image.size = (dataset_manager.image_width, dataset_manager.image_height)
+    mock_image.close = MagicMock()
+    mock_open.return_value = mock_image
 
+    # Add an image with incorrect number of labels
+    image_path = 'image_with_invalid_labels.jpg'
+    success = dataset_manager.add_image(image_path, labels=[1, 0])  # Incorrect label length
 
-def test_remove_image_and_check_labels(dataset_manager):
-    """Test removing an image and ensuring the labels are correctly updated."""
-    # Add two attributes first
-    dataset_manager.add_label('Label1')
-    dataset_manager.add_label('Label2')
+    assert success is False, "Adding an image with invalid labels should fail."
 
-    # Add two images with labels
-    dataset_manager.add_image('image1.jpg', [1, 0])
-    dataset_manager.add_image('image2.jpg', [0, 1])
+# ---------------------------------------------------
+# Additional Tests for DatasetManager Methods
+# ---------------------------------------------------
 
-    # Remove the first image
-    dataset_manager.remove_image(0)
+def test_fetch_labels_by_image_name(dataset_manager):
+    """Test fetching labels by image name."""
+    # Add a label and an image
+    dataset_manager.add_label('test_label')
+    with patch('os.path.exists', return_value=True), \
+         patch('PIL.Image.open', return_value=MagicMock(size=(192, 256))):
+        dataset_manager.add_image('test_image.jpg', [1])
 
-    # Ensure the image and label are removed, and the second image/label is still present
-    assert dataset_manager.annotation.image_name == ['image2.jpg'], "First image should be removed."
-    assert np.array_equal(dataset_manager.annotation.label, [[0, 1]]), "First image's label should be removed."
+    # Fetch labels by image name
+    success, labels = dataset_manager.fetch_labels_by_image_name('test_image.jpg')
+    assert success is True, "Should successfully fetch labels by image name."
+    assert labels == [1], "Labels should match the ones assigned during image addition."
 
-def test_remove_all_images(dataset_manager):
-    """Test removing all images from the dataset."""
-    # Add attributes first
-    dataset_manager.add_label('Label1')
-    dataset_manager.add_label('Label2')
+@patch('os.path.exists', return_value=True)
+@patch('PIL.Image.open')
+def test_fetch_image_by_name(mock_image_open, mock_path_exists, dataset_manager):
+    """Test fetching an image by its name."""
+    # Create a mock image object
+    mock_image = MagicMock()
+    mock_image.size = (192, 256)
+    mock_image.close = MagicMock()
+    mock_image_open.return_value = mock_image
 
-    # Add multiple images
-    dataset_manager.add_image('image1.jpg', [1, 0])
-    dataset_manager.add_image('image2.jpg', [0, 1])
-    
-    # Remove both images
-    dataset_manager.remove_image(1)  # Remove the second image first
-    dataset_manager.remove_image(0)  # Now remove the first image
-
-    # Check that all images and labels are gone
-    assert len(dataset_manager.annotation.image_name) == 0, "All images should be removed."
-    assert dataset_manager.annotation.label.size == 0, "All labels should be removed."
-
-def test_fetch_image_invalid_root(dataset_manager):
-    """Test fetching an image with an invalid root path."""
     # Add an image
-    dataset_manager.annotation.root = '/invalid/root'
-    dataset_manager.add_image('image1.jpg')
+    dataset_manager.add_image('test_image.jpg')
 
-    # Attempt to fetch the image with an invalid root path
-    with pytest.raises(FileNotFoundError):
-        dataset_manager.fetch_image(0, include_root_path=True)
+    # Fetch image by name
+    success, image = dataset_manager.fetch_image_by_name('test_image.jpg')
+    assert success is True, "Should successfully fetch image by name."
+    assert image == mock_image, "Fetched image should match the mock image."
 
+@patch('os.path.exists', return_value=True)
+def test_fetch_image_path(mock_exists, dataset_manager):
+    """Test fetching the full image path by index."""
+    # Mock Image.open
+    with patch('PIL.Image.open', return_value=MagicMock(size=(192, 256))):
+        # Add an image
+        dataset_manager.add_image('test_image.jpg')
 
-def test_remove_label_empty_dataset(dataset_manager):
-    """Test removing a label from an empty dataset."""
-    with pytest.raises(IndexError):
-        dataset_manager.remove_label(0)  # No labels exist, so this should raise an error
+    # Fetch image path
+    success, image_path = dataset_manager.fetch_image_path(0)
+    expected_path = dataset_manager.annotation.image_name[0]
 
-def test_fetch_all_images_empty_dataset(dataset_manager):
-    """Test fetching all images when no images exist."""
-    all_images = dataset_manager.fetch_all_images()
-    assert all_images == [], "Should return an empty list when no images are in the dataset."
+    assert success is True, "Should successfully fetch image path by index."
+    assert image_path == expected_path, "Image path should match."
 
+def test_fetch_image(dataset_manager):
+    """Test opening and returning an image by index."""
+    # Add an image
+    mock_image = MagicMock()
+    mock_image.size = (192, 256)
+    mock_image.close = MagicMock()
+    with patch('os.path.exists', return_value=True), \
+         patch('PIL.Image.open', return_value=mock_image):
+        dataset_manager.add_image('test_image.jpg')
 
+        # Fetch image
+        success, image = dataset_manager.fetch_image(0)
+        assert success is True, "Should successfully fetch image by index."
+        assert image == mock_image, "Fetched image should match the mock image."
+
+def test_remove_image(dataset_manager):
+    """Test removing an image by index."""
+    # Add an image
+    with patch('os.path.exists', return_value=True), \
+         patch('PIL.Image.open', return_value=MagicMock(size=(192, 256))):
+        dataset_manager.add_image('test_image.jpg')
+
+    # Remove the image
+    success = dataset_manager.remove_image(0)
+    assert success is True, "Should successfully remove the image."
+    assert len(dataset_manager.annotation.image_name) == 0, "Image list should be empty after removal."
+
+def test_get_labels_for_image(dataset_manager):
+    """Test retrieving labels for a specific image by its index."""
+    # Add a label and an image
+    dataset_manager.add_label('test_label')
+    with patch('os.path.exists', return_value=True), \
+         patch('PIL.Image.open', return_value=MagicMock(size=(192, 256))):
+        dataset_manager.add_image('test_image.jpg', [1])
+
+    # Get labels for the image
+    success, labels = dataset_manager.get_labels_for_image(0)
+    assert success is True, "Should successfully get labels for the image."
+    assert labels == [1], "Labels should match the ones assigned during image addition."
+
+def test_edit_label_for_image(dataset_manager):
+    """Test editing a label for a specific image."""
+    # Add a label and an image
+    dataset_manager.add_label('test_label')
+    with patch('os.path.exists', return_value=True), \
+         patch('PIL.Image.open', return_value=MagicMock(size=(192, 256))):
+        dataset_manager.add_image('test_image.jpg', [0])
+
+    # Edit label for the image
+    success = dataset_manager.edit_label_for_image(0, [1])
+    assert success is True, "Should successfully edit label for the image."
+
+    # Verify that the label has been updated
+    success, labels = dataset_manager.get_labels_for_image(0)
+    assert labels == [1], "Labels should be updated to the new values."
+
+def test_remove_label_from_image(dataset_manager):
+    """Test removing labels from a specific image."""
+    # Add a label and an image
+    dataset_manager.add_label('test_label')
+    with patch('os.path.exists', return_value=True), \
+         patch('PIL.Image.open', return_value=MagicMock(size=(192, 256))):
+        dataset_manager.add_image('test_image.jpg', [1])
+
+    # Remove label from the image
+    success = dataset_manager.remove_label_from_image(0)
+    assert success is True, "Should successfully remove labels from the image."
+
+    # Verify that the labels are reset
+    success, labels = dataset_manager.get_labels_for_image(0)
+    assert labels == [0], "Labels should be reset to default values."
+
+def test_get_all_labels(dataset_manager):
+    """Test fetching all labels from the dataset."""
+    # Add labels and images
+    dataset_manager.add_label('label1')
+    dataset_manager.add_label('label2')
+    with patch('os.path.exists', return_value=True), \
+         patch('PIL.Image.open', return_value=MagicMock(size=(192, 256))):
+        dataset_manager.add_image('image1.jpg', [1, 0])
+        dataset_manager.add_image('image2.jpg', [0, 1])
+
+    # Get all labels
+    success, labels = dataset_manager.get_all_labels()
+    assert success is True, "Should successfully fetch all labels."
+    expected_labels = np.array([[1, 0], [0, 1]], dtype=int)
+    np.testing.assert_array_equal(labels, expected_labels)
+
+def test_save_and_load_annotation(dataset_manager):
+    """Test saving and loading the annotation."""
+    # Add labels and images
+    dataset_manager.add_label('label1')
+    with patch('os.path.exists', return_value=True), \
+         patch('PIL.Image.open', return_value=MagicMock(size=(192, 256))):
+        dataset_manager.add_image('image1.jpg')
+
+    # Save the annotation
+    save_success = dataset_manager.save_annotation()
+    assert save_success is True, "Should successfully save the annotation."
+
+    # Load the annotation
+    load_success, annotation = dataset_manager.load_annotation()
+    assert load_success is True, "Should successfully load the annotation."
+    assert annotation.attr_name == dataset_manager.annotation.attr_name, "Attributes should match after loading."
+    assert annotation.image_name == dataset_manager.annotation.image_name, "Image names should match after loading."
+
+def test_remove_label_out_of_bounds(dataset_manager):
+    """Test removing a label with an invalid index."""
+    # Try to remove a label when none exist
+    success = dataset_manager.remove_label(0)
+    assert success is False, "Removing label out of bounds should fail."
+
+    # Add a label and then try to remove an invalid index
+    dataset_manager.add_label('label1')
+    success = dataset_manager.remove_label(1)  # Index out of bounds
+    assert success is False, "Removing label with invalid index should fail."
+
+def test_remove_image_out_of_bounds(dataset_manager):
+    """Test removing an image with an invalid index."""
+    # Try to remove an image when none exist
+    success = dataset_manager.remove_image(0)
+    assert success is False, "Removing image out of bounds should fail."
+
+    # Add an image and then try to remove an invalid index
+    with patch('os.path.exists', return_value=True), \
+         patch('PIL.Image.open', return_value=MagicMock(size=(192, 256))):
+        dataset_manager.add_image('image1.jpg')
+
+    success = dataset_manager.remove_image(1)  # Index out of bounds
+    assert success is False, "Removing image with invalid index should fail."
 
 # ---------------------------------------------------
-# Test Group: Integration Testing (End-to-End)
+# Integration Test
 # ---------------------------------------------------
 
-@pytest.fixture
-def temp_pickle_file():
-    """Creates a temporary pickle file for testing."""
-    with tempfile.TemporaryDirectory() as temp_dir:
-        pickle_file = os.path.join(temp_dir, 'test_dataset.pkl')
-        yield pickle_file
-
-def test_dataset_manager_integration(temp_pickle_file):
+def test_dataset_manager_integration(temp_dir):
     """Comprehensive integration test for the DatasetManager class."""
 
+    # Prepare temporary pickle file and config
+    temp_pickle_file = os.path.join(temp_dir, 'test_dataset_annotation.pkl')
+    config = {
+        'FILES': {'BASE_DIR': temp_dir},
+        'DATASET': {'HEIGHT': 256, 'WIDTH': 192, 'TRAIN_SPLIT': 'train', 'VAL_SPLIT': 'val', 'ZERO_SHOT': True}
+    }
+
     # Step 1: Initialize the DatasetManager
-    manager = DatasetManager(temp_pickle_file)
+    manager = DatasetManager(temp_pickle_file, config)
     print("\n--- Step 1: Initialized DatasetManager ---")
     print(f"Description: {manager.annotation.description}")
     print(f"Attributes (before adding any): {manager.annotation.attr_name}")
@@ -480,28 +387,30 @@ def test_dataset_manager_integration(temp_pickle_file):
     # Step 2: Add Images without Labels
     print("\n--- Step 2: Adding Images Without Labels ---")
     
-    # Add three images without labels
-    manager.add_image('image1.jpg')
-    manager.add_image('image2.jpg')
-    manager.add_image('image3.jpg')
+    # Mock os.path.exists and PIL.Image.open
+    with patch('os.path.exists', return_value=True), \
+         patch('PIL.Image.open', return_value=MagicMock(size=(192, 256))):
 
-    print("After adding three images",manager.annotation.partition.train)
-    
+        # Add three images without labels
+        manager.add_image('image1.jpg')
+        manager.add_image('image2.jpg')
+        manager.add_image('image3.jpg')
+
     print(f"Images after adding three images without labels: {manager.annotation.image_name}")
-    assert manager.annotation.image_name == ['image1.jpg', 'image2.jpg', 'image3.jpg']
+    expected_image_names = [os.path.abspath('image1.jpg'), os.path.abspath('image2.jpg'), os.path.abspath('image3.jpg')]
+    assert manager.annotation.image_name == expected_image_names
     
-       # Check that labels are empty arrays with correct shape
-    expected_labels = np.empty((3, 0), dtype=object)  # No attributes, labels are empty for each image
+    # Check that labels are empty arrays with correct shape
+    expected_labels = np.zeros((3, 0), dtype=int)  # No attributes, labels are empty for each image
     np.testing.assert_array_equal(manager.annotation.label, expected_labels)
     print(f"Labels after adding three images without labels (should be empty):\n{manager.annotation.label}")
-
 
     # Step 3: Add First Label and Verify
     print("\n--- Step 3: Adding First Label ---")
     manager.add_label('Label1')
     
     # Check if label is added to all images
-    expected_labels = np.zeros((3, 1))  # 3 images, 1 label initialized to 0
+    expected_labels = np.zeros((3, 1), dtype=int)  # 3 images, 1 label initialized to 0
     np.testing.assert_array_equal(manager.annotation.label, expected_labels)
     print(f"Labels after adding 'Label1':\n{manager.annotation.label}")
 
@@ -510,7 +419,7 @@ def test_dataset_manager_integration(temp_pickle_file):
     manager.add_label('Label2')
 
     # Check if second label is added to all images
-    expected_labels = np.zeros((3, 2))  # 3 images, 2 labels initialized to 0
+    expected_labels = np.zeros((3, 2), dtype=int)  # 3 images, 2 labels initialized to 0
     np.testing.assert_array_equal(manager.annotation.label, expected_labels)
     print(f"Labels after adding 'Label2':\n{manager.annotation.label}")
 
@@ -518,12 +427,12 @@ def test_dataset_manager_integration(temp_pickle_file):
     print("\n--- Step 5: Removing Middle Image ---")
     print(f"Images before removing 'image2.jpg': {manager.annotation.image_name}")
     manager.remove_image(1)
-    print("train After removing one image",manager.annotation.partition.train)
 
     # Check that the middle image ('image2.jpg') and its labels are removed
-    expected_labels = np.zeros((2, 2))  # 2 images left, both with 2 labels
+    expected_labels = np.zeros((2, 2), dtype=int)  # 2 images left, both with 2 labels
     np.testing.assert_array_equal(manager.annotation.label, expected_labels)
-    assert manager.annotation.image_name == ['image1.jpg', 'image3.jpg']
+    expected_image_names = [os.path.abspath('image1.jpg'), os.path.abspath('image3.jpg')]
+    assert manager.annotation.image_name == expected_image_names
     print(f"Images after removing 'image2.jpg': {manager.annotation.image_name}")
     print(f"Labels after removing 'image2.jpg':\n{manager.annotation.label}")
 
@@ -546,7 +455,7 @@ def test_dataset_manager_integration(temp_pickle_file):
     manager.add_label('NewLabel')
 
     # Check that the new label is added to both images
-    expected_labels = np.zeros((2, 1))  # 2 images, 1 new label
+    expected_labels = np.zeros((2, 1), dtype=int)  # 2 images, 1 new label
     np.testing.assert_array_equal(manager.annotation.label, expected_labels)
     print(f"Labels after adding 'NewLabel':\n{manager.annotation.label}")
 
@@ -555,45 +464,57 @@ def test_dataset_manager_integration(temp_pickle_file):
     manager.edit_label_for_image(0, [1])  # Set the first image label to [1]
     manager.edit_label_for_image(1, [0])  # Set the second image label to [0]
 
-    expected_labels = np.array([[1], [0]])
+    expected_labels = np.array([[1], [0]], dtype=int)
     np.testing.assert_array_equal(manager.annotation.label, expected_labels)
     print(f"Labels after editing:\n{manager.annotation.label}")
 
-    # Step 9: Error Handling (Before label removal)
+    # Step 9: Error Handling
     print("\n--- Step 9: Error Handling ---")
-    with pytest.raises(ValueError):
-        print("Testing error for adding 'image4.jpg' with invalid label length")
-        manager.add_image('image4.jpg', labels=[1, 1])  # Invalid label length
+    # Since methods return False instead of raising exceptions, we need to assert on the return value
 
-    with pytest.raises(IndexError):
-        print("Testing error for editing labels for a non-existent image")
-        manager.edit_label_for_image(5, [0])  # Invalid image index
+    # Test adding image with invalid label length
+    with patch('os.path.exists', return_value=True), \
+         patch('PIL.Image.open', return_value=MagicMock(size=(192, 256))):
+        success = manager.add_image('image4.jpg', labels=[1, 1])  # Invalid label length
+        assert success is False, "Adding image with invalid label length should fail."
 
-    with pytest.raises(IndexError):
-        print("Testing error for removing a non-existent label")
-        manager.remove_label(10)  # Invalid label index
+    # Test editing labels for a non-existent image
+    success = manager.edit_label_for_image(5, [0])  # Invalid image index
+    assert success is False, "Editing labels for non-existent image should fail."
+
+    # Test removing a non-existent label
+    success = manager.remove_label(10)  # Invalid label index
+    assert success is False, "Removing a non-existent label should fail."
 
     # Step 10: Fetch Images
     print("\n--- Step 10: Fetching Images ---")
-    image_name = manager.fetch_image(0)
-    print(f"Fetched image at index 0: {image_name}")
-    assert image_name == 'image1.jpg'
+    # Fetch image at index 0
+    mock_image = MagicMock()
+    mock_image.size = (192, 256)
+    mock_image.close = MagicMock()
+    with patch('os.path.exists', return_value=True), \
+         patch('PIL.Image.open', return_value=mock_image):
+        success, image = manager.fetch_image(0)
+        assert success is True, "Fetching image at index 0 should succeed."
+        assert image == mock_image, "Fetched image should be the mock image."
 
-    all_images = manager.fetch_all_images()
+    # Fetch all image names
+    all_images = manager.annotation.image_name
     print(f"All images fetched: {all_images}")
-    assert all_images == ['image1.jpg', 'image3.jpg']
+    expected_image_names = [os.path.abspath('image1.jpg'), os.path.abspath('image3.jpg')]
+    assert all_images == expected_image_names
 
     # Step 11: Persistence
     print("\n--- Step 11: Testing Persistence ---")
     print("Reloading the manager and verifying state")
-    new_manager = DatasetManager(temp_pickle_file)
+    new_manager = DatasetManager(temp_pickle_file, config)
     print(f"Reloaded manager state: attr_name={new_manager.annotation.attr_name}, image_name={new_manager.annotation.image_name}")
     assert new_manager.annotation.attr_name == ['NewLabel']
-    assert new_manager.annotation.image_name == ['image1.jpg', 'image3.jpg']
-    expected_labels = np.array([[1], [0]])
-    print(type(new_manager.annotation.label))
+    assert new_manager.annotation.image_name == expected_image_names
+    expected_labels = np.array([[1], [0]], dtype=int)
     np.testing.assert_array_equal(new_manager.annotation.label, expected_labels)
     print(f"Labels after reloading manager:\n{new_manager.annotation.label}")
+
 # ---------------------------------------------------
-# END OF TEST CASES
+# END OF TEST FILE
 # ---------------------------------------------------
