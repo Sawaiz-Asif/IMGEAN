@@ -50,8 +50,17 @@ def load_PAR_model(cfg, model):
     Returns:
         None: This function modifies the model in place.
     """
-    checkpoint = torch.load(cfg[PATH], weights_only=False)
-    
+    #checkpoint = torch.load(cfg[PATH], weights_only=False)
+
+
+    # Sawaiz have updated this code
+    # Check if CUDA is available
+    device = torch.device('cuda' if torch.cuda.is_available() else 'cpu')
+    # Load the checkpoint and map to the appropriate device
+    checkpoint = torch.load(cfg[PATH], map_location=device)
+
+    # update ends here 
+
     # As we read the checkpoint, each attribute has an extra "module." on the name and therefore cannot be loaded directly
     state_dict = checkpoint['state_dicts']
     new_state_dict = {}

@@ -4,6 +4,7 @@ import pickle
 import logging
 from easydict import EasyDict
 from PIL import Image
+import pickle
 
 # Configure logging
 logging.basicConfig(filename='dataset_manager.log', level=logging.ERROR,
@@ -67,49 +68,72 @@ class DatasetManager:
 
     def load_annotation(self, description=None, reorder=None, root=None):
         """
-        Loads the annotation from a pickle file if it exists. If the pickle file does not exist,
-        it initializes a new dataset with default values and saves it.
+        Loads the annotation from a pickle file if it exists. If the pickle file does not exist
+        or if there's an error while reading the file, it initializes a new dataset with default values 
+        and saves it.
 
         Returns:
             tuple: (bool, EasyDict): True and annotation if successful, False otherwise.
         """
         try:
             if os.path.exists(self.pickle_file):
-                with open(self.pickle_file, 'rb') as f:
-                    annotation = pickle.load(f)
+                try:
+                    # Attempt to open and load the pickle file
+                    with open(self.pickle_file, 'rb') as f:
+                        annotation = pickle.load(f)
 
-                modified = False
-                if description:
-                    annotation['description'] = description
-                    modified = True
-                if reorder:
-                    annotation['reorder'] = reorder
-                    modified = True
-                if root:
-                    annotation['root'] = root
-                    modified = True
+                    modified = False
+                    # Update values if provided
+                    if description:
+                        annotation['description'] = description
+                        modified = True
+                    if reorder:
+                        annotation['reorder'] = reorder
+                        modified = True
+                    if root:
+                        annotation['root'] = root
+                        modified = True
 
-                if modified:
+                    # Save the modified annotation if any changes were made
+                    if modified:
+                        self.save_annotation(annotation)
+                except (EOFError, pickle.UnpicklingError, FileNotFoundError) as e:
+                    # Log the error and create a new annotation if reading fails
+                    logging.error(f"Error loading pickle file: {e}. Creating a new dataset.")
+                    annotation = self._create_default_annotation(description, reorder, root)
                     self.save_annotation(annotation)
             else:
-                annotation = EasyDict({
-                    'description': description if description else 'New Dataset',
-                    'reorder': reorder if reorder else '',
-                    'root': root if root else '',
-                    'image_name': [],
-                    'label': np.zeros((0, 0), dtype=int),
-                    'attr_name': [],
-                    'label_idx': EasyDict({'eval': [], 'color': [], 'extra': []}),
-                    'partition': EasyDict({'train': [], 'val': [], 'test': [], 'trainval': []}),
-                    'weight_train': [],
-                    'weight_trainval': []
-                })
+                # If the pickle file does not exist, create a new annotation
+                logging.info("Pickle file does not exist. Creating a new dataset.")
+                annotation = self._create_default_annotation(description, reorder, root)
                 self.save_annotation(annotation)
 
             return True, annotation
+
         except (IOError, pickle.PickleError) as e:
-            logging.error(f"Error in load_annotation: {e}")
+            # Handle other IO or Pickle-related errors
+            logging.error(f"File access error in load_annotation: {e}")
             return False, None
+
+    def _create_default_annotation(self, description=None, reorder=None, root=None):
+        """
+        Helper function to create a default annotation.
+
+        Returns:
+            EasyDict: The default annotation.
+        """
+        return EasyDict({
+            'description': description if description else 'New Dataset',
+            'reorder': reorder if reorder else '',
+            'root': root if root else '',
+            'image_name': [],
+            'label': np.zeros((0, 0), dtype=int),
+            'attr_name': [],
+            'label_idx': EasyDict({'eval': [], 'color': [], 'extra': []}),
+            'partition': EasyDict({'train': [], 'val': [], 'test': [], 'trainval': []}),
+            'weight_train': [],
+            'weight_trainval': []
+        })
 
     def save_annotation(self, annotation=None):
         """
