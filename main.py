@@ -10,9 +10,9 @@ if __name__ == "__main__":
     
     config = read_config('./config.yaml')
 
-    import shutil
-    shutil.rmtree('./data', ignore_errors=True)
-    shutil.copytree('./data_start', './data')
+    # import shutil
+    # shutil.rmtree('./data', ignore_errors=True)
+    # shutil.copytree('./data_start', './data')
 
     fu.verify_or_create_dirs(config)
 

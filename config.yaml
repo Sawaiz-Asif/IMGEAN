@@ -9,14 +9,15 @@ DATASET:
   LABEL: 'eval'
   HEIGHT: 256
   WIDTH: 192
-  PATH: ./data/custom_dataset/dataset_info.pkl
+  PATH: ./data/custom_dataset/dataset_zs_run0.pkl
 
 FILES:
   BASE_DIR: &base_dir ./data
   GENERATED_DIR: !join [*base_dir, /generated]
   CHECKING_DIR: !join [*base_dir, /checking]
   DISCARDED_DIR: !join [*base_dir, /discarded]
-  LABELING_DIR: !join [*base_dir, /labeling]
+  #LABELING_DIR: !join [*base_dir, /labeling]
+  LABELING_DIR: !join ['/Users/sawaiz/Documents/IPCV/UAM/TRDP-I/Data/RAP_dataset']
   DISCARDED_TRACKER: !join [*base_dir, /discarded, /reasons_tracker.txt]
   
 
@@ -33,7 +34,7 @@ CHECKER:
 ANNOTATION:
   BASE_DIR: './data/labeling'
   PAR_MODEL:
-    PATH: './models/img_par_model/ckpt_max_2024-03-02_18:01:07.pth'
+    PATH: './models/img_par_model/ckpt_max_2024-04-10_23:26:07.pth'
     BACKBONE_TYPE: 'resnet50'
     CLASSIFIER:
       NAME: 'linear'
@@ -43,3 +44,13 @@ ANNOTATION:
     DATASET:
       HEIGHT: 256
       WIDTH: 192
+
+AUTO_LABEL:
+  BATCH_SIZE: 12  # Number of images to process during auto-labeling
+  CONFIDENCE_THRESHOLDS:
+    - value: 0.75
+      color: "green"
+    - value: 0.5
+      color: "yellow"
+  DEFAULT_COLOR: "red"  # Fallback color if no threshold matches or color is missing
+  CHECKBOX_THRESHOLD: 0.5  # Threshold to keep labels in autolabeling

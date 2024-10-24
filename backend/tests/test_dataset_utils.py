@@ -6,6 +6,7 @@ import numpy as np
 from easydict import EasyDict
 from backend.annotation_manager.dataset_utils import DatasetManager
 import logging
+import pickle
 
 #################
 #
@@ -24,6 +25,23 @@ logging.basicConfig(level=logging.ERROR,
 # Fixtures - Setup and Teardown for Tests
 # ---------------------------------------------------
 
+
+# ---------------------------------------------------
+# Custom Mock Class for Annotation (Pickle-safe)
+# ---------------------------------------------------
+
+class MockAnnotation:
+    def __init__(self):
+        self.attr_name = []
+        self.image_name = []
+        self.label = np.array([], dtype=int)
+        self.description = 'New Dataset'
+
+
+# ---------------------------------------------------
+# Fixtures - Setup and Teardown for Tests
+# ---------------------------------------------------
+
 @pytest.fixture
 def temp_dir():
     """
@@ -33,6 +51,7 @@ def temp_dir():
     with tempfile.TemporaryDirectory() as tmpdirname:
         yield tmpdirname
 
+
 @pytest.fixture
 def dataset_manager(temp_dir):
     """
@@ -41,11 +60,46 @@ def dataset_manager(temp_dir):
     starts with a fresh DatasetManager.
     """
     test_pickle_file = os.path.join(temp_dir, 'test_dataset_annotation.pkl')
+
+    # Try to import the actual Annotation class
+    try:
+        from backend.annotation_manager.dataset_utils import Annotation
+    except ImportError:
+        # If Annotation class is not directly importable, use MockAnnotation class
+        Annotation = MockAnnotation
+
+    # Ensure the pickle file exists with the MockAnnotation or real Annotation object
+    if not os.path.exists(test_pickle_file):
+        empty_annotation = Annotation()  # Using the real or mocked Annotation object
+        with open(test_pickle_file, 'wb') as f:
+            pickle.dump(empty_annotation, f)
+
     config = {
-        'FILES': {'BASE_DIR': temp_dir},
-        'DATASET': {'HEIGHT': 256, 'WIDTH': 192, 'TRAIN_SPLIT': 'train', 'VAL_SPLIT': 'val', 'ZERO_SHOT': True}
+    'PROJECT_NAME': 'PAR for zs',
+    'FILES': {
+        'BASE_DIR': temp_dir,
+    },
+    'DATASET': {
+        'TYPE': 'pedes',
+        'NAME': 'RAP2',
+        'TRAIN_SPLIT': 'trainval',
+        'VAL_SPLIT': 'test',
+        'ZERO_SHOT': True,
+        'HEIGHT': 256,
+        'WIDTH': 192,
+        'PATH': test_pickle_file  # Essential for DatasetManager
+    },
+    'ANNOTATION': {
+        'BASE_DIR': os.path.join(temp_dir, 'labeling')
     }
-    return DatasetManager(test_pickle_file, config)
+    }
+
+    manager = DatasetManager(test_pickle_file, config)
+
+    # Assert that 'annotation' is correctly initialized
+    assert hasattr(manager, 'annotation'), "DatasetManager should have an 'annotation' attribute after initialization."
+
+    return manager
 
 # ---------------------------------------------------
 # Test Group: Label Handling (Add, Remove, Edit)

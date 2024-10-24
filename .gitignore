@@ -10,6 +10,10 @@
 # Ignore all __pycache__ directories
 **/__pycache__/
 
+*.log
+
+config.yaml
+
 # Ignore the env directory
 /env/
 
