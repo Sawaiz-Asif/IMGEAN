@@ -272,3 +272,24 @@ def delete_single_discarded(config, filename):
     with open(discarded_tracker_path, 'w') as file:
         for entry in updated_entries:
             file.write(f"{entry}\n")
+
+def move_labeling_dataset(config, filenames, dataset_path):
+    """
+    Moves one or more generated images from labeling_directory to the dataset.
+
+    Args:
+        config (dict): Configuration settings loaded from config.yaml.
+        filenames (str or list): The name or list of names of the files to be moved to the dataset.
+        dataset_path (str): The path to the dataset where the images will be moved.
+
+    Returns:
+        None
+    """
+    filenames = [filenames] if isinstance(filenames, str) else filenames
+    
+    for filename in filenames:
+        file_path = os.path.join(config['FILES']['LABELING_DIR'], filename)
+        
+        destination_path = os.path.join(dataset_path, filename)
+        
+        os.rename(file_path, destination_path)

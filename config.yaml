@@ -9,6 +9,7 @@ DATASET:
   LABEL: 'eval'
   HEIGHT: 256
   WIDTH: 192
+  PATH: ./data/custom_dataset/dataset_info.pkl
 
 FILES:
   BASE_DIR: &base_dir ./data

@@ -1,143 +1,169 @@
 import numpy as np
 import os
 import pickle
+import logging
 from easydict import EasyDict
+from PIL import Image
+
+# Configure logging
+logging.basicConfig(filename='dataset_manager.log', level=logging.ERROR,
+                    format='%(asctime)s - %(levelname)s - %(message)s')
 
 class DatasetManager:
-    def __init__(self, pickle_file, description=None, reorder=None, root=None):
+    def __init__(self, pickle_file, config, description=None, reorder=None):
         """
-        Initializes the DatasetManager by attempting to load an annotation from a pickle file.
-        If the file does not exist, it initializes a new dataset and saves it as a pickle.
+        Initializes the DatasetManager by loading an annotation from a pickle file if it exists.
+        If the pickle file does not exist, it initializes a new dataset and saves it as a pickle.
 
         Args:
             pickle_file (str): The path to the pickle file where the dataset is stored.
+            config (dict): The configuration dictionary loaded from the config file.
             description (str, optional): A custom description for the dataset. Defaults to None.
-            reorder (str, optional): A custom reorder value. Defaults to None.
-            root (str, optional): A custom root path. Defaults to None.
+            reorder (str, optional): A reorder value to set or replace. Defaults to None.
+
+        Initializes:
+            self.initialized (bool): Whether the initialization was successful.
         """
-        self.pickle_file = pickle_file
-        self.annotation = self.load_annotation(description, reorder, root)
+        try:
+            self.config = config
+
+            # Set the root and ensure directories exist
+            self.root = os.path.dirname(self.config['DATASET']['PATH'])
+            if not os.path.exists(self.root):
+                try:
+                    os.makedirs(self.root)
+                except OSError as e:
+                    logging.error(f"Error creating directory {self.root}: {e}")
+                    self.initialized = False
+                    return
+
+            # Allowed formats (could be added to the config)
+            self.allowed_formats = ['.png', '.jpg']
+
+            # Constraints for image dimensions
+            self.image_height = self.config['DATASET']['HEIGHT']
+            self.image_width = self.config['DATASET']['WIDTH']
+
+            # Other config values
+            self.train_split = self.config['DATASET']['TRAIN_SPLIT']
+            self.val_split = self.config['DATASET']['VAL_SPLIT']
+            self.zero_shot = self.config['DATASET']['ZERO_SHOT']
+
+            self.pickle_file = pickle_file
+            success, annotation = self.load_annotation(description, reorder)
+            if not success:
+                logging.error("Failed to load annotation.")
+                self.initialized = False
+                return
+
+            self.annotation = annotation
+            self.initialized = True
+
+            self.batch_idx=0
+
+        except Exception as e:
+            logging.error(f"Error in __init__: {e}")
+            self.initialized = False
 
     def load_annotation(self, description=None, reorder=None, root=None):
         """
-        Loads the annotation from a pickle file if it exists, otherwise initializes a new dataset.
-
-        Args:
-            description (str, optional): The dataset description to set or replace. Defaults to None.
-            reorder (str, optional): The reorder value to set or replace. Defaults to None.
-            root (str, optional): The root path to set or replace. Defaults to None.
+        Loads the annotation from a pickle file if it exists. If the pickle file does not exist,
+        it initializes a new dataset with default values and saves it.
 
         Returns:
-            EasyDict: The loaded or newly created annotation data.
-
-        Raises:
-            RuntimeError: If loading the annotation fails due to corruption or other errors.
+            tuple: (bool, EasyDict): True and annotation if successful, False otherwise.
         """
         try:
             if os.path.exists(self.pickle_file):
                 with open(self.pickle_file, 'rb') as f:
-                    print("Loading annotation from pickle file.")
                     annotation = pickle.load(f)
 
-                # Update fields if they are provided
                 modified = False
-                if description is not None:
+                if description:
                     annotation['description'] = description
                     modified = True
-                if reorder is not None:
+                if reorder:
                     annotation['reorder'] = reorder
                     modified = True
-                if root is not None:
+                if root:
                     annotation['root'] = root
                     modified = True
 
-                # Save updated annotation if changes were made
                 if modified:
                     self.save_annotation(annotation)
             else:
-                print("Pickle file not found. Initializing a new dataset.")
                 annotation = EasyDict({
                     'description': description if description else 'New Dataset',
                     'reorder': reorder if reorder else '',
                     'root': root if root else '',
                     'image_name': [],
-                    'label': np.zeros((0, 0), dtype=int),  # Ensuring labels are initialized as integers
+                    'label': np.zeros((0, 0), dtype=int),
                     'attr_name': [],
-                    'label_idx': EasyDict({
-                        'eval': [],
-                        'color': [],
-                        'extra': []
-                    }),
-                    'partition': EasyDict({
-                        'train': [],
-                        'val': [],
-                        'test': [],
-                        'trainval': []
-                    }),
+                    'label_idx': EasyDict({'eval': [], 'color': [], 'extra': []}),
+                    'partition': EasyDict({'train': [], 'val': [], 'test': [], 'trainval': []}),
                     'weight_train': [],
                     'weight_trainval': []
                 })
-                self.annotation = annotation
                 self.save_annotation(annotation)
 
-            return annotation
-        except (EOFError, pickle.UnpicklingError) as e:
-            raise RuntimeError(f"Failed to load annotation from corrupted pickle file '{self.pickle_file}': {e}")
-        except Exception as e:
-            raise RuntimeError(f"Unexpected error while loading annotation from '{self.pickle_file}': {e}")
+            return True, annotation
+        except (IOError, pickle.PickleError) as e:
+            logging.error(f"Error in load_annotation: {e}")
+            return False, None
 
     def save_annotation(self, annotation=None):
         """
-        Saves the current annotation to the pickle file.
-
-        Args:
-            annotation (EasyDict): The annotation data to save. If None, saves the current annotation.
-
-        Raises:
-            RuntimeError: If saving the annotation fails.
-        """
-        try:
-            with open(self.pickle_file, 'wb') as f:
-                pickle.dump(annotation or self.annotation, f)
-            print("Annotation successfully saved to pickle file.")
-        except Exception as e:
-            raise RuntimeError(f"Failed to save annotation: {e}")
-
-    def get_all_labels(self):
-        """
-        Fetches all labels from the dataset.
+        Saves the current annotation to the pickle file. Creates directories if they don't exist.
 
         Returns:
-            numpy.ndarray: An array of all labels for the images in the dataset.
-
-        Raises:
-            ValueError: If labels are not found in the dataset.
+            bool: True if successful, False otherwise.
         """
         try:
-            return self.annotation.label
-        except AttributeError:
-            raise ValueError("Labels not found in the dataset.")
+            pickle_dir = os.path.dirname(self.pickle_file)
+            if not os.path.exists(pickle_dir):
+                os.makedirs(pickle_dir)
+            with open(self.pickle_file, 'wb') as f:
+                pickle.dump(annotation or self.annotation, f)
+            return True
+        except IOError as e:
+            logging.error(f"Error in save_annotation: {e}")
+            return False
+        except Exception as e:
+            logging.error(f"Unexpected error in save_annotation: {e}")
+            return False
+
+    def is_image_in_dataset(self, image_path):
+        """
+        Checks if the specified image path exists in the dataset.
+
+        Args:
+            image_path (str): The path of the image to check.
+
+        Returns:
+            bool: True if the image is in the dataset, False otherwise.
+        """
+        return image_path in self.annotation.image_name
+
+    def get_dataset_labels(self):
+        """
+        Retrieves the labels from the dataset.
+
+        Returns:
+            tuple: (bool, list of str): True and the list of attribute names if successful, False otherwise.
+        """
+        return True, self.annotation.attr_name
 
     def add_label(self, new_label, default_value=0):
         """
         Adds a new label to the dataset and assigns it a default value for all images.
 
-        Args:
-            new_label (str): The new label to add.
-            default_value (int): The default label value for all images (default is 0).
-
         Returns:
-            int: The index of the newly added label.
-
-        Raises:
-            ValueError: If the label already exists in the dataset.
-            RuntimeError: If the label could not be added due to other issues (e.g., saving errors).
+            bool: True if successful, False otherwise.
         """
         try:
             if new_label in self.annotation.attr_name:
-                raise ValueError(f"Label '{new_label}' already exists in the dataset.")
+                return False
 
-            # Add new attribute name and initialize labels
             self.annotation.attr_name.append(new_label)
             if len(self.annotation.image_name) == 0:
                 self.annotation.label = np.zeros((0, len(self.annotation.attr_name)), dtype=int)
@@ -146,166 +172,297 @@ class DatasetManager:
                 self.annotation.label = np.column_stack((self.annotation.label, new_default_column))
 
             self.save_annotation()
-            return len(self.annotation.attr_name) - 1
-        except ValueError as ve:
-            raise ve
-        except Exception as e:
-            raise RuntimeError(f"Failed to add new label: {e}")
+            return True
+        except ValueError as e:
+            logging.error(f"Error in add_label: {e}")
+            return False
 
     def edit_label(self, label_index, new_label):
         """
         Modifies an existing label by index.
 
-        Args:
-            label_index (int): The index of the label to edit.
-            new_label (str): The new label name.
-
-        Raises:
-            IndexError: If the label index is out of range.
-            RuntimeError: If editing fails.
+        Returns:
+            bool: True if successful, False otherwise.
         """
         try:
             if 0 <= label_index < len(self.annotation.attr_name):
                 self.annotation.attr_name[label_index] = new_label
                 self.save_annotation()
+                return True
             else:
-                raise IndexError("Label index out of range.")
-        except Exception as e:
-            raise RuntimeError(f"Failed to edit label: {e}")
+                return False
+        except IndexError as e:
+            logging.error(f"Error in edit_label: {e}")
+            return False
 
     def remove_label(self, label_index):
         """
         Removes a label from all images by index.
 
-        Args:
-            label_index (int): The index of the label to remove.
-
-        Raises:
-            IndexError: If the label index is out of range.
-            ValueError: If there are issues removing the label (e.g., when label array is not valid).
-        """
-        # Check if the label index is within bounds
-        if not (0 <= label_index < len(self.annotation.attr_name)):
-            raise IndexError("Label index out of range.")
-
-        # Attempt to remove the label
-        self.annotation.attr_name.pop(label_index)
-
-        if self.annotation.label.size > 0:
-            # Ensure that the label array is valid for deletion
-            if self.annotation.label.shape[1] <= label_index:
-                raise ValueError("Label index is out of bounds for label array.")
-            
-            # Remove the corresponding column from the label array
-            self.annotation.label = np.delete(self.annotation.label, label_index, axis=1)
-
-        # Save the updated annotation
-        self.save_annotation()
-
-    def fetch_image(self, image_index, include_root_path=False):
-        """
-        Fetches a specific image path by index.
-
-        Args:
-            image_index (int): The index of the image to fetch.
-            include_root_path (bool): If True, return the complete path. If False, return only the image name.
-
         Returns:
-            str: The path or name of the image file.
-
-        Raises:
-            TypeError: If the index is not an integer.
-            IndexError: If the index is out of range.
-            FileNotFoundError: If the image file does not exist at the specified path.
-        """
-        if not isinstance(image_index, int):
-            raise TypeError("Index must be an integer")
-        
-        if image_index < 0 or image_index >= len(self.annotation.image_name):
-            raise IndexError("Image index out of range.")
-
-        image_name = self.annotation.image_name[image_index]
-
-        if include_root_path:
-            full_image_path = os.path.join(self.annotation.root, image_name)
-            if not os.path.exists(full_image_path):
-                raise FileNotFoundError(f"Image not found at path: {full_image_path}")
-
-            return full_image_path
-        
-        return image_name
-
-    def fetch_all_images(self, include_root_path=False):
-        """
-        Fetches the paths or names of all images in the dataset.
-
-        Args:
-            include_root_path (bool): If True, return complete paths. If False, return only the image names.
-
-        Returns:
-            list: A list of all image file paths or names.
+            bool: True if successful, False otherwise.
         """
         try:
-            if include_root_path:
-                return [os.path.join(self.annotation.root, img) for img in self.annotation.image_name]
-            else:
-                return self.annotation.image_name
+            if not (0 <= label_index < len(self.annotation.attr_name)):
+                return False
+
+            self.annotation.attr_name.pop(label_index)
+            if self.annotation.label.size > 0:
+                if self.annotation.label.shape[1] <= label_index:
+                    return False
+
+                self.annotation.label = np.delete(self.annotation.label, label_index, axis=1)
+
+            self.save_annotation()
+            return True
+        except IndexError as e:
+            logging.error(f"Error in remove_label: {e}")
+            return False
+
+    def get_all_labels(self):
+        """
+        Fetches all labels from the dataset.
+
+        Returns:
+            tuple: (bool, np.ndarray): True and labels if successful, False otherwise.
+        """
+        try:
+            return True, self.annotation.label
+        except AttributeError as e:
+            logging.error(f"Error in get_all_labels: {e}")
+            return False, None
+
+    def get_labels_for_image(self, image_index):
+        """
+        Retrieves the labels associated with a specific image by its index.
+
+        Returns:
+            tuple: (bool, list): True and labels if successful, False otherwise.
+        """
+        try:
+            if image_index < 0 or image_index >= len(self.annotation.image_name):
+                return False, None
+            return True, self.annotation.label[image_index].tolist()
         except Exception as e:
-            raise RuntimeError(f"Failed to fetch all images: {e}")
+            logging.error(f"Error in get_labels_for_image: {e}")
+            return False, None
+
+    def edit_label_for_image(self, image_index, new_label_value):
+        """
+        Edits an existing label for a specific image.
+
+        Returns:
+            bool: True if successful, False otherwise.
+        """
+        try:
+            if image_index < 0 or image_index >= len(self.annotation.image_name):
+                return False
+
+            if len(new_label_value) != len(self.annotation.attr_name):
+                return False
+
+            self.annotation.label[image_index] = np.array(new_label_value, dtype=int)
+            self.save_annotation()
+            return True
+        except Exception as e:
+            logging.error(f"Error in edit_label_for_image: {e}")
+            return False
+
+    def remove_label_from_image(self, image_index):
+        """
+        Removes the label from a specific image.
+
+        Returns:
+            bool: True if successful, False otherwise.
+        """
+        try:
+            if image_index < 0 or image_index >= len(self.annotation.image_name):
+                return False
+
+            self.annotation.label[image_index] = np.zeros(len(self.annotation.attr_name), dtype=int)
+            self.save_annotation()
+            return True
+        except Exception as e:
+            logging.error(f"Error in remove_label_from_image: {e}")
+            return False
+
+    def get_labels_by_image_path(self, image_path):
+        """
+        Fetches the labels associated with a specific image by its name or path.
+
+        Returns:
+            tuple: (bool, list): True and labels if successful, False otherwise.
+        """
+        try:
+            if image_path not in self.annotation.image_name:
+                return False, None
+
+            image_index = self.annotation.image_name.index(image_path)
+            labels = self.annotation.label[image_index].tolist()
+            return True, labels
+        except Exception as e:
+            logging.error(f"Error in fetch_labels_by_image_name: {e}")
+            return False, None
+
+    def get_image_index(self, image_path):
+        """
+        Finds the index of the specified image in the dataset.
+
+        Args:
+            image_name (str): The name of the image to find.
+
+        Returns:
+            tuple: (bool, int or None): True and the index if the image is found, False and None otherwise.
+        """
+        if image_path not in self.annotation.image_name:
+            return False, None
+        else:
+            index = self.annotation.image_name.index(image_path)
+            return True, index
+
+    def fetch_image_by_path(self, image_path):
+        """
+        Opens and returns the image by its name or path.
+
+        Returns:
+            tuple: (bool, PIL.Image.Image): True and image if successful, False otherwise.
+        """
+        try:
+            image_path = os.path.normpath(os.path.abspath(image_path))
+
+            if image_path not in self.annotation.image_name:
+                return False, None
+
+            try:
+                image = Image.open(image_path)
+                return True, image
+            except Exception as e:
+                logging.error(f"Error loading image: {e}")
+                return False, None
+        except Exception as e:
+            logging.error(f"Error in fetch_image_by_name: {e}")
+            return False, None
+
+    def fetch_image_path(self, image_index):
+        """
+        Fetches the full image path by index.
+
+        Returns:
+            tuple: (bool, str): True and image path if successful, False otherwise.
+        """
+        try:
+            if image_index < 0 or image_index >= len(self.annotation.image_name):
+                return False, None
+
+            image_name = self.annotation.image_name[image_index]
+            image_path = os.path.join(self.annotation.root, image_name)
+
+            if not os.path.exists(image_path):
+                return False, None
+
+            return True, image_path
+        except Exception as e:
+            logging.error(f"Error in fetch_image_path: {e}")
+            return False, None
+
+    def fetch_image(self, image_index):
+        """
+        Opens and returns the image by index.
+
+        Returns:
+            tuple: (bool, PIL.Image.Image): True and image if successful, False otherwise.
+        """
+        try:
+            success, image_path = self.fetch_image_path(image_index)
+            if not success:
+                return False, None
+
+            try:
+                image = Image.open(image_path)
+                return True, image
+            except Exception as e:
+                logging.error(f"Error loading image: {e}")
+                return False, None
+        except Exception as e:
+            logging.error(f"Error in fetch_image: {e}")
+            return False, None
 
     def add_image(self, image_name, labels=None):
         """
         Adds a new image and its corresponding labels to the dataset.
 
-        Args:
-            image_name (str): The name of the image file to add.
-            labels (list, optional): The list of labels corresponding to the new image. If None, a list of zeros will be created.
-
-        Raises:
-            ValueError: If the length of the labels list does not match the number of attributes,
-                        or if the attribute names are not set.
-            Exception: If saving errors occur.
+        Returns:
+            bool: True if successful, False otherwise.
         """
-
-        # Initialize labels with zeros if no labels are provided
-        if labels is None:
-            labels = [0] * len(self.annotation.attr_name)  # Create a list of zeros
-
-        # Check if the number of labels matches the number of attributes
-        if len(labels) != len(self.annotation.attr_name):
-            raise ValueError("Label list length does not match the number of attributes.")
-
-        # Add the image name
-        self.annotation.image_name.append(image_name)
-
-        # Append the labels to the label array directly, assuming the label array is aligned with images
-        if len(self.annotation.image_name) == 1:
-            # If this is the first image, initialize the label array
-            self.annotation.label = np.array([labels], dtype=int)
-        else:
-            # For additional images, append the labels
-            self.annotation.label = np.row_stack((self.annotation.label, np.array(labels, dtype=int)))
-
-        # Add to partitions if specified
-        self.annotation.partition.train.append(len(self.annotation.image_name) - 1)
-        self.annotation.partition.trainval.append(len(self.annotation.image_name) - 1)
-
-        # Attempt to save the updated annotation
         try:
+            print(f"Attempting to add image: {image_name}")
+
+            # Check if the image exists
+            if not os.path.exists(image_name):
+                print("Image file does not exist.")
+                return False
+
+            image_path = image_name
+
+            # Check if the image already exists in the dataset
+            if image_path in self.annotation.image_name:
+                print(f"Image already exists in dataset: {image_path}")
+                return False
+
+            # Check the file extension for allowed formats
+            _, file_extension = os.path.splitext(image_path)
+            if file_extension.lower() not in self.allowed_formats:
+                print(f"Invalid file format: {file_extension.lower()}")
+                return False
+
+            # Open the image and check its dimensions
+            try:
+                image = Image.open(image_path)
+                print(f"Image size: {image.size}, Required size: ({self.image_width}, {self.image_height})")
+                # This does not work like that on the original dataset
+                """ if image.size != (self.image_width, self.image_height):
+                    image.close()
+                    print(f"Image dimensions {image.size} do not match required size ({self.image_width}, {self.image_height}).")
+                    return False """
+                image.close()
+            except Exception as e:
+                logging.error(f"Error loading image: {e}")
+                return False
+
+            # Assign default labels if none provided
+            if labels is None:
+                labels = [0] * len(self.annotation.attr_name)
+                print(f"Default labels assigned: {labels}")
+            if len(labels) != len(self.annotation.attr_name):
+                print("Label count does not match attribute count.")
+                return False
+
+            # Add the image path and its labels to the dataset
+            self.annotation.image_name.append(image_path)
+
+            if len(self.annotation.image_name) == 1:
+                self.annotation.label = np.array([labels], dtype=int)
+            else:
+                self.annotation.label = np.row_stack((self.annotation.label, np.array(labels, dtype=int)))
+
+            # Add image to the training partition
+            self.annotation.partition.train.append(len(self.annotation.image_name) - 1)
+            self.annotation.partition.trainval.append(len(self.annotation.image_name) - 1)
+
+            # Save the annotation after adding the image
             self.save_annotation()
-        except Exception as save_error:
-            raise Exception(f"Failed to save the updated annotation: {save_error}")
+            print(f"Image {image_name} added successfully with labels: {labels}")
+            return True
+        except Exception as e:
+            logging.error(f"Error in add_image: {e}")
+            return False
 
     def remove_image(self, index):
         """
         Removes an image and its labels by index.
 
-        Args:
-            index (int): The index of the image to remove.
-
-        Raises:
-            IndexError: If the image index is out of range.
-            RuntimeError: If the image could not be removed due to other issues (e.g., saving errors).
+        Returns:
+            bool: True if successful, False otherwise.
         """
         try:
             if 0 <= index < len(self.annotation.image_name):
@@ -313,87 +470,84 @@ class DatasetManager:
 
                 if self.annotation.label.shape[0] == 1:
                     self.annotation.label = np.array([], dtype=int)
-                    print("Resetting label array to empty since last image was removed.")
                 elif self.annotation.label.shape[0] > index:
                     self.annotation.label = np.delete(self.annotation.label, index, axis=0)
 
-                # Remove from partitions
                 if index in self.annotation.partition.train:
                     self.annotation.partition.train.remove(index)
                 if index in self.annotation.partition.trainval:
                     self.annotation.partition.trainval.remove(index)
-                
-                 # Update partitions to reflect the new indices after removal
-                self.annotation.partition.train = [
-                    i if i < index else i - 1 for i in self.annotation.partition.train
-                ]
-                self.annotation.partition.trainval = [
-                    i if i < index else i - 1 for i in self.annotation.partition.trainval
-                ]
+
+                self.annotation.partition.train = [i if i < index else i - 1 for i in self.annotation.partition.train]
+                self.annotation.partition.trainval = [i if i < index else i - 1 for i in self.annotation.partition.trainval]
 
                 self.save_annotation()
+                return True
             else:
-                raise IndexError("Image index out of range.")
+                return False
         except Exception as e:
-            raise RuntimeError(f"Failed to remove image: {e}")
-
-    def get_labels_for_image(self, image_index):
+            logging.error(f"Error in remove_image: {e}")
+            return False
+        
+    def fetch_batch_of_images(self, batch_size=32):
         """
-        Retrieves the labels associated with a specific image by its index.
+        Fetches a batch of images from the dataset. If batch_size is -1, all images are returned.
 
         Args:
-            image_index (int): The index of the image for which to retrieve labels.
+            batch_size (int, optional): The number of images to fetch in the batch. Defaults to 32.
+                                    If set to -1, all images are returned.
 
         Returns:
-            list: A list of labels associated with the specified image.
-
-        Raises:
-            IndexError: If the image index is out of range.
+            tuple: (bool, list of PIL.Image.Image): True and list of images if successful, False otherwise.
         """
-        if image_index < 0 or image_index >= len(self.annotation.image_name):
-            raise IndexError("Image index out of range.")
+        try:
+            image_paths = self.annotation.image_name
+            
+            # If batch_size is -1, return all images
+            if batch_size == -1:
+                selected_images = image_paths
+            else:
+                # Randomly select a batch of images
+                selected_images = image_paths[self.batch_idx*batch_size:(self.batch_idx+1)*batch_size]
+                self.batch_idx += 1
+
+            images = []
+            for img_path in selected_images:
+                success, image = self.fetch_image_by_path(img_path)
+                if not success:
+                    logging.error(f"Failed to load image: {img_path}")
+                    continue
+                images.append(image)
+
+            return True, images
+        except Exception as e:
+            logging.error(f"Error in fetch_batch_of_images: {e}")
+            return False, None
         
-        return self.annotation.label[image_index].tolist()
-
-    def remove_label_from_image(self, image_index):
+    def fetch_batch_of_images_paths(self, batch_size=32):
         """
-        Removes the label from a specific image.
+        Fetches a batch of images paths from the dataset. If batch_size is -1, all paths are returned.
 
         Args:
-            image_index (int): The index of the image from which the label will be removed.
+            batch_size (int, optional): The number of images to fetch in the batch. Defaults to 32.
+                                    If set to -1, all images are returned.
 
-        Raises:
-            IndexError: If the image index is out of range.
+        Returns:
+            tuple: (bool, list of Strings): True and list of paths if successful, False otherwise.
         """
-        if image_index < 0 or image_index >= len(self.annotation.image_name):
-            raise IndexError("Image index out of range.")
+        try:
+            image_paths = self.annotation.image_name
+            
+            # If batch_size is -1, return all images
+            if batch_size == -1:
+                selected_images = image_paths
+            else:
+                # Randomly select a batch of images
+                selected_images = image_paths[self.batch_idx*batch_size:(self.batch_idx+1)*batch_size]
+                self.batch_idx += 1
 
-        # Reset the label for the specified image
-        self.annotation.label[image_index] = np.zeros(len(self.annotation.attr_name), dtype=int)  # Assuming default is zero
-        self.save_annotation()
-
-    def edit_label_for_image(self, image_index, new_label_value):
-        """
-        Edits an existing label for a specific image.
-
-        Args:
-            image_index (int): The index of the image for which to edit the label.
-            new_label_value: The new label value. Must match the size of the existing labels.
-
-        Raises:
-            IndexError: If the image index is out of range.
-            ValueError: If the size of the new label does not match the number of attributes.
-        """
-        if image_index < 0 or image_index >= len(self.annotation.image_name):
-            raise IndexError("Image index out of range.")
-        
-        # Check if the new label's size matches the number of attributes
-        if len(new_label_value) != len(self.annotation.attr_name):
-            raise ValueError("New label size must match the number of attributes.")
-
-        # Update the label
-        self.annotation.label[image_index] = np.array(new_label_value, dtype=int)
-        self.save_annotation()
-
-# Example usage:
-# dataset_manager = DatasetManager("dataset_annotation.pkl")
+            return True, selected_images
+        except Exception as e:
+            logging.error(f"Error in fetch_batch_of_images: {e}")
+            return False, None
+    
