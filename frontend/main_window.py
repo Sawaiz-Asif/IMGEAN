@@ -1,14 +1,21 @@
 from PyQt5 import QtWidgets
 from frontend.main_window_ui import Ui_MainWindow  # Import the UI class
-
 from frontend.settings import SettingsWindow
 from frontend.img_quality_check import CheckImgQuality
 from frontend.annotate_img import AnnotateImg  # Import Annotate Image logic
 from frontend.generator_window import GeneratorWindow  # Import the logic class
 
+FILES = 'FILES'
+CHECKING_DIR = 'CHECKING_DIR'
+DISCARDED_DIR = 'DISCARDED_DIR'
+LABELING_DIR = 'LABELING_DIR'
+
 class MainWindow(QtWidgets.QMainWindow, Ui_MainWindow):
-    def __init__(self):
+    def __init__(self, config):
         super(MainWindow, self).__init__()
+
+        self.config = config
+
         self.setupUi(self)  # Set up the UI
 
         # Set up the additional screens
@@ -23,13 +30,15 @@ class MainWindow(QtWidgets.QMainWindow, Ui_MainWindow):
     def setup_screens(self):
         """Add additional screens to the QStackedWidget."""
 
+        cfg = self.config[FILES]
+
         # Generate Images Screen
         self.generator_window = GeneratorWindow(self.stackedWidget)
 
         # Img Quality Check Screen
-        self.imgQualityCheckScreen = CheckImgQuality(self.stackedWidget)  # Pass the stacked widget
+        self.imgQualityCheckScreen = CheckImgQuality(self.stackedWidget, self.config, images_checking_dir=cfg[CHECKING_DIR],  images_discarded_dir=cfg[DISCARDED_DIR])  # Pass the stacked widget
         # Annotate image Screen
-        self.annotateImgSelectScreen = AnnotateImg(self.stackedWidget)  # Pass the stacked widget
+        self.annotateImgSelectScreen = AnnotateImg(self.stackedWidget, self.config, images_labeling_dir=cfg[LABELING_DIR])  # Pass the stacked widget
 
         # Setting Screen
         self.settingsScreen = SettingsWindow(self.stackedWidget)
@@ -47,10 +56,14 @@ class MainWindow(QtWidgets.QMainWindow, Ui_MainWindow):
 
     def goToImgQualityCheckScreen(self):
         # Switch back to the main screen
+        self.imgQualityCheckScreen.refresh_window_info()
+
         self.stackedWidget.setCurrentIndex(2)
 
     def goToAnnotateImgSelectScreen(self):
         # Switch back to the main screen
+        self.annotateImgSelectScreen.refresh_window_info()
+
         self.stackedWidget.setCurrentIndex(3)
 
     def goToSettingScreen(self):

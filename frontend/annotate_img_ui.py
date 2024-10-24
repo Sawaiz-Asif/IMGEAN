@@ -1,6 +1,14 @@
 from PyQt5 import QtCore, QtGui, QtWidgets
+import backend.annotation_manager.dataset_utils as du
+
+DATASET = 'DATASET'
+PATH = 'PATH'
 
 class Ui_AnnotateImg(object):
+    def __init__(self, config):
+        self.config = config
+        self.dataset_manager = du.DatasetManager(config[DATASET][PATH], config)
+
     def setupUi(self, AnnotateImg):
         AnnotateImg.setObjectName("AnnotateImg")
         AnnotateImg.resize(800, 600)
@@ -41,10 +49,29 @@ class Ui_AnnotateImg(object):
 
         # List of checkboxes (labels) below auto-label buttons
         self.labelList = QtWidgets.QListWidget(AnnotateImg)
+        _, list_labels = self.dataset_manager.get_dataset_labels()  # Retrieve the actual labels
         self.labelList.setGeometry(QtCore.QRect(500, 160, 260, 200))
-        for i in range(1, 13):
-            item = QtWidgets.QListWidgetItem(f"Label {i}")
+
+        # Iterate through the actual labels and create a checkbox for each one
+        for label in list_labels:
+            # Create a widget to hold both the checkbox and the label name
+            widget = QtWidgets.QWidget()
+            layout = QtWidgets.QHBoxLayout(widget)
+            
+            checkbox = QtWidgets.QCheckBox()
+            label_widget = QtWidgets.QLabel(label)
+            
+            layout.addWidget(checkbox)
+            layout.addWidget(label_widget)
+            
+            layout.setAlignment(QtCore.Qt.AlignLeft)  # Align items to the left
+            layout.setContentsMargins(0, 0, 0, 0)  # Remove margins for a compact look
+            
+            # Add the custom widget (with checkbox and label) to the list
+            item = QtWidgets.QListWidgetItem()
             self.labelList.addItem(item)
+            self.labelList.setItemWidget(item, widget)
+
 
         # Confirm labeling button
         self.confirmLabelButton = QtWidgets.QPushButton(AnnotateImg)
@@ -57,14 +84,43 @@ class Ui_AnnotateImg(object):
         self.openImageGridButton.setText("Images")
 
         # Image grid overlay (initially hidden)
-        # Now spans the left half of the screen (including image area and below)
-        self.imageGridOverlay = QtWidgets.QListWidget(AnnotateImg)
+        scroll_area = QtWidgets.QScrollArea(AnnotateImg)
+        scroll_area.setGeometry(QtCore.QRect(20, 100, 380, 380))
+        scroll_area.setWidgetResizable(True)
+
+        # Scroll widget to contain the grid layout
+        scroll_widget = QtWidgets.QWidget()
+
+        # Create a layout to contain both the button and the image grid
+        layout = QtWidgets.QVBoxLayout(scroll_widget)
+        layout.setContentsMargins(0, 0, 0, 0)  # Remove margins to push the button closer to the top
+        layout.setSpacing(0)  # Remove spacing between the button and the grid
+
+        # Button to import dataset images (placed at the top left inside the scroll area)
+        self.importButton = QtWidgets.QPushButton("Import dataset images", scroll_widget)
+        layout.addWidget(self.importButton, alignment=QtCore.Qt.AlignLeft | QtCore.Qt.AlignTop)
+
+        # Grid layout for images
+        self.imageGridLayout = QtWidgets.QGridLayout()
+        self.imageGridLayout.setContentsMargins(0, 0, 0, 0)  # No margins for grid layout
+        layout.addLayout(self.imageGridLayout)
+
+        scroll_area.setWidget(scroll_widget)
+        scroll_area.setHidden(True)  # Initially hidden
+
+        self.imageGridOverlay = scroll_area
+
+
+
+
+
+        """ self.imageGridOverlay = QtWidgets.QListWidget(AnnotateImg)
         self.imageGridOverlay.setGeometry(QtCore.QRect(20, 100, 380, 380))  # Covering left half of the screen
         self.imageGridOverlay.setSelectionMode(QtWidgets.QAbstractItemView.SingleSelection)
-        self.imageGridOverlay.setHidden(True)  # Initially hidden
-        for i in range(1, 25):
+        self.imageGridOverlay.setHidden(True)  # Initially hidden """
+        """ for i in range(1, 25):
             item = QtWidgets.QListWidgetItem(f"Img {i}")
-            self.imageGridOverlay.addItem(item)
+            self.imageGridOverlay.addItem(item) """
 
     def retranslateUi(self, AnnotateImg):
         _translate = QtCore.QCoreApplication.translate

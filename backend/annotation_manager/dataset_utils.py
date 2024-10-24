@@ -28,7 +28,7 @@ class DatasetManager:
             self.config = config
 
             # Set the root and ensure directories exist
-            self.root = self.config['FILES']['BASE_DIR']
+            self.root = os.path.dirname(self.config['DATASET']['PATH'])
             if not os.path.exists(self.root):
                 try:
                     os.makedirs(self.root)
@@ -58,6 +58,8 @@ class DatasetManager:
 
             self.annotation = annotation
             self.initialized = True
+
+            self.batch_idx=0
 
         except Exception as e:
             logging.error(f"Error in __init__: {e}")
@@ -111,31 +113,45 @@ class DatasetManager:
 
     def save_annotation(self, annotation=None):
         """
-        Saves the current annotation to the pickle file.
+        Saves the current annotation to the pickle file. Creates directories if they don't exist.
 
         Returns:
             bool: True if successful, False otherwise.
         """
         try:
+            pickle_dir = os.path.dirname(self.pickle_file)
+            if not os.path.exists(pickle_dir):
+                os.makedirs(pickle_dir)
             with open(self.pickle_file, 'wb') as f:
                 pickle.dump(annotation or self.annotation, f)
             return True
         except IOError as e:
             logging.error(f"Error in save_annotation: {e}")
             return False
+        except Exception as e:
+            logging.error(f"Unexpected error in save_annotation: {e}")
+            return False
 
-    def get_all_labels(self):
+    def is_image_in_dataset(self, image_path):
         """
-        Fetches all labels from the dataset.
+        Checks if the specified image path exists in the dataset.
+
+        Args:
+            image_path (str): The path of the image to check.
 
         Returns:
-            tuple: (bool, np.ndarray): True and labels if successful, False otherwise.
+            bool: True if the image is in the dataset, False otherwise.
         """
-        try:
-            return True, self.annotation.label
-        except AttributeError as e:
-            logging.error(f"Error in get_all_labels: {e}")
-            return False, None
+        return image_path in self.annotation.image_name
+
+    def get_dataset_labels(self):
+        """
+        Retrieves the labels from the dataset.
+
+        Returns:
+            tuple: (bool, list of str): True and the list of attribute names if successful, False otherwise.
+        """
+        return True, self.annotation.attr_name
 
     def add_label(self, new_label, default_value=0):
         """
@@ -203,7 +219,74 @@ class DatasetManager:
             logging.error(f"Error in remove_label: {e}")
             return False
 
-    def fetch_labels_by_image_name(self, image_name):
+    def get_all_labels(self):
+        """
+        Fetches all labels from the dataset.
+
+        Returns:
+            tuple: (bool, np.ndarray): True and labels if successful, False otherwise.
+        """
+        try:
+            return True, self.annotation.label
+        except AttributeError as e:
+            logging.error(f"Error in get_all_labels: {e}")
+            return False, None
+
+    def get_labels_for_image(self, image_index):
+        """
+        Retrieves the labels associated with a specific image by its index.
+
+        Returns:
+            tuple: (bool, list): True and labels if successful, False otherwise.
+        """
+        try:
+            if image_index < 0 or image_index >= len(self.annotation.image_name):
+                return False, None
+            return True, self.annotation.label[image_index].tolist()
+        except Exception as e:
+            logging.error(f"Error in get_labels_for_image: {e}")
+            return False, None
+
+    def edit_label_for_image(self, image_index, new_label_value):
+        """
+        Edits an existing label for a specific image.
+
+        Returns:
+            bool: True if successful, False otherwise.
+        """
+        try:
+            if image_index < 0 or image_index >= len(self.annotation.image_name):
+                return False
+
+            if len(new_label_value) != len(self.annotation.attr_name):
+                return False
+
+            self.annotation.label[image_index] = np.array(new_label_value, dtype=int)
+            self.save_annotation()
+            return True
+        except Exception as e:
+            logging.error(f"Error in edit_label_for_image: {e}")
+            return False
+
+    def remove_label_from_image(self, image_index):
+        """
+        Removes the label from a specific image.
+
+        Returns:
+            bool: True if successful, False otherwise.
+        """
+        try:
+            if image_index < 0 or image_index >= len(self.annotation.image_name):
+                return False
+
+            self.annotation.label[image_index] = np.zeros(len(self.annotation.attr_name), dtype=int)
+            self.save_annotation()
+            return True
+        except Exception as e:
+            logging.error(f"Error in remove_label_from_image: {e}")
+            return False
+
+    def get_labels_by_image_path(self, image_path):
         """
         Fetches the labels associated with a specific image by its name or path.
 
@@ -211,8 +294,6 @@ class DatasetManager:
             tuple: (bool, list): True and labels if successful, False otherwise.
         """
         try:
-            image_path = os.path.normpath(os.path.abspath(image_name))
-
             if image_path not in self.annotation.image_name:
                 return False, None
 
@@ -223,7 +304,23 @@ class DatasetManager:
             logging.error(f"Error in fetch_labels_by_image_name: {e}")
             return False, None
 
-    def fetch_image_by_name(self, image_name):
+    def get_image_index(self, image_path):
+        """
+        Finds the index of the specified image in the dataset.
+
+        Args:
+            image_name (str): The name of the image to find.
+
+        Returns:
+            tuple: (bool, int or None): True and the index if the image is found, False and None otherwise.
+        """
+        if image_path not in self.annotation.image_name:
+            return False, None
+        else:
+            index = self.annotation.image_name.index(image_path)
+            return True, index
+
+    def fetch_image_by_path(self, image_path):
         """
         Opens and returns the image by its name or path.
 
@@ -231,7 +328,7 @@ class DatasetManager:
             tuple: (bool, PIL.Image.Image): True and image if successful, False otherwise.
         """
         try:
-            image_path = os.path.normpath(os.path.abspath(image_name))
+            image_path = os.path.normpath(os.path.abspath(image_path))
 
             if image_path not in self.annotation.image_name:
                 return False, None
@@ -305,7 +402,7 @@ class DatasetManager:
                 print("Image file does not exist.")
                 return False
 
-            image_path = os.path.normpath(os.path.abspath(image_name))
+            image_path = image_name
 
             # Check if the image already exists in the dataset
             if image_path in self.annotation.image_name:
@@ -322,10 +419,11 @@ class DatasetManager:
             try:
                 image = Image.open(image_path)
                 print(f"Image size: {image.size}, Required size: ({self.image_width}, {self.image_height})")
-                if image.size != (self.image_width, self.image_height):
+                # This does not work like that on the original dataset
+                """ if image.size != (self.image_width, self.image_height):
                     image.close()
                     print(f"Image dimensions {image.size} do not match required size ({self.image_width}, {self.image_height}).")
-                    return False
+                    return False """
                 image.close()
             except Exception as e:
                 logging.error(f"Error loading image: {e}")
@@ -390,57 +488,66 @@ class DatasetManager:
         except Exception as e:
             logging.error(f"Error in remove_image: {e}")
             return False
-
-    def get_labels_for_image(self, image_index):
+        
+    def fetch_batch_of_images(self, batch_size=32):
         """
-        Retrieves the labels associated with a specific image by its index.
+        Fetches a batch of images from the dataset. If batch_size is -1, all images are returned.
+
+        Args:
+            batch_size (int, optional): The number of images to fetch in the batch. Defaults to 32.
+                                    If set to -1, all images are returned.
 
         Returns:
-            tuple: (bool, list): True and labels if successful, False otherwise.
+            tuple: (bool, list of PIL.Image.Image): True and list of images if successful, False otherwise.
         """
         try:
-            if image_index < 0 or image_index >= len(self.annotation.image_name):
-                return False, None
-            return True, self.annotation.label[image_index].tolist()
+            image_paths = self.annotation.image_name
+            
+            # If batch_size is -1, return all images
+            if batch_size == -1:
+                selected_images = image_paths
+            else:
+                # Randomly select a batch of images
+                selected_images = image_paths[self.batch_idx*batch_size:(self.batch_idx+1)*batch_size]
+                self.batch_idx += 1
+
+            images = []
+            for img_path in selected_images:
+                success, image = self.fetch_image_by_path(img_path)
+                if not success:
+                    logging.error(f"Failed to load image: {img_path}")
+                    continue
+                images.append(image)
+
+            return True, images
         except Exception as e:
-            logging.error(f"Error in get_labels_for_image: {e}")
+            logging.error(f"Error in fetch_batch_of_images: {e}")
             return False, None
-
-    def edit_label_for_image(self, image_index, new_label_value):
+        
+    def fetch_batch_of_images_paths(self, batch_size=32):
         """
-        Edits an existing label for a specific image.
+        Fetches a batch of images paths from the dataset. If batch_size is -1, all paths are returned.
+
+        Args:
+            batch_size (int, optional): The number of images to fetch in the batch. Defaults to 32.
+                                    If set to -1, all images are returned.
 
         Returns:
-            bool: True if successful, False otherwise.
+            tuple: (bool, list of Strings): True and list of paths if successful, False otherwise.
         """
         try:
-            if image_index < 0 or image_index >= len(self.annotation.image_name):
-                return False
+            image_paths = self.annotation.image_name
+            
+            # If batch_size is -1, return all images
+            if batch_size == -1:
+                selected_images = image_paths
+            else:
+                # Randomly select a batch of images
+                selected_images = image_paths[self.batch_idx*batch_size:(self.batch_idx+1)*batch_size]
+                self.batch_idx += 1
 
-            if len(new_label_value) != len(self.annotation.attr_name):
-                return False
-
-            self.annotation.label[image_index] = np.array(new_label_value, dtype=int)
-            self.save_annotation()
-            return True
+            return True, selected_images
         except Exception as e:
-            logging.error(f"Error in edit_label_for_image: {e}")
-            return False
-
-    def remove_label_from_image(self, image_index):
-        """
-        Removes the label from a specific image.
-
-        Returns:
-            bool: True if successful, False otherwise.
-        """
-        try:
-            if image_index < 0 or image_index >= len(self.annotation.image_name):
-                return False
-
-            self.annotation.label[image_index] = np.zeros(len(self.annotation.attr_name), dtype=int)
-            self.save_annotation()
-            return True
-        except Exception as e:
-            logging.error(f"Error in remove_label_from_image: {e}")
-            return False
+            logging.error(f"Error in fetch_batch_of_images: {e}")
+            return False, None
+    
