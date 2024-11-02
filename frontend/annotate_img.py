@@ -266,6 +266,9 @@ class AnnotateImg(QtWidgets.QWidget):
         This function updates the checkboxes and label colors based on predictions (if available)
         or falls back to the existing dataset labels if predictions are not found.
         """
+        if len(self.images_to_label) == 0:
+            return
+
         image_path = self.images_to_label[self.current_image_index]
 
         # Check if the image has already been auto-labeled
