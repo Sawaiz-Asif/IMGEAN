@@ -16,8 +16,8 @@ FILES:
   GENERATED_DIR: !join [*base_dir, /generated]
   CHECKING_DIR: !join [*base_dir, /checking]
   DISCARDED_DIR: !join [*base_dir, /discarded]
-  #LABELING_DIR: !join [*base_dir, /labeling]
-  LABELING_DIR: !join ['/Users/sawaiz/Documents/IPCV/UAM/TRDP-I/Data/RAP_dataset']
+  LABELING_DIR: !join [*base_dir, /labeling]
+  #LABELING_DIR: !join ['/Users/sawaiz/Documents/IPCV/UAM/TRDP-I/Data/RAP_dataset'] ???
   DISCARDED_TRACKER: !join [*base_dir, /discarded, /reasons_tracker.txt]
   
 
@@ -25,6 +25,7 @@ GENERATION:
   IP_COMFY: ''
   MODEL_SD3:
     BASE_DIR: ''
+  BASE_OUTPUT_PATH: '../ComfyUI/output'
 
 CHECKER:
   BASE_DIR: ''

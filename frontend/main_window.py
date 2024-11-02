@@ -33,7 +33,7 @@ class MainWindow(QtWidgets.QMainWindow, Ui_MainWindow):
         cfg = self.config[FILES]
 
         # Generate Images Screen
-        self.generator_window = GeneratorWindow(self.stackedWidget)
+        self.generator_window = GeneratorWindow(self.stackedWidget, self.config)
 
         # Img Quality Check Screen
         self.imgQualityCheckScreen = CheckImgQuality(self.stackedWidget, self.config, images_checking_dir=cfg[CHECKING_DIR],  images_discarded_dir=cfg[DISCARDED_DIR])  # Pass the stacked widget
