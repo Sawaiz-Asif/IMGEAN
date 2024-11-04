@@ -351,7 +351,10 @@ class AnnotateImg(QtWidgets.QWidget):
             grid_layout.addWidget(label, i // 4, i % 4)
 
     def refresh_window_info(self):
-        self.images_to_label =  self.get_labeling_images()
+        try:
+            self.images_to_label
+        except:
+            self.images_to_label =  self.get_labeling_images()
 
         self.update_image_display()
         self.update_checkboxes_selection()
