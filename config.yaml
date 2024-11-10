@@ -1,57 +1,91 @@
-PROJECT_NAME: 'PAR for zs'
-
-DATASET:
-  TYPE: 'pedes'
-  NAME: 'RAP2'
-  TRAIN_SPLIT: 'trainval'
-  VAL_SPLIT: 'test'
-  ZERO_SHOT: True
-  LABEL: 'eval'
-  HEIGHT: 256
-  WIDTH: 192
-  PATH: ./data/custom_dataset/dataset_zs_run0.pkl
-
-FILES:
-  BASE_DIR: &base_dir ./data
-  GENERATED_DIR: !join [*base_dir, /generated]
-  CHECKING_DIR: !join [*base_dir, /checking]
-  DISCARDED_DIR: !join [*base_dir, /discarded]
-  LABELING_DIR: !join [*base_dir, /labeling]
-  #LABELING_DIR: !join ['/Users/sawaiz/Documents/IPCV/UAM/TRDP-I/Data/RAP_dataset'] ???
-  DISCARDED_TRACKER: !join [*base_dir, /discarded, /reasons_tracker.txt]
-  
-
-GENERATION:
-  IP_COMFY: ''
-  MODEL_SD3:
-    BASE_DIR: ''
-  BASE_OUTPUT_PATH: '../ComfyUI/output'
-
-CHECKER:
-  BASE_DIR: ''
-  FUNCTION_BYW:
-    FILENAME: ''
-
 ANNOTATION:
-  BASE_DIR: './data/labeling'
+  BASE_DIR: ./data/labeling
   PAR_MODEL:
-    PATH: './models/img_par_model/ckpt_max_2024-04-10_23:26:07.pth'
-    BACKBONE_TYPE: 'resnet50'
+    BACKBONE_TYPE: resnet50
     CLASSIFIER:
-      NAME: 'linear'
-      BN: False
-      POOLING: 'avg'
+      BN: false
+      NAME: linear
+      POOLING: avg
       SCALE: 1
     DATASET:
       HEIGHT: 256
       WIDTH: 192
-
+    PATH: ./models/img_par_model/ckpt_max_2024-04-10_23:26:07.pth
 AUTO_LABEL:
-  BATCH_SIZE: 12  # Number of images to process during auto-labeling
+  BATCH_SIZE: 12
+  CHECKBOX_THRESHOLD: 0.5
   CONFIDENCE_THRESHOLDS:
-    - value: 0.75
-      color: "green"
-    - value: 0.5
-      color: "yellow"
-  DEFAULT_COLOR: "red"  # Fallback color if no threshold matches or color is missing
-  CHECKBOX_THRESHOLD: 0.5  # Threshold to keep labels in autolabeling
+  - color: green
+    value: 0.75
+  - color: yellow
+    value: 0.5
+  DEFAULT_COLOR: red
+DATASET:
+  HEIGHT: 256
+  LABEL: eval
+  NAME: RAP2
+  PATH: ./data/custom_dataset/dataset_zs_run0.pkl
+  TRAIN_SPLIT: trainval
+  TYPE: pedes
+  VAL_SPLIT: test
+  WIDTH: 192
+  ZERO_SHOT: true
+FILES:
+  BASE_DIR: ./data
+  CHECKING_DIR: ./data/checking
+  DISCARDED_DIR: ./data/discarded
+  DISCARDED_TRACKER: ./data/discarded/reasons_tracker.txt
+  GENERATED_DIR: ./data/generated
+  LABELING_DIR: ./data/labeling
+GENERATION:
+  BASE_OUTPUT_PATH: ../ComfyUI/output
+  IP_COMFY: ''
+  MODELS:
+  - name: sd3_medium_incl_clips.safetensors
+    path: ./models/sd_v1.safetensors
+  - name: Stable Diffusion v2
+    path: ./models/sd_v2.safetensors
+  PROMPTS:
+    negative: "Partial figures, cropped bodies, low-resolution images, blurred backgrounds,\
+      \ no low-angle shots, no side views, avoid obscured faces. \n"
+    positive: 'A highly detailed, ultra high definition image of a single pedestrian
+      on an airport, with the pedestrian fully visible and centered in the frame. '
+  filename: generated_image
+  manual_quality_check: true
+  model: sd3_medium_incl_clips.safetensors
+  num_images: 1
+  resolution_height: 1024
+  resolution_width: 1024
+  seed: null
+  steps: 4
+PROJECT_NAME: PAR for zs
+QUALITY_CHECKS:
+  BASE_DIR: ''
+  FUNCTIONS:
+  - code: "def check_black_and_white(image):\n    # Assuming 'image' is a 2D numpy\
+      \ array\n    return len(image.shape) == 2\n"
+    name: B&W
+  - code: "def check_brightness(image):\n    # Assuming 'image' is a 2D numpy array\
+      \ with 3 channels (RGB)\n    if len(image.shape) == 3:\n        max_val = image.max(axis=(0,\
+      \ 1))\n        return max_val.mean() > 200\n    return False\n"
+    name: Saturation
+  - code: "def check_sharpness(image):\n    # Placeholder for sharpness calculation,\
+      \ assuming 'image' is a 2D array\n    import numpy as np\n    gradient = np.gradient(image.astype(float))\n\
+      \    sharpness = np.mean(np.hypot(*gradient))\n    return sharpness > 20\n"
+    name: Sharpness
+  FUNCTION_BYW:
+    FILENAME: ''
+  selected_checks:
+  - 1
+  - 0
+  - 0
+UI_STYLES:
+  colors:
+    background: '#f0f0f0'
+    button_cancel: '#ff6666'
+    button_generate: '#66cc66'
+    progress_bar: '#00aaff'
+    text_prompt: '#333333'
+  fonts:
+    text_font_size: 14
+    title_font_size: 24

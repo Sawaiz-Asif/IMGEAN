@@ -11,7 +11,7 @@ logging.basicConfig(filename='dataset_manager.log', level=logging.ERROR,
                     format='%(asctime)s - %(levelname)s - %(message)s')
 
 class DatasetManager:
-    def __init__(self, pickle_file, config, description=None, reorder=None):
+    def __init__(self, pickle_file, config, use_default_path=False, description=None, reorder=None):
         """
         Initializes the DatasetManager by loading an annotation from a pickle file if it exists.
         If the pickle file does not exist, it initializes a new dataset and saves it as a pickle.
@@ -51,7 +51,11 @@ class DatasetManager:
             self.zero_shot = self.config['DATASET']['ZERO_SHOT']
 
             self.pickle_file = pickle_file
-            success, annotation = self.load_annotation(description, reorder)
+            if use_default_path:
+                success, annotation = self.load_annotation(description, reorder, self.root)
+            else: 
+                success, annotation = self.load_annotation(description, reorder)
+
             if not success:
                 logging.error("Failed to load annotation.")
                 self.initialized = False
@@ -423,7 +427,7 @@ class DatasetManager:
 
             # Check if the image exists
             if not os.path.exists(image_name):
-                print("Image file does not exist.")
+                print(image_name,"Image file does not exist.")
                 return False
 
             image_path = image_name
@@ -462,7 +466,8 @@ class DatasetManager:
                 return False
 
             # Add the image path and its labels to the dataset
-            self.annotation.image_name.append(image_path)
+            image_name = os.path.basename(new_filename)
+            self.dataset_manager.annotation.image_name.append(image_name)
 
             if len(self.annotation.image_name) == 1:
                 self.annotation.label = np.array([labels], dtype=int)
