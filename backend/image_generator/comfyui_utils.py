@@ -127,7 +127,7 @@ def import_custom_nodes() -> None:
 from nodes import NODE_CLASS_MAPPINGS
 
 
-def execute_prompt(prompt_text: str, negative_prompt: str, execution_count: int, model_name: str, steps: int, output_filename: str, seed: int, config=None):
+def execute_prompt(prompt_text: str, negative_prompt: str, execution_count: int, model_name: str, steps: int, output_filename: str, seed: int, config=None, progress_callback=None):
     import_custom_nodes()
     with torch.inference_mode():
         checkpointloadersimple = NODE_CLASS_MAPPINGS["CheckpointLoaderSimple"]()
@@ -182,11 +182,26 @@ def execute_prompt(prompt_text: str, negative_prompt: str, execution_count: int,
             toolyolocropper_10 = toolyolocropper.detect(
                 object="person", padding=0, image=get_value_at_index(vaedecode_8, 0)
             )
+            
 
             saveimage_9 = saveimage.save_images(
                 filename_prefix=output_filename,
                 images=get_value_at_index(toolyolocropper_10, 2),
             )
+            source_dir = config[GENERATION][BASE_OUTPUT_PATH]
+
+            image_info = saveimage_9.get('ui', {}).get('images', [])
+            if len(image_info) > 0:
+                image_filename = image_info[0].get('filename')
+                if image_filename:
+                    image_path = os.path.join(source_dir, image_filename)  # Assuming './output' is your image directory
+                    print(image_path)
+                    progress_callback(q + 1, image_path)
+            else:
+                progress_callback(q + 1, None)
+             # Update progress bar if provided
+            # Update progress if a callback is provided
+            progress_callback(q+1,image_path)
 
     if config is not None:
         source_dir = config[GENERATION][BASE_OUTPUT_PATH]

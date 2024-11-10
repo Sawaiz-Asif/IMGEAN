@@ -16,3 +16,13 @@ def read_config(config_path):
         config = yaml.safe_load(file)
     
     return config
+
+# Save the configuration with custom tags to the YAML file
+def save_config(config, config_path):
+    """Saves the updated configuration to the YAML file."""
+    try:
+        with open(config_path, 'w') as file:
+            yaml.dump(config, file, Dumper=yaml.SafeDumper, default_flow_style=False)
+        print("Configuration saved successfully.")
+    except Exception as e:
+        print(f"Failed to save configuration: {e}")
