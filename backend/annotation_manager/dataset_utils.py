@@ -415,7 +415,7 @@ class DatasetManager:
             logging.error(f"Error in fetch_image: {e}")
             return False, None
 
-    def add_image(self, image_name, labels=None):
+    def add_image(self, image_path, labels=None):
         """
         Adds a new image and its corresponding labels to the dataset.
 
@@ -423,14 +423,12 @@ class DatasetManager:
             bool: True if successful, False otherwise.
         """
         try:
-            print(f"Attempting to add image: {image_name}")
+            print(f"Attempting to add image: {image_path}")
 
             # Check if the image exists
-            if not os.path.exists(image_name):
-                print(image_name,"Image file does not exist.")
+            if not os.path.exists(image_path):
+                print(image_path,"Image file does not exist.")
                 return False
-
-            image_path = image_name
 
             # Check if the image already exists in the dataset
             if image_path in self.annotation.image_name:
@@ -466,8 +464,7 @@ class DatasetManager:
                 return False
 
             # Add the image path and its labels to the dataset
-            image_name = os.path.basename(new_filename)
-            self.dataset_manager.annotation.image_name.append(image_name)
+            self.annotation.image_name.append(image_path)
 
             if len(self.annotation.image_name) == 1:
                 self.annotation.label = np.array([labels], dtype=int)
@@ -480,7 +477,7 @@ class DatasetManager:
 
             # Save the annotation after adding the image
             self.save_annotation()
-            print(f"Image {image_name} added successfully with labels: {labels}")
+            print(f"Image {image_path} added successfully with labels: {labels}")
             return True
         except Exception as e:
             logging.error(f"Error in add_image: {e}")

@@ -42,6 +42,8 @@ class AnnotateImg(QtWidgets.QWidget):
         self.current_image_index = 0
         self.images_to_label =  self.get_labeling_images()
 
+        self.dataset_imported = False
+
         self.update_image_display()
         self.update_checkboxes_selection()
 
@@ -239,11 +241,9 @@ class AnnotateImg(QtWidgets.QWidget):
         self.ui.imageLabel.setHidden(False)
 
     def on_import_dataset_click(self):
-        _, dataset_images = self.ui.dataset_manager.fetch_batch_of_images_paths(-1)
-        self.images_to_label.extend(image for image in dataset_images if image not in set(self.images_to_label))
-        self.populate_image_grid(self.ui.imageGridLayout, self.images_to_label)
-        self.update_image_display()
-        self.update_checkboxes_selection()
+
+        self.dataset_imported = True
+        self.refresh_window_info()
 
     def update_image_display(self):
         # Update the image display based on the current image index
@@ -352,7 +352,11 @@ class AnnotateImg(QtWidgets.QWidget):
 
     def refresh_window_info(self):
         self.images_to_label =  self.get_labeling_images()
+        if self.dataset_imported:
+            _, dataset_images = self.ui.dataset_manager.fetch_batch_of_images_paths(-1)
+            self.images_to_label.extend(image for image in dataset_images if image not in set(self.images_to_label))
 
+        self.populate_image_grid(self.ui.imageGridLayout, self.images_to_label)
         self.update_image_display()
         self.update_checkboxes_selection()
 
