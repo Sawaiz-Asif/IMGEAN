@@ -444,18 +444,18 @@ class DatasetManager:
                 return False
 
             # Open the image and check its dimensions
-            try:
+            # This does not work like that on the original dataset
+            """ try:
                 image = Image.open(image_path)
                 print(f"Image size: {image.size}, Required size: ({self.image_width}, {self.image_height})")
-                # This does not work like that on the original dataset
-                """ if image.size != (self.image_width, self.image_height):
+                if image.size != (self.image_width, self.image_height):
                     image.close()
                     print(f"Image dimensions {image.size} do not match required size ({self.image_width}, {self.image_height}).")
-                    return False """
+                    return False
                 image.close()
             except Exception as e:
                 logging.error(f"Error loading image: {e}")
-                return False
+                return False """
 
             # Assign default labels if none provided
             if labels is None:

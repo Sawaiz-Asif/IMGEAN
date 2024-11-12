@@ -1,6 +1,7 @@
 import os
 import shutil
 import glob
+import time
 
 # Config settings
 FILES = 'FILES'
@@ -136,6 +137,21 @@ def move_generated_checking(config, filenames):
         file_path = os.path.join(config[FILES][GENERATED_DIR], filename)
         _move_checking(config, file_path)
 
+def move_all_generated_images_checking(config):
+    files = [f for f in os.listdir(config[FILES][GENERATED_DIR]) if os.path.isfile(os.path.join(config[FILES][GENERATED_DIR], f))]
+    move_generated_checking(config, files)
+
+def ensure_unique_id_generation(config):
+    generated_dir = config[FILES][GENERATED_DIR]
+    unique_id = str(int(time.time()))
+    
+    for filename in os.listdir(generated_dir):
+        old_path = os.path.join(generated_dir, filename)
+        name, ext = os.path.splitext(filename)
+        new_filename = f"{name}_{unique_id}{ext}"
+        new_path = os.path.join(generated_dir, new_filename)
+        os.rename(old_path, new_path)
+
 def move_generated_labeling(config, filenames):
     """
     Moves one or more generated images from generated_directory to labeling_directory.
@@ -151,6 +167,10 @@ def move_generated_labeling(config, filenames):
     for filename in filenames:
         file_path = os.path.join(config[FILES][GENERATED_DIR], filename)
         _move_labeling(config, file_path)
+
+def move_all_generated_images_labeling(config):
+    files = [f for f in os.listdir(config[FILES][GENERATED_DIR]) if os.path.isfile(os.path.join(config[FILES][GENERATED_DIR], f))]
+    move_generated_labeling(config, files)
 
 def move_discarded_labeling(config, filenames):
     """
