@@ -3,6 +3,7 @@ from frontend.generator_window_ui import Ui_genrate_images
 from backend.image_generator.image_generation_thread import ImageGenerationThread
 from backend.image_generator.comfyui_utils import execute_prompt
 from backend.config_reader import save_config
+import backend.file_utils as fu
 from PyQt5.QtGui import QPixmap
 from PyQt5.QtWidgets import QGraphicsPixmapItem, QGraphicsScene, QSystemTrayIcon
 import os
@@ -141,10 +142,12 @@ class GeneratorWindow(QtWidgets.QMainWindow, Ui_genrate_images):
             self.show_image()  # Show the placeholder
 
          # Move generated files and add them to the annotation system
-        try:
-            self.move_and_process_all_generated_images(self.config)
-        except FileNotFoundError as e:
-            print(e)
+        fu.ensure_unique_id_generation(self.config)
+        if self.checkbox_manual.isChecked():
+            fu.move_all_generated_images_checking(self.config)
+        else:
+            fu.move_all_generated_images_labeling(self.config)
+
 
         self.show_notification("Image Generation", "Generation completed successfully!")
         self.generate_button.setDisabled(False)
@@ -204,61 +207,3 @@ class GeneratorWindow(QtWidgets.QMainWindow, Ui_genrate_images):
         print("Returning to the main screen...")
         self.save_current_state()
         self.stacked_widget.setCurrentIndex(0)
-
-    def move_and_process_all_generated_images(self, config):
-        """
-        Move all generated images to the labeling directory, 
-        rename them with a unique identifier in the source folder first, 
-        and add them to the annotation manager.
-        
-        Args:
-            config (dict): Configuration dictionary containing file paths.
-        """
-
-        # Check if the config is provided
-        if config is None:
-            print("Error: Configuration is missing.")
-            return
-
-        # Extract source and destination directories from config
-        source_dir = config['FILES']['GENERATED_DIR']
-        dest_dir = config['FILES']['LABELING_DIR']
-        
-        print(f"Source directory: {source_dir}")
-        print(f"Destination directory: {dest_dir}")
-
-        # Check if the source directory exists
-        if not os.path.exists(source_dir):
-            raise FileNotFoundError(f"Output directory not found: {source_dir}")
-
-        # Get the list of all files in the source directory
-        files = [f for f in os.listdir(source_dir) if os.path.isfile(os.path.join(source_dir, f))]
-        
-        if not files:
-            print("No generated files found")
-            return
-
-        print(f"Total files to be moved and renamed: {len(files)}")
-
-        for filename in files:
-            source_path = os.path.join(source_dir, filename)
-
-            # Generate a unique identifier using the current timestamp
-            unique_id = str(int(time.time()))
-            new_filename = f"{os.path.splitext(filename)[0]}_{unique_id}.png"
-            new_source_path = os.path.join(source_dir, new_filename)
-            dest_path = os.path.join(dest_dir, new_filename)
-
-            # Rename the file in the source directory
-            os.rename(source_path, new_source_path)
-            print(f"Renamed file: {filename} -> {new_filename}")
-
-            # Add the renamed image to the annotation manager
-
-            print(f"Image added to annotation manager: {new_source_path}")
-
-            # Move the renamed file to the destination directory
-            shutil.move(new_source_path, dest_path)
-            print(f"File moved: {new_source_path} -> {dest_path}")
-
-        print("All files have been renamed, moved, and processed successfully.")

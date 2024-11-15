@@ -42,6 +42,8 @@ class AnnotateImg(QtWidgets.QWidget):
         self.current_image_index = 0
         self.images_to_label =  self.get_labeling_images()
 
+        self.dataset_imported = False
+
         self.update_image_display()
         self.update_checkboxes_selection()
 
@@ -87,9 +89,11 @@ class AnnotateImg(QtWidgets.QWidget):
             QtWidgets.QMessageBox.warning(self, "Warning", "No images to label.")
             return
 
-        # Get the image path
+        # Get the image path, construct full path only if it is not a dataset image (already full path in this case)
         image_path = self.images_to_label[self.current_image_index]
-        image_path = self.ui.dataset_manager.config['FILES']['LABELING_DIR'] + '/' + image_path
+        if not self.ui.dataset_manager.is_image_in_dataset(image_path):
+            image_path = self.images_to_label[self.current_image_index]
+            image_path = self.ui.dataset_manager.config['FILES']['LABELING_DIR'] + '/' + image_path
         print(f"Image path: {image_path}")
         
         # Get class labels
@@ -175,24 +179,30 @@ class AnnotateImg(QtWidgets.QWidget):
 
             # Loop through the images starting from the current image index
             for idx, image_index in enumerate(range(self.current_image_index, self.current_image_index + num_images_to_label)):
-                image_path = self.images_to_label[image_index]
-                image_path_full = os.path.join(self.ui.dataset_manager.config['FILES']['LABELING_DIR'], image_path)
+                if (self.current_image_index + idx < len(self.images_to_label)):
+                    # Get the image path, construct full path only if it is not a dataset image (already full path in this case)
+                    image_path_original = self.images_to_label[image_index]
+                    if not self.ui.dataset_manager.is_image_in_dataset(image_path_original):
+                        image_path = self.images_to_label[image_index]
+                        image_path = self.ui.dataset_manager.config['FILES']['LABELING_DIR'] + '/' + image_path_original
+                    else:
+                        image_path = image_path_original
 
-                # Run predictions
-                predictions = get_predictions_with_confidence(self.config, model, image_path_full, class_labels)
+                    # Run predictions
+                    predictions = get_predictions_with_confidence(self.config, model, image_path, class_labels)
 
-                # Store the predictions for this image
-                self.predictions_for_images[image_path] = predictions
+                    # Store the predictions for this image
+                    self.predictions_for_images[image_path_original] = predictions
 
-                # Update the UI with the new predictions for the current image
-                if image_index == self.current_image_index:
-                    self.update_checkboxes_selection()
+                    # Update the UI with the new predictions for the current image
+                    if image_index == self.current_image_index:
+                        self.update_checkboxes_selection()
 
-                # Allow the UI to update after processing each image
-                QtWidgets.QApplication.processEvents()
+                    # Allow the UI to update after processing each image
+                    QtWidgets.QApplication.processEvents()
 
-                # Update progress bar after each image is processed
-                progress_dialog.setValue(idx + 1)
+                    # Update progress bar after each image is processed
+                    progress_dialog.setValue(idx + 1)
 
             QtWidgets.QMessageBox.information(self, "Success", f"Auto-labeled {num_images_to_label} images successfully.")
 
@@ -239,11 +249,9 @@ class AnnotateImg(QtWidgets.QWidget):
         self.ui.imageLabel.setHidden(False)
 
     def on_import_dataset_click(self):
-        _, dataset_images = self.ui.dataset_manager.fetch_batch_of_images_paths(-1)
-        self.images_to_label.extend(image for image in dataset_images if image not in set(self.images_to_label))
-        self.populate_image_grid(self.ui.imageGridLayout, self.images_to_label)
-        self.update_image_display()
-        self.update_checkboxes_selection()
+
+        self.dataset_imported = True
+        self.refresh_window_info()
 
     def update_image_display(self):
         # Update the image display based on the current image index
@@ -261,7 +269,7 @@ class AnnotateImg(QtWidgets.QWidget):
         else:
             self.ui.imageLabel.setText("No images to display")  # Display message if no images
 
-    def update_checkboxes_selection(self):
+    def update_checkboxes_selection(self, priority_dataset=False):
         """
         This function updates the checkboxes and label colors based on predictions (if available)
         or falls back to the existing dataset labels if predictions are not found.
@@ -271,17 +279,21 @@ class AnnotateImg(QtWidgets.QWidget):
 
         image_path = self.images_to_label[self.current_image_index]
 
-        # Check if the image has already been auto-labeled
-        if image_path in self.predictions_for_images:
+        # The idea of priority_dataset is that, if it is true and the image is both, auto-labeled and in the dataset, we see the labels on the dataset
+        # TODO have a selector in the frontend, or a way to select which ones you want to prioritize visually
+        if priority_dataset and self.ui.dataset_manager.is_image_in_dataset(image_path):
+            _, labels_select = self.ui.dataset_manager.get_labels_by_image_path(image_path)
+            predictions = [(label, None) for label in labels_select]  # No confidence available
+        elif image_path in self.predictions_for_images:
             predictions = self.predictions_for_images[image_path]
         else:
-            # If not auto-labeled, fallback to the current labels in the dataset
             if self.ui.dataset_manager.is_image_in_dataset(image_path):
                 _, labels_select = self.ui.dataset_manager.get_labels_by_image_path(image_path)
             else:
-                # If the image is not in the dataset, initialize labels to 0 (unchecked)
-                labels_select = [0] * len(self.ui.dataset_manager.get_dataset_labels()[1])
+                labels_select = [0] * len(self.ui.dataset_manager.get_dataset_labels()[1])  # Initialize labels to 0 (unchecked)
+            
             predictions = [(label, None) for label in labels_select]  # No confidence available
+
 
         # Iterate over the checkboxes and apply predictions or default dataset labels
         for i in range(self.ui.labelList.count()):
@@ -351,11 +363,14 @@ class AnnotateImg(QtWidgets.QWidget):
             grid_layout.addWidget(label, i // 4, i % 4)
 
     def refresh_window_info(self):
-        try:
-            self.images_to_label
-        except:
-            self.images_to_label =  self.get_labeling_images()
+        self.images_to_label =  self.get_labeling_images()
+        if self.dataset_imported:
+            _, dataset_images = self.ui.dataset_manager.fetch_batch_of_images_paths(-1)
+            self.images_to_label.extend(image for image in dataset_images if image not in set(self.images_to_label))
+        if (self.current_image_index >= len(self.images_to_label)):
+            self.current_image_index = len(self.images_to_label)-1
 
+        self.populate_image_grid(self.ui.imageGridLayout, self.images_to_label)
         self.update_image_display()
         self.update_checkboxes_selection()
 
