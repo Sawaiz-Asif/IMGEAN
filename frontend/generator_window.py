@@ -5,9 +5,10 @@ from backend.image_generator.comfyui_utils import execute_prompt
 from backend.config_reader import save_config
 import backend.file_utils as fu
 from PyQt5.QtGui import QPixmap
-from PyQt5.QtWidgets import QGraphicsPixmapItem, QGraphicsScene, QSystemTrayIcon
+from PyQt5.QtWidgets import QGraphicsPixmapItem, QGraphicsScene, QSystemTrayIcon, QMessageBox
 import os
 from PyQt5.QtCore import QThread, pyqtSignal
+from backend.quality_checker.quality_checker_loader import load_quality_checkers
 import shutil
 import time
 
@@ -141,8 +142,44 @@ class GeneratorWindow(QtWidgets.QMainWindow, Ui_genrate_images):
         if not os.path.exists(self.config['GENERATION'].get('filename', '')):
             self.show_image()  # Show the placeholder
 
-         # Move generated files and add them to the annotation system
         fu.ensure_unique_id_generation(self.config)
+
+        # --- Automatic quality checking starts here ---
+        # Get the selection of the quality functions to be used
+        selected_quality_function_checkboxes = []
+        for row in range(self.auto_check_list.count()):
+            item = self.auto_check_list.item(row)
+            if item.checkState() == QtCore.Qt.Checked:
+                selected_quality_function_checkboxes.append(item.text())
+
+        # Get the pointers to all the quality functions (on the directory)
+        quality_checkers_functions = load_quality_checkers(self.config)
+        # Get the configurations for the quality checkers (config file)
+        config_quality_checkers = self.config.get('QUALITY_CHECKS', {}).get('FUNCTIONS', [])
+
+        success = True
+        # For each function on the configuration file (the ones showed to the user)
+        for config_function in config_quality_checkers:
+            function_user_name = config_function['name']
+            if function_user_name in selected_quality_function_checkboxes: #If it is selected
+                filename = os.path.basename(config_function['path'])
+                function = quality_checkers_functions[filename] # Get the pointer
+                success = fu.discard_generated_images_based_on_function(self.config, function, config_function['args']) # Use it
+                if (not success):
+                    msg = QMessageBox()
+                    msg.setIcon(QMessageBox.Critical)
+                    msg.setWindowTitle("Error")
+                    msg.setText(f"There was an exception when executing \"{function_user_name}\" auto-checker function. Aborting process.")
+                    msg.exec_()
+                    break
+        # --- Automatic quality checking ends here ---
+        if (not success):
+            self.generate_button.setDisabled(False)
+            self.cancel_button.setDisabled(True)
+            return
+
+
+        # Move generated files and add them to the annotation system
         if self.checkbox_manual.isChecked():
             fu.move_all_generated_images_checking(self.config)
         else:

@@ -60,23 +60,29 @@ GENERATION:
   steps: 4
 PROJECT_NAME: PAR for zs
 QUALITY_CHECKS:
-  BASE_DIR: ''
+  BASE_DIR: ./backend/quality_checker
   FUNCTIONS:
-  - code: "def check_black_and_white(image):\n    # Assuming 'image' is a 2D numpy\
-      \ array\n    return len(image.shape) == 2\n"
+  - args: 10
     name: B&W
-  - code: "def check_brightness(image):\n    # Assuming 'image' is a 2D numpy array\
-      \ with 3 channels (RGB)\n    if len(image.shape) == 3:\n        max_val = image.max(axis=(0,\
-      \ 1))\n        return max_val.mean() > 200\n    return False\n"
-    name: Saturation
-  - code: "def check_sharpness(image):\n    # Placeholder for sharpness calculation,\
-      \ assuming 'image' is a 2D array\n    import numpy as np\n    gradient = np.gradient(image.astype(float))\n\
-      \    sharpness = np.mean(np.hypot(*gradient))\n    return sharpness > 20\n"
-    name: Sharpness
-  FUNCTION_BYW:
-    FILENAME: ''
+    path: ./backend/quality_checker/check_black_white.py
+  - args: null
+    name: Always true
+    path: ./backend/quality_checker/check_always_true.py
+  - args:
+    - 10
+    - 20
+    name: Always false
+    path: ./backend/quality_checker/check_always_false.py
+  - args: 50
+    name: Random
+    path: ./backend/quality_checker/check_random.py
+  - args: null
+    name: Always exception
+    path: ./backend/quality_checker/check_throws_exception.py
   selected_checks:
+  - 0
   - 1
+  - 0
   - 0
   - 0
 UI_STYLES:
