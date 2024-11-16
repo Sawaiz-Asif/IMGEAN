@@ -328,7 +328,21 @@ def discard_generated_images_based_on_function(config, function, args):
     # Get the list of all files in the generated images directory
     files = glob.glob(os.path.join(config[FILES][GENERATED_DIR], '*'))
 
+    if args == None:
+        args = ()
+    elif not isinstance(args, tuple):
+        if not isinstance(args, list):
+            args = (args,)
+        else:
+            args = tuple(args)
+
     for file in files:
         with Image.open(file) as img:
-            if function(img, *args):
-                move_generated_discard(config, file, reason=f'Automatic function {function.__name__} returned true for the image')
+            try:
+                ret = function(img, *args)
+                if ret:
+                    move_generated_discard(config, os.path.basename(file), reason=f'Automatic function {function.__name__} returned true for the image')
+            except:
+                return False
+    
+    return True
