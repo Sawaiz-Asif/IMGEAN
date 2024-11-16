@@ -41,7 +41,7 @@ class MainWindow(QtWidgets.QMainWindow, Ui_MainWindow):
         self.annotateImgSelectScreen = AnnotateImg(self.stackedWidget, self.config, images_labeling_dir=cfg[LABELING_DIR])  # Pass the stacked widget
 
         # Setting Screen
-        self.settingsScreen = SettingsWindow(self.stackedWidget)
+        self.settingsScreen = SettingsWindow(self.stackedWidget, self.config)
 
         # Add the third screen (Generate Images) to the stacked widget
         

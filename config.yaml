@@ -39,7 +39,7 @@ FILES:
   LABELING_DIR: ./data/labeling
 GENERATION:
   BASE_OUTPUT_PATH: ../ComfyUI/output
-  IP_COMFY: ''
+  IP_COMFY: http://127.0.0.1:8188
   MODELS:
   - name: sd3_medium_incl_clips.safetensors
     path: ./models/sd_v1.safetensors
@@ -79,6 +79,11 @@ QUALITY_CHECKS:
   - args: null
     name: Always exception
     path: ./backend/quality_checker/check_throws_exception.py
+  - args:
+    - '23'
+    - '34'
+    name: newfunction
+    path: /autofs/unitytravail/travail/sasifchaudhr/DLCV/Lab3/gfdm_calc.py
   selected_checks:
   - 0
   - 1
