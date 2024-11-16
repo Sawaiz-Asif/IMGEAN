@@ -21,14 +21,14 @@ def load_quality_checkers(config):
             module = importlib.util.module_from_spec(spec)
             spec.loader.exec_module(module)
 
-            # Inspect module for functions with the expected inputs/outputs (this allows to have >1 function per file also)
+            # Inspect module for functions with the expected inputs/outputs
             for attr_name in dir(module):
                 attr = getattr(module, attr_name)
                 if callable(attr):
                     sig = signature(attr)
                     params = list(sig.parameters.values())
                     if (len(params) >= 1 and params[0].name == "img" and params[1].name == "args" and sig.return_annotation == bool):
-                        quality_checkers[attr_name] = attr
+                        quality_checkers[file] = attr
 
     return quality_checkers
 
@@ -41,21 +41,21 @@ if __name__ == "__main__":
     quality_checkers = load_quality_checkers(config)
 
     print("Loaded Quality Checkers:")
-    for func_name, func in quality_checkers.items():
-        print(f"  Function: {func_name}, From File: {func.__module__}.py")
+    for file_name, func in quality_checkers.items():
+        print(f"  Function: {file_name}, From File: {func.__module__}.py")
 
     dummy_image = np.zeros((100, 100, 3), dtype=np.uint8)
 
     test_args = {
-        "check_black_white": (10,),
-        "check_random": (70,),
+        "check_black_white.py": (10,),
+        "check_random.py": (70,),
     }
 
     print("\nTesting Quality Checkers:")
-    for func_name, func in quality_checkers.items():
+    for file_name, func in quality_checkers.items():
         try:
-            args = test_args.get(func_name, ())
+            args = test_args.get(file_name, ())
             result = func(dummy_image, *args)
-            print(f"  {func_name}: Returned {result} with args {args}")
+            print(f"  {file_name}: Returned {result} with args {args}")
         except Exception as e:
-            print(f"  {func_name}: Error - {e}")
+            print(f"  {file_name}: Error - {e}")

@@ -64,12 +64,16 @@ QUALITY_CHECKS:
   FUNCTIONS:
   - name: B&W
     path: './backend/quality_checker/check_black_white.py'
+    args:
   - name: Always true
     path: './backend/quality_checker/check_always_true.py'
+    args:
   - name: Always false
     path: './backend/quality_checker/check_always_false.py'
+    args:
   - name: Random
     path: './backend/quality_checker/check_random.py'
+    args:
   selected_checks:
   - 1
   - 0

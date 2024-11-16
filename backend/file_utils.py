@@ -2,6 +2,7 @@ import os
 import shutil
 import glob
 import time
+from PIL import Image
 
 # Config settings
 FILES = 'FILES'
@@ -313,3 +314,21 @@ def move_labeling_dataset(config, filenames, dataset_path):
         destination_path = os.path.join(dataset_path, filename)
         
         os.rename(file_path, destination_path)
+
+def discard_generated_images_based_on_function(config, function, args):
+    """
+    Discards generated images based on the result of a given function.
+    The image will be moved to a discard folder if the function returns True.
+
+    Args:
+        config: A dictionary containing configuration values such as the generated directory.
+        function: A callable function to be applied to each image (e.g., check_black_white).
+        args: Arguments to be passed to the function when applied to the image.
+    """
+    # Get the list of all files in the generated images directory
+    files = glob.glob(os.path.join(config[FILES][GENERATED_DIR], '*'))
+
+    for file in files:
+        with Image.open(file) as img:
+            if function(img, *args):
+                move_generated_discard(config, file, reason=f'Automatic function {function.__name__} returned true for the image')
