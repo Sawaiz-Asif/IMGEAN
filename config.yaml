@@ -60,7 +60,7 @@ GENERATION:
   steps: 4
 PROJECT_NAME: PAR for zs
 QUALITY_CHECKS:
-  BASE_DIR: ''
+  BASE_DIR: './backend/quality_checker'
   FUNCTIONS:
   - code: "def check_black_and_white(image):\n    # Assuming 'image' is a 2D numpy\
       \ array\n    return len(image.shape) == 2\n"
