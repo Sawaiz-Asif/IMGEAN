@@ -1,0 +1,34 @@
+
+colors:
+  background: '#ffffff'
+  yellow: '#ffe599'
+  orange: '#f9cb9c'
+  green: '#b6d7a8'
+  purple: '#b4a7d6'
+  blue: '#9fc5f8'
+  
+  button_cancel: '#ff6666'
+  button_generate: '#66cc66'
+  progress_bar: '#00aaff'
+  text_prompt: '#333333'
+sizes:
+  main_buttons:
+    width: 260
+    height: 90
+fonts:
+  text_font_size: 14
+  title_font_size: 75
+  button_font_size: 18
+  bold_font_file: './frontend/fonts/BalsamiqSans-Bold.ttf'
+  regular_font_file: './frontend/fonts/BalsamiqSans-Regular.ttf'
+paddings:
+  before_title: 50
+  after_title: 100
+  screen_ending: 20
+  main_buttons_horizontal: 50
+  main_buttons_vertical: 25
+borders:
+  main_button_border: 2
+  main_button_style: 'solid black'
+  main_button_radius: 10
+window_height: 720
