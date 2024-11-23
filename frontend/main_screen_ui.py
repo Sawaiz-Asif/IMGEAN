@@ -19,8 +19,8 @@ class Ui_MainScreen(object):
     def __init__(self, ui_styles):
         self.ui_styles = ui_styles
 
-    def setupUi(self, MainScren):
-        MainScren.setObjectName("MainScreen")
+    def setupUi(self, MainScreen):
+        MainScreen.setObjectName("MainScreen")
 
         main_widget = QWidget()
 
@@ -135,4 +135,4 @@ class Ui_MainScreen(object):
         main_layout.addLayout(lower_layout)
         main_layout.addSpacing(self.ui_styles[PADDINGS][SCREEN_ENDING])
         
-        MainScren.setLayout(main_layout)
+        MainScreen.setLayout(main_layout)

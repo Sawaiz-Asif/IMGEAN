@@ -6,6 +6,8 @@ colors:
   green: '#b6d7a8'
   purple: '#b4a7d6'
   blue: '#9fc5f8'
+  red: '#ea9999'
+  black: '#000000'
   
   button_cancel: '#ff6666'
   button_generate: '#66cc66'
@@ -15,10 +17,23 @@ sizes:
   main_buttons:
     width: 260
     height: 90
+  return_button:
+    width: 80
+    height: 20
+  prompt_box:
+    height: 100
+  seed_box:
+    width: 65
+  spin_box:
+    width: 40
+  combo_models:
+    width: 250
 fonts:
   text_font_size: 14
+  label_font_size: 18
   title_font_size: 75
   button_font_size: 18
+  return_button_font_size: 14
   bold_font_file: './frontend/fonts/BalsamiqSans-Bold.ttf'
   regular_font_file: './frontend/fonts/BalsamiqSans-Regular.ttf'
 paddings:
@@ -27,8 +42,11 @@ paddings:
   screen_ending: 20
   main_buttons_horizontal: 50
   main_buttons_vertical: 25
+  sides: 25
 borders:
   main_button_border: 2
   main_button_style: 'solid black'
   main_button_radius: 10
+  default_border: 2
+  default_radius: 5
 window_height: 720
