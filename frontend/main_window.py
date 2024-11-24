@@ -33,7 +33,7 @@ class MainWindow(QtWidgets.QMainWindow):
         self.generator_window = GeneratorWindow(self, self.config, self.ui_styles)
 
         # Img Quality Check Screen
-        self.imgQualityCheckScreen = CheckImgQuality(self.ui.stackedWidget, self.config, images_checking_dir=cfg[CHECKING_DIR],  images_discarded_dir=cfg[DISCARDED_DIR])  # Pass the stacked widget
+        self.imgQualityCheckScreen = CheckImgQuality(self, self.config, self.ui_styles)  # Pass the stacked widget
         # Annotate image Screen
         self.annotateImgSelectScreen = AnnotateImg(self.ui.stackedWidget, self.config, images_labeling_dir=cfg[LABELING_DIR])  # Pass the stacked widget
 

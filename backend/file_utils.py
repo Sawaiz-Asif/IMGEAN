@@ -346,3 +346,24 @@ def discard_generated_images_based_on_function(config, function, args):
                 return False
     
     return True
+
+def get_discarded_reasons(config, filename):
+    """
+    Reads a hardcoded file with a format of 'filename<TAB>reason' and returns the discard reason
+    for the given filename.
+
+    Args:
+        filename (str): The image filename (e.g., 'pedestrian2.png').
+
+    Returns:
+        str: The reason for discarding the image, or None if not found.
+    """
+
+    with open(config[FILES][DISCARDED_TRACKER], 'r') as file:
+        for line in file:
+            parts = line.strip().split('\t')
+            if len(parts) == 2:
+                file_name, reason = parts
+                if file_name == filename:
+                    return reason 
+    return "" 
