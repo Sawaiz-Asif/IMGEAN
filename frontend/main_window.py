@@ -5,6 +5,8 @@ from frontend.img_quality_check import CheckImgQuality
 from frontend.annotate_img import AnnotateImg  # Import Annotate Image logic
 from frontend.generator_window import GeneratorWindow  # Import the logic class
 
+from backend.annotation_manager.dataset_utils import DatasetManager
+
 FILES = 'FILES'
 CHECKING_DIR = 'CHECKING_DIR'
 DISCARDED_DIR = 'DISCARDED_DIR'
@@ -15,6 +17,8 @@ class MainWindow(QtWidgets.QMainWindow, Ui_MainWindow):
         super(MainWindow, self).__init__()
 
         self.config = config
+        dataset_path = config['DATASET']['PATH']
+        self.dataset_manager = DatasetManager(dataset_path, config)
 
         self.setupUi(self)  # Set up the UI
 
@@ -38,10 +42,13 @@ class MainWindow(QtWidgets.QMainWindow, Ui_MainWindow):
         # Img Quality Check Screen
         self.imgQualityCheckScreen = CheckImgQuality(self.stackedWidget, self.config, images_checking_dir=cfg[CHECKING_DIR],  images_discarded_dir=cfg[DISCARDED_DIR])  # Pass the stacked widget
         # Annotate image Screen
-        self.annotateImgSelectScreen = AnnotateImg(self.stackedWidget, self.config, images_labeling_dir=cfg[LABELING_DIR])  # Pass the stacked widget
+        self.annotateImgSelectScreen = AnnotateImg(self.stackedWidget, self.config,self.dataset_manager, images_labeling_dir=cfg[LABELING_DIR])  # Pass the stacked widget
 
         # Setting Screen
-        self.settingsScreen = SettingsWindow(self.stackedWidget)
+        self.settingsScreen = SettingsWindow(self.stackedWidget, self.config,self.dataset_manager)
+
+        # Connect the signal from SettingsWindow to AnnotateImg
+        self.settingsScreen.dataset_updated.connect(self.annotateImgSelectScreen.refresh_labels)
 
         # Add the third screen (Generate Images) to the stacked widget
         

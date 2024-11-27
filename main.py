@@ -11,7 +11,7 @@ if __name__ == "__main__":
     
     config = read_config('./config.yaml')
 
-    process = cu.start_comfyui_server()
+    #process = cu.start_comfyui_server()
 
     # import shutil
     # shutil.rmtree('./data', ignore_errors=True)
@@ -26,4 +26,6 @@ if __name__ == "__main__":
 
         sys.exit(app.exec_())  # Execute the application
     finally:
-        cu.stop_comfyui_server(process)
+        pass
+        
+        #cu.stop_comfyui_server(process)

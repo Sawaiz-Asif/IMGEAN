@@ -125,3 +125,4 @@ class Ui_AnnotateImg(object):
     def retranslateUi(self, AnnotateImg):
         _translate = QtCore.QCoreApplication.translate
         AnnotateImg.setWindowTitle(_translate("AnnotateImg", "Annotate Images"))
+        
