@@ -24,7 +24,7 @@ DATASET:
   HEIGHT: 256
   LABEL: eval
   NAME: RAP2
-  PATH: ./data/custom_dataset/dataset_zs_run0.pkl
+  PATH: ./data/custom_dataset/dataset_info.pkl
   TRAIN_SPLIT: trainval
   TYPE: pedes
   VAL_SPLIT: test

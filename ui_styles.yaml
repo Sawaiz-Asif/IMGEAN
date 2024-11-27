@@ -1,4 +1,3 @@
-
 colors:
   background: '#ffffff'
   yellow: '#ffe599'
@@ -16,8 +15,8 @@ colors:
   text_prompt: '#333333'
 sizes:
   main_buttons:
-    width: 260
-    height: 90
+    width: 275
+    height: 100
   return_button:
     width: 80
     height: 20
@@ -31,6 +30,17 @@ sizes:
     width: 250
   img_preview:
     width: 420
+  dropdown_button:
+    width: 100
+    height: 600
+  annotate_img:
+    width: 500
+    height: 500
+  label_nav_button:
+    width: 100
+  label_list:
+    width: 350
+    height: 430
 fonts:
   text_font_size: 14
   label_font_size: 18
@@ -46,6 +56,10 @@ paddings:
   main_buttons_horizontal: 50
   main_buttons_vertical: 25
   sides: 25
+  min_sides: 15
+  spacing_among_elements: 20
+  labels_left: 10
+  labels_up: 4
 borders:
   main_button_border: 2
   main_button_style: 'solid black'
@@ -53,3 +67,4 @@ borders:
   default_border: 2
   default_radius: 5
 window_height: 720
+num_imgs_labeling_grid: 5

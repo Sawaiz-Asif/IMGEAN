@@ -1,8 +1,10 @@
 from PyQt5 import QtWidgets, QtGui, QtCore
 from frontend.annotate_img_ui import Ui_AnnotateImg  # Import the UI
+from frontend.img_quality_check_ui import Ui_CheckImgQuality
 import os
 import backend.file_utils as fu
 from backend.annotation_manager.automatic_labeling import open_model,get_predictions_with_confidence
+from config_constants import *
 
 # Custom QLabel to handle image clicks
 class ClickableLabel(QtWidgets.QLabel):
@@ -12,16 +14,16 @@ class ClickableLabel(QtWidgets.QLabel):
         self.clicked.emit()  # Emit signal when label is clicked
         super().mousePressEvent(event)
 
-class AnnotateImg(QtWidgets.QWidget):
-    def __init__(self, stacked_widget, config, images_labeling_dir="data"):
+class AnnotateImg(QtWidgets.QMainWindow):
+    def __init__(self, main_window, config, ui_styles):
         super(AnnotateImg, self).__init__()
-        self.ui = Ui_AnnotateImg(config)  # Initialize the UI
+        self.ui = Ui_AnnotateImg(config, ui_styles)  # Initialize the UI
         self.ui.setupUi(self)
-        self.stacked_widget = stacked_widget  # Reference to the QStackedWidget for navigation
+        self.main_window = main_window  # Reference to the QStackedWidget for navigation
 
         self.config = config
 
-        self.images_labeling_dir = images_labeling_dir
+        self.images_labeling_dir = config[FILES][LABELING_DIR]
 
         # Initialize predictions storage
         self.predictions_for_images = {}  # Initialize an empty dictionary to store predictions for all images
@@ -37,6 +39,7 @@ class AnnotateImg(QtWidgets.QWidget):
         self.ui.confirmLabelButton.clicked.connect(self.on_confirm_label_click)
         self.ui.openImageGridButton.clicked.connect(self.on_open_image_grid_click)
         self.ui.importButton.clicked.connect(self.on_import_dataset_click)
+        self.ui.closeImageGridButton.clicked.connect(self.on_close_image_grid_click)
 
         # Track the current image index for navigation
         self.current_image_index = 0
@@ -49,11 +52,9 @@ class AnnotateImg(QtWidgets.QWidget):
 
     def on_return_click(self):
         # Return to the main screen
+        self.on_close_image_grid_click()
+        self.main_window.change_current_screen(0)
 
-        self.ui.imageGridOverlay.setHidden(True)
-        self.ui.imageLabel.setHidden(False)
-
-        self.stacked_widget.setCurrentIndex(0)
 
     def on_prev_click(self):
         # Go to the previous image
@@ -231,11 +232,15 @@ class AnnotateImg(QtWidgets.QWidget):
 
     def on_open_image_grid_click(self):
         # Show the image grid overlay
-        self.ui.imageGridOverlay.setHidden(False)
+        self.ui.scroll_widget.setHidden(False)
+        self.ui.closeImageGridButton.setHidden(False)
 
         self.populate_image_grid(self.ui.imageGridLayout, self.images_to_label)
 
-        self.ui.imageLabel.setHidden(True)  # Hide the image display
+    def on_close_image_grid_click(self):
+        # Show the image grid overlay
+        self.ui.scroll_widget.setHidden(True)
+        self.ui.closeImageGridButton.setHidden(True)
 
     def on_image_clicked(self, index):
         # Update current_image_index based on the clicked image
@@ -359,8 +364,9 @@ class AnnotateImg(QtWidgets.QWidget):
             label.setFrameShape(QtWidgets.QFrame.Box)
             label.clicked.connect(lambda idx=i: self.on_image_clicked(idx))
 
+            # TODO meter esto en un metodo y asi puedo controlar color y demas, y shape del grid
             # Add the label to the grid layout
-            grid_layout.addWidget(label, i // 4, i % 4)
+            self.ui.populate_grid(label, i)
 
     def refresh_window_info(self):
         self.images_to_label =  self.get_labeling_images()
