@@ -1,44 +1,48 @@
 import torch
+import os
 from PIL import Image
 import torch.nn.functional as F
 from backend.annotation_manager.custom_models import *
 
 # Config settings
 ANNOTATION = 'ANNOTATION'
+MODELS = 'MODELS'
+CURRENT_SELECTED ='CURRENT_SELECTED'
 
 model_mapping = {
     "PAR_MODEL": (get_PAR_model, load_PAR_model, process_PAR_model)
     # Add more mappings as needed
 }
 
-def open_model(config, model_key='PAR_MODEL', number_attributes=51):
+def open_model(config, model_name=None, number_attributes=51):
     """
     Load a pre-trained model from a checkpoint based on the provided configuration.
 
     Args:
         config (dict): Configuration dictionary that holds the model path under `ANNOTATION`.
-        model_key (str): Key in `config[ANNOTATION]` to access the model path.
+        model_name (str): Key in `config[ANNOTATION][MODELS][INDEX][NAME]` to access the model path.
         number_attributes (int): Number of attributes used to configure the model.
 
     Returns:
         torch.nn.Module: The loaded PyTorch model.
     """
-    cfg = config[ANNOTATION][model_key]
 
+    cfg = get_model_config(config, model_name)
+    model_type = cfg.get('TYPE', 'PAR_MODEL')
     # This part of here dynamically handles geting the model and loading it based on the model_mapping dict
-    get_model, load_model, _ = model_mapping.get(model_key)
+    get_model, load_model, _ = model_mapping.get(model_type)
     if get_model:
         model = get_model(cfg, number_attributes)
         load_model(cfg, model)
     else:
-        raise ValueError(f"Model type '{model_key}' is not defined.")
+        raise ValueError(f"Model type '{model_type}' is not defined.")
 
     model.eval()
     
     return model
 
 
-def get_predictions_with_confidence(config, model, image_path, class_labels, model_key='PAR_MODEL'):
+def get_predictions_with_confidence(config, model, image_path, class_labels, model_name=None):
     """
     Get the predicted labels and their confidence scores for an image using the loaded model.
 
@@ -54,11 +58,17 @@ def get_predictions_with_confidence(config, model, image_path, class_labels, mod
     """
 
     # This part of here dynamically handles geting the model and loading it based on the model_mapping dict
-    _, _, get_transform = model_mapping.get(model_key)
+    cfg = get_model_config(config, model_name)
+    model_type = cfg.get('TYPE', 'PAR_MODEL')
+
+    _, _, get_transform = model_mapping.get(model_type)
     if get_transform:
-        _, valid_transform = get_transform(config)
+        _, valid_transform = get_transform(cfg)
     else:
-        raise ValueError(f"Model type '{model_key}' is not defined.")
+        raise ValueError(f"Model type '{model_type}' is not defined.")
+    
+    if not os.path.exists(image_path):
+        raise FileNotFoundError(f"Image file not found: {image_path}")
     
     image = Image.open(image_path).convert('RGB')
     image_tensor = valid_transform(image).unsqueeze(0)
@@ -78,3 +88,24 @@ def get_predictions_with_confidence(config, model, image_path, class_labels, mod
     predictions_with_confidence = list(zip(class_labels, probabilities))
     
     return predictions_with_confidence
+
+def get_model_config(config, model_name):
+    """
+    Retrieve the configuration for a specific model by name.
+
+    Args:
+        config (dict): The configuration dictionary.
+        model_name (str): The name of the model to retrieve.
+
+    Returns:
+        dict: The configuration for the specified model.
+    """
+    index = config[ANNOTATION][CURRENT_SELECTED]
+    if model_name is None:
+        return config[ANNOTATION][MODELS][index]
+
+    models = config.get(ANNOTATION, {}).get(MODELS, [])
+    for model_cfg in models:
+        if model_cfg.get('Name') == model_name:
+            return model_cfg
+    raise ValueError(f"Model with name '{model_name}' not found in configuration.")

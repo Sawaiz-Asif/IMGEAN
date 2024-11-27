@@ -1,5 +1,13 @@
 from PyQt5 import QtWidgets
 from frontend.settings_ui import Ui_SettingsWindow  # Import the UI class
+# dialogs
+from frontend.model_settings_dialog import ModelSettingsDialog
+from frontend.quality_checker_dialog import QualityCheckerDialog
+from frontend.annotator_model_dialog import AnnotatorModelDialog
+from frontend.add_thresh_dialog import AddThresholdDialog
+
+import ast
+
 import os
 import logging
 
@@ -8,22 +16,26 @@ from backend.config_reader import save_config
 # Import the DatasetManager class
 from backend.annotation_manager.dataset_utils import DatasetManager
 
+from PyQt5.QtCore import pyqtSignal
+
 
 
 class SettingsWindow(QtWidgets.QMainWindow, Ui_SettingsWindow):
-    def __init__(self, stacked_widget, config):
+    dataset_updated = pyqtSignal()# Signal to notify updates
+
+    def __init__(self, stacked_widget, config,dataset_manager):
         super(SettingsWindow, self).__init__()
         self.setupUi(self)
         self.stacked_widget = stacked_widget
         self.config = config
 
         # Initialize DatasetManager
-        self.dataset_manager = DatasetManager(
-            pickle_file=self.config['DATASET']['PATH'],
-            config=self.config,
-            use_default_path=True
-        )
-
+        # self.dataset_manager = DatasetManager(
+        #     pickle_file=self.config['DATASET']['PATH'],
+        #     config=self.config,
+        #     use_default_path=True
+        # )
+        self.dataset_manager = dataset_manager
         if not self.dataset_manager.initialized:
             QtWidgets.QMessageBox.critical(self, "Error", "Failed to initialize Dataset Manager.")
             return
@@ -40,21 +52,34 @@ class SettingsWindow(QtWidgets.QMainWindow, Ui_SettingsWindow):
         self.removeLabelButton.clicked.connect(self.remove_label)
         self.saveDatasetButton.clicked.connect(self.save_dataset_settings)
 
-        # Annotator section connections
-        self.addNewAnnotatorModelButton.clicked.connect(self.add_new_annotator_model)
-        self.removeAnnotatorModelButton.clicked.connect(self.remove_annotator_model)
-        self.saveAnnotatorButton.clicked.connect(self.save_annotator_settings)
-
         # Image Generator section connections
-        self.addNewImageModelButton.clicked.connect(self.add_new_image_model)
+        self.addNewImageModelButton.clicked.connect(lambda: self.manage_image_model())
         self.removeImageModelButton.clicked.connect(self.remove_image_model)
         self.outputFolderBrowseButton.clicked.connect(self.browse_output_folder)
         self.saveImageGenButton.clicked.connect(self.save_image_generator_settings)
+        self.imageModelSettingsButton.clicked.connect(self.edit_selected_image_model)
 
         # Quality Checker section connections
-        self.addNewQualityFunctionButton.clicked.connect(self.add_new_quality_function)
         self.removeQualityFunctionButton.clicked.connect(self.remove_quality_function)
         self.saveQualityCheckerButton.clicked.connect(self.save_quality_checker_settings)
+        self.addNewQualityFunctionButton.clicked.connect(lambda: self.manage_quality_function())
+        self.qualityFunctionSettingsButton.clicked.connect(self.edit_selected_quality_function)
+
+        # Annotator section connections
+        # self.addNewAnnotatorModelButton.clicked.connect(self.add_new_annotator_model)
+        # self.removeAnnotatorModelButton.clicked.connect(self.remove_annotator_model)
+        self.saveAnnotatorButton.clicked.connect(self.save_annotator_settings)
+
+        # Button connections
+        self.addConfidenceButton.clicked.connect(self.add_confidence_threshold)
+        self.editConfidenceButton.clicked.connect(self.edit_confidence_threshold)
+        self.removeConfidenceButton.clicked.connect(self.remove_confidence_threshold)
+        # Connect buttons
+        self.addModelButton.clicked.connect(self.add_new_model)
+        self.editModelButton.clicked.connect(self.edit_selected_model)
+        self.removeModelButton.clicked.connect(self.remove_selected_model)
+
+        
 
     def initialize_ui(self):
         # Initialize Dataset section
@@ -77,37 +102,118 @@ class SettingsWindow(QtWidgets.QMainWindow, Ui_SettingsWindow):
             QtWidgets.QMessageBox.warning(self, "Warning", "Failed to load labels from dataset.")
 
         # Initialize Annotator section
-        annotator_config = self.config.get('ANNOTATOR', {})
-        models = annotator_config.get('MODELS', [])
+        annotator_config = self.config.get('ANNOTATION', {})
+        self.annotator_data = annotator_config.get('MODELS', []).copy()  # Work on a copy of the models
         self.annotatorModelsList.clear()
-        for model in models:
-            self.annotatorModelsList.addItem(model.get('Name', 'Unknown Model'))
+        for model in self.annotator_data:
+            self.annotatorModelsList.addItem(model.get('Name', 'Unnamed Model'))
 
+        self.currentSelectionComboBox.clear()
+        for model in self.annotator_data:
+            self.currentSelectionComboBox.addItem(model.get('Name', 'Unnamed Model'))
+
+        # Set the current selection
+        current_selected = self.config.get('ANNOTATION', {}).get('CURRENT_SELECTED', 0)
+        if 0 <= current_selected < len(self.annotator_data):
+            self.currentSelectionComboBox.setCurrentIndex(current_selected)
+
+        
+
+        # Handle other Annotator fields
         self.colorAssistCheckbox.setChecked(annotator_config.get('ColorAssist', False))
-        self.confidenceThresholdsLineEdit.setText(str(annotator_config.get('ConfidenceThresholds', '')))
+        auto_label_config = self.config.get('AUTO_LABEL', {})
+        # Load MAX_AUTO_LABEL
+        self.maxAutoLabelSpinBox.setValue(auto_label_config.get('MAX_AUTO_LABEL', 12))
+
+        # Load CHECKBOX_THRESHOLD
+        self.checkboxThresholdSpinBox.setValue(auto_label_config.get('CHECKBOX_THRESHOLD', 0.5))
+
+        # Load DEFAULT_COLOR
+        default_color = auto_label_config.get('DEFAULT_COLOR', 'blue')
+        if default_color in [self.defaultColorComboBox.itemText(i) for i in range(self.defaultColorComboBox.count())]:
+            self.defaultColorComboBox.setCurrentText(default_color)
+        else:
+            self.defaultColorComboBox.setCurrentIndex(0)  # Fallback to the first color
+
+        # Load CONFIDENCE_THRESHOLDS
+        self.temp_confidence_thresholds = auto_label_config.get('CONFIDENCE_THRESHOLDS', [])
+        self.confidenceThresholdList.clear()
+        for threshold in self.temp_confidence_thresholds:
+            self.confidenceThresholdList.addItem(f"{threshold['color']}: {threshold['value']}")
+
+        # Load Color-Assisted Mode (if applicable in the config)
+        self.colorAssistCheckbox.setChecked(auto_label_config.get('ENABLE_COLOR_ASSIST', False))
+
 
         # Initialize Image Generator section
-        generation_config = self.config.get('GENERATION', {})
-        models = generation_config.get('MODELS', [])
+        self.temp_image_config = self.config.get('GENERATION', {}).copy()
+        models = self.temp_image_config.get('MODELS', [])
         self.imageModelsList.clear()
         for model in models:
             self.imageModelsList.addItem(model.get('name', 'Unknown Model'))
 
-        self.outputFolderLineEdit.setText(generation_config.get('BASE_OUTPUT_PATH', '../ComfyUI/output'))
-        self.comfyUiIpLineEdit.setText(generation_config.get('IP_COMFY', 'http://127.0.0.1:8188'))
+        self.outputFolderLineEdit.setText(self.temp_image_config.get('BASE_OUTPUT_PATH', '../ComfyUI/output'))
+        self.comfyUiIpLineEdit.setText(self.temp_image_config.get('IP_COMFY', 'http://127.0.0.1:8188'))
 
         # Initialize Quality Checker section
-        quality_config = self.config.get('QUALITY_CHECKS', {})
-        functions = quality_config.get('FUNCTIONS', [])
+        self.temp_quality_config = self.config.get('QUALITY_CHECKS', {}).copy()
+        functions = self.temp_quality_config.get('FUNCTIONS', [])
         self.qualityFunctionsList.clear()
         for function in functions:
             self.qualityFunctionsList.addItem(function.get('name', 'Unknown Function'))
+    
 
+    def manage_image_model(self, model_index=None):
+        """
+        Opens the model settings dialog for creating or editing a model.
+        If model_index is provided, it will be in edit mode.
+        """
+        # Determine if we are editing an existing model or creating a new one
+        title=''
+        if model_index is not None:
+            model_data = self.temp_image_config['MODELS'][model_index]
+            current_name = model_data.get('name', '')
+            current_path = model_data.get('path', '')
+            title = 'Edit Model'
+        else:
+            current_name = ''
+            current_path = ''
+            title = 'Add New Model'
+        
+        # Open the dialog
+        dialog = ModelSettingsDialog(self,title=title, model_name=current_name, model_path=current_path)
+        if dialog.exec_() == QtWidgets.QDialog.Accepted:
+            new_name, new_path = dialog.get_model_data()
+
+            # Validate user input
+            if not dialog.validate_input():
+                return
+
+            if model_index is None:  # Creating a new model
+                model_entry = {'name': new_name, 'path': new_path}
+                self.temp_image_config['MODELS'].append(model_entry)
+                self.imageModelsList.addItem(new_name)
+            else:  # Editing an existing model
+                self.temp_image_config['MODELS'][model_index]['name'] = new_name
+                self.temp_image_config['MODELS'][model_index]['path'] = new_path
+                self.imageModelsList.item(model_index).setText(new_name)
+
+            # Save the updated configuration
+            QtWidgets.QMessageBox.information(self, "Success", "Model settings saved successfully.")
+    def edit_selected_image_model(self):
+        print("hi i am here")
+        selected_items = self.imageModelsList.selectedItems()
+        if selected_items:
+            index = self.imageModelsList.row(selected_items[0])
+            self.manage_image_model(model_index=index)
+   
     # Dataset Section Methods
     def browse_pickle_file(self):
         options = QtWidgets.QFileDialog.Options()
         file_name, _ = QtWidgets.QFileDialog.getOpenFileName(self, "Select Pickle File", "", "Pickle Files (*.pkl);;All Files (*)", options=options)
         if file_name:
+            project_dir = os.path.abspath(".")
+            file_name = os.path.relpath(file_name, start=project_dir)
             self.pickleFilePathLineEdit.setText(file_name)
             self.dataset_manager.pickle_file = file_name
             self.dataset_manager.load_annotation()
@@ -152,124 +258,179 @@ class SettingsWindow(QtWidgets.QMainWindow, Ui_SettingsWindow):
         if selected_items:
             item = selected_items[0]
             index = self.labelsListWidget.row(item)
-            confirm = QtWidgets.QMessageBox.question(self, 'Confirm', f"Are you sure you want to remove label '{item.text()}'?")
+            print(f"[INFO] Selected label to remove: '{item.text()}' at index {index}.")
+            
+            confirm = QtWidgets.QMessageBox.question(
+                self, 'Confirm', f"Are you sure you want to remove label '{item.text()}'?"
+            )
+            
             if confirm == QtWidgets.QMessageBox.Yes:
+                print(f"[INFO] User confirmed removal of label: '{item.text()}'.")
                 success = self.dataset_manager.remove_label(label_index=index)
+                
                 if success:
+                    print(f"[SUCCESS] Label '{item.text()}' removed successfully.")
                     self.labelsListWidget.takeItem(index)
-                    del self.labels[index]
+                    self.dataset_updated.emit()  # Emit the signal to notify updates
+                    #del self.labels[index]
                 else:
+                    print(f"[ERROR] Failed to remove label: '{item.text()}'.")
                     QtWidgets.QMessageBox.warning(self, "Warning", "Failed to remove label.")
+            else:
+                print(f"[INFO] User canceled removal of label: '{item.text()}'.")
+        else:
+            print("[INFO] No label selected for removal.")
 
     def save_dataset_settings(self):
         # Update config
         self.config['DATASET']['NAME'] = self.descriptionLineEdit.text()
         self.config['DATASET']['PATH'] = self.pickleFilePathLineEdit.text()
-
-        # Save config file
-        self.save_config()
-
         # Update dataset manager
         self.dataset_manager.pickle_file = self.config['DATASET']['PATH']
         self.dataset_manager.save_annotation()
+        # Save config file
+        self.save_config()
 
         QtWidgets.QMessageBox.information(self, "Success", "Dataset settings saved successfully.")
 
-    # Annotator Section Methods
-    def add_new_annotator_model(self):
-        name, ok = QtWidgets.QInputDialog.getText(self, 'Add New Model', 'Enter model name:')
-        if ok and name:
-            # Collect other required fields
-            backbone_type, ok = QtWidgets.QInputDialog.getText(self, 'Backbone Type', 'Enter backbone type (e.g., resnet50):')
-            if not ok:
-                return
-            classifier_bn, ok = QtWidgets.QInputDialog.getItem(self, 'Classifier BN', 'Batch Norm (true/false):', ['true', 'false'], 0, False)
-            if not ok:
-                return
-            classifier_name, ok = QtWidgets.QInputDialog.getText(self, 'Classifier Name', 'Enter classifier name:')
-            if not ok:
-                return
-            classifier_pooling, ok = QtWidgets.QInputDialog.getText(self, 'Classifier Pooling', 'Enter pooling method (e.g., avg):')
-            if not ok:
-                return
-            classifier_scale, ok = QtWidgets.QInputDialog.getInt(self, 'Classifier Scale', 'Enter scale value:', value=1)
-            if not ok:
-                return
-            dataset_height, ok = QtWidgets.QInputDialog.getInt(self, 'Dataset Height', 'Enter height:', value=256)
-            if not ok:
-                return
-            dataset_width, ok = QtWidgets.QInputDialog.getInt(self, 'Dataset Width', 'Enter width:', value=192)
-            if not ok:
-                return
-            path, _ = QtWidgets.QFileDialog.getOpenFileName(self, 'Select Model File', '', 'Model Files (*.pth *.pt)')
-            if not path or not os.path.exists(path):
-                QtWidgets.QMessageBox.warning(self, 'Error', 'Model file does not exist.')
-                return
-
-            # Build model entry
-            model_entry = {
-                'Name': name,
-                'BACKBONE_TYPE': backbone_type,
-                'CLASSIFIER': {
-                    'BN': classifier_bn.lower() == 'true',
-                    'NAME': classifier_name,
-                    'POOLING': classifier_pooling,
-                    'SCALE': classifier_scale
-                },
-                'DATASET': {
-                    'HEIGHT': dataset_height,
-                    'WIDTH': dataset_width
-                },
-                'PATH': path
-            }
-
-            # Verify model mapping exists
-            if not self.verify_model_mapping(name):
-                QtWidgets.QMessageBox.warning(self, 'Error', f"No model mapping found for '{name}'.")
-                return
-
-            # Add to config and UI
-            self.config.setdefault('ANNOTATOR', {}).setdefault('MODELS', []).append(model_entry)
-            self.annotatorModelsList.addItem(name)
-
-        # Save the updated config
-        self.save_config()
-
-    def remove_annotator_model(self):
-        selected_items = self.annotatorModelsList.selectedItems()
+    # Quality Checker Section Methods
+    def remove_quality_function(self):
+        selected_items = self.qualityFunctionsList.selectedItems()
         if selected_items:
             item = selected_items[0]
-            index = self.annotatorModelsList.row(item)
-            confirm = QtWidgets.QMessageBox.question(self, 'Confirm', f"Are you sure you want to remove model '{item.text()}'?")
+            index = self.qualityFunctionsList.row(item)
+            confirm = QtWidgets.QMessageBox.question(self, 'Confirm', f"Are you sure you want to remove function '{item.text()}'?")
             if confirm == QtWidgets.QMessageBox.Yes:
-                self.annotatorModelsList.takeItem(index)
-                del self.config['ANNOTATOR']['MODELS'][index]
-                # Save the updated config
-                self.save_config()
+                self.qualityFunctionsList.takeItem(index)
+                del self.temp_quality_config['QUALITY_CHECKS']['FUNCTIONS'][index]
 
-    def save_annotator_settings(self):
-        self.config.setdefault('ANNOTATOR', {})
-        self.config['ANNOTATOR']['ColorAssist'] = self.colorAssistCheckbox.isChecked()
-        self.config['ANNOTATOR']['ConfidenceThresholds'] = self.confidenceThresholdsLineEdit.text()
-        self.save_config()
-        QtWidgets.QMessageBox.information(self, "Success", "Annotator settings saved successfully.")
+    def save_quality_checker_settings(self):
+        self.config['QUALITY_CHECKS'] = self.temp_quality_config.copy()  # Save temp_config to main config
+        self.save_config()  # Write to file
+        QtWidgets.QMessageBox.information(self, "Success", "Quality checker settings saved successfully.")
 
-    def verify_model_mapping(self, model_name):
-        # Implement logic to verify that the model mapping exists
-        # For example, check if model_name exists in model_mapping
-        # Here, we'll simulate the model_mapping as an example
-        model_mapping = {
-            "Model1": ("func1", "func2", "func3"),
-            "Model2": ("funcA", "funcB", "funcC")
-            # Add actual model mappings here
-        }
-        return model_name in model_mapping
+    def parse_args(self,args_string):
+        """
+        Parse a comma-separated string into a list of values with inferred types.
+        Example: "10,20" -> [10, 20]
+        """
+        if not args_string.strip():  # Handle empty input
+            return []
+
+        parsed_args = []
+        for arg in args_string.split(','):
+            arg = arg.strip()  # Remove whitespace
+            try:
+                # Convert to int or float if possible
+                if '.' in arg:
+                    parsed_args.append(float(arg))
+                else:
+                    parsed_args.append(int(arg))
+            except ValueError:
+                # Keep as string if conversion fails
+                parsed_args.append(arg)
+        return parsed_args
+
+    def manage_quality_function(self, function_index=None):
+        """
+        Opens the quality function dialog for creating or editing a function.
+        If function_index is provided, it will be in edit mode.
+        """
+        is_editing = function_index is not None
+
+        if is_editing:
+            # Pre-fill existing data for editing
+            function_data = self.temp_quality_config['QUALITY_CHECKS']['FUNCTIONS'][function_index]
+            current_name = function_data.get('name', '')
+            current_path = function_data.get('path', '')
+            current_path = os.path.relpath(current_path, start=os.path.abspath("."))  # Normalize to relative path
+            args = function_data.get('args', [])
+            if isinstance(args, (list, tuple)):
+                current_args = ','.join(map(str, args))  # Display as a string
+            else:
+                current_args = ''  # Ensure current_args is always a string
+        else:
+            # Blank data for new function
+            current_name = ''
+            current_path = ''
+            current_args = ''  # Ensure current_args is always a string
+
+        # Open dialog for user input
+        dialog = QualityCheckerDialog(
+            self,
+            function_name=current_name,
+            file_path=current_path,
+            args=current_args,
+            is_editing=is_editing
+        )
+
+        if dialog.exec_() == QtWidgets.QDialog.Accepted:
+            new_name, new_path, new_args = dialog.get_function_data()
+            # Parse the new arguments
+            new_args = self.parse_args(new_args) 
+
+            # Validate inputs (file existence and function testing)
+            if not dialog.validate_input():
+                return
+            try:
+                result = ast.literal_eval(new_args)  # Converts to [10, 20]
+                print(result)  # Output: [10, 20]
+                print(type(result))  # Output: <class 'list'>
+            except (ValueError, SyntaxError):
+                print("Invalid input!")
+            
+
+            # Handle file movement for new or updated functions
+            if not is_editing:
+                try:
+                    checking_dir = os.path.join(".", "data", "checking")
+                    if not os.path.exists(checking_dir):
+                        os.makedirs(checking_dir)
+
+                    # Move the file to the directory
+                    destination_path = os.path.join(checking_dir, os.path.basename(new_path))
+                    if os.path.exists(destination_path):
+                        QtWidgets.QMessageBox.warning(
+                            self, "Error",
+                            f"A file with the name '{os.path.basename(new_path)}' already exists in the checking directory."
+                        )
+                        return  # Stop further processing
+
+                    os.replace(new_path, destination_path)
+                    new_path = os.path.relpath(destination_path, start=os.path.abspath("."))
+                except Exception as e:
+                    QtWidgets.QMessageBox.critical(self, "Error", f"Failed to move the file: {e}")
+                    return
+
+            # Update or add the function entry in the config
+            if is_editing:
+                self.temp_quality_config['QUALITY_CHECKS']['FUNCTIONS'][function_index] = {
+                    'name': new_name,
+                    'path': new_path,
+                    'args': new_args
+                }
+                self.qualityFunctionsList.item(function_index).setText(new_name)
+            else:
+                function_entry = {'name': new_name, 'path': new_path, 'args': new_args}
+                self.temp_quality_config['QUALITY_CHECKS']['FUNCTIONS'].append(function_entry)
+                self.qualityFunctionsList.addItem(new_name)
+
+            QtWidgets.QMessageBox.information(self, "Success", "Quality function settings saved successfully.")
+
+    def edit_selected_quality_function(self):
+        selected_items = self.qualityFunctionsList.selectedItems()
+        if selected_items:
+            index = self.qualityFunctionsList.row(selected_items[0])
+            self.manage_quality_function(function_index=index)
+
 
     # Image Generator Section Methods
     def browse_output_folder(self):
         directory = QtWidgets.QFileDialog.getExistingDirectory(self, "Select Output Folder", "")
         if directory:
-            self.outputFolderLineEdit.setText(directory)
+            project_dir = os.path.abspath(".")
+            relative_path = os.path.relpath(directory, start=project_dir)
+            self.outputFolderLineEdit.setText(relative_path)
 
     def add_new_image_model(self):
         name, ok = QtWidgets.QInputDialog.getText(self, 'Add New Model', 'Enter model name:')
@@ -277,10 +438,8 @@ class SettingsWindow(QtWidgets.QMainWindow, Ui_SettingsWindow):
             path, _ = QtWidgets.QFileDialog.getOpenFileName(self, 'Select Model File', '', 'Model Files (*.safetensors *.ckpt)')
             if path and os.path.exists(path):
                 model_entry = {'name': name, 'path': path}
-                self.config['GENERATION']['MODELS'].append(model_entry)
+                self.temp_image_config['GENERATION']['MODELS'].append(model_entry)
                 self.imageModelsList.addItem(name)
-                # Save the updated config
-                self.save_config()
             else:
                 QtWidgets.QMessageBox.warning(self, 'Error', 'Selected file does not exist.')
 
@@ -292,54 +451,161 @@ class SettingsWindow(QtWidgets.QMainWindow, Ui_SettingsWindow):
             confirm = QtWidgets.QMessageBox.question(self, 'Confirm', f"Are you sure you want to remove model '{item.text()}'?")
             if confirm == QtWidgets.QMessageBox.Yes:
                 self.imageModelsList.takeItem(index)
-                del self.config['GENERATION']['MODELS'][index]
-                # Save the updated config
-                self.save_config()
+                del self.temp_image_config['GENERATION']['MODELS'][index]
 
     def save_image_generator_settings(self):
-        self.config['GENERATION']['BASE_OUTPUT_PATH'] = self.outputFolderLineEdit.text()
-        self.config['GENERATION']['IP_COMFY'] = self.comfyUiIpLineEdit.text()
+        self.temp_image_config['BASE_OUTPUT_PATH'] = self.outputFolderLineEdit.text()
+        self.temp_image_config['IP_COMFY'] = self.comfyUiIpLineEdit.text()
+        self.config['GENERATION'] = self.temp_image_config
         self.save_config()
         QtWidgets.QMessageBox.information(self, "Success", "Image generator settings saved successfully.")
 
-    # Quality Checker Section Methods
-    def add_new_quality_function(self):
-        name, ok = QtWidgets.QInputDialog.getText(self, 'Add New Function', 'Enter function name:')
-        if ok and name:
-            file_path, _ = QtWidgets.QFileDialog.getOpenFileName(self, 'Select Function File', '', 'Python Files (*.py)')
-            if file_path and os.path.exists(file_path):
-                args_text, ok = QtWidgets.QInputDialog.getText(self, 'Function Arguments', 'Enter arguments (comma-separated):')
-                args = tuple(args_text.split(',')) if ok and args_text else None
-                function_entry = {'name': name, 'path': file_path, 'args': args}
-                self.config['QUALITY_CHECKS']['FUNCTIONS'].append(function_entry)
-                self.qualityFunctionsList.addItem(name)
-                # Save the updated config
-                self.save_config()
-            else:
-                QtWidgets.QMessageBox.warning(self, 'Error', 'Selected file does not exist.')
 
-    def remove_quality_function(self):
-        selected_items = self.qualityFunctionsList.selectedItems()
+    # Annotator Section Methods
+    def add_confidence_threshold(self):
+        """Add a new confidence threshold."""
+        # Determine the current maximum threshold
+        existing_thresholds = [t['value'] for t in self.temp_confidence_thresholds]
+        min_value = max(existing_thresholds, default=0.0)
+        max_value = 1.0
+
+        # Open the AddThresholdDialog
+        dialog = AddThresholdDialog(min_value=min_value, max_value=max_value, parent=self)
+        if dialog.exec_() == QtWidgets.QDialog.Accepted:
+            color, value = dialog.get_data()
+            self.temp_confidence_thresholds.append({'color': color, 'value': value})
+            self.confidenceThresholdList.addItem(f"{color}: {value}")
+
+    def edit_confidence_threshold(self):
+        """Edit the selected confidence threshold."""
+        selected_items = self.confidenceThresholdList.selectedItems()
+        if not selected_items:
+            QtWidgets.QMessageBox.warning(self, "No Selection", "Please select a threshold to edit.")
+            return
+
+        # Get selected threshold
+        selected_item = selected_items[0]
+        index = self.confidenceThresholdList.row(selected_item)
+        threshold = self.temp_confidence_thresholds[index]
+
+        # Determine the valid range for editing
+        existing_thresholds = [t['value'] for i, t in enumerate(self.temp_confidence_thresholds) if i != index]
+        min_value = max(existing_thresholds, default=0.0)
+        max_value = 1.0
+
+        # Open the dialog with the existing values
+        dialog = AddThresholdDialog(
+            min_value=min_value,
+            max_value=max_value,
+            color=threshold['color'],
+            value=threshold['value'],
+            parent=self
+        )
+
+        if dialog.exec_() == QtWidgets.QDialog.Accepted:
+            color, value = dialog.get_data()
+            self.temp_confidence_thresholds[index] = {'color': color, 'value': value}
+            selected_item.setText(f"{color}: {value}")
+
+    def remove_confidence_threshold(self):
+        """Remove the selected confidence threshold."""
+        selected_items = self.confidenceThresholdList.selectedItems()
+        if not selected_items:
+            QtWidgets.QMessageBox.warning(self, "No Selection", "Please select a threshold to remove.")
+            return
+
+        for item in selected_items:
+            index = self.confidenceThresholdList.row(item)
+            self.confidenceThresholdList.takeItem(index)
+            del self.temp_confidence_thresholds[index]
+       
+    def save_current_selection(self):
+        current_index = self.currentSelectionComboBox.currentIndex()
+        self.config["ANNOTATION"]["CURRENT_SELECTED"] = current_index
+
+    def add_new_model(self):
+        """Open the dialog to add a new model."""
+        new_model = {
+            'Name': '',
+            'BACKBONE_TYPE': 'resnet50',
+            'CLASSIFIER': {'BN': False, 'NAME': 'linear', 'POOLING': 'avg', 'SCALE': 1},
+            'DATASET': {'HEIGHT': 256, 'WIDTH': 192},
+            'PATH': '',
+            'ColorAssist': False,
+            'ConfidenceThresholds': ''
+        }
+        dialog = AnnotatorModelDialog(self, model_data=new_model, is_editing=False)
+        if dialog.exec_() == QtWidgets.QDialog.Accepted:
+            self.annotator_data.append(new_model)
+            self.annotatorModelsList.addItem(new_model["Name"])
+
+    def remove_selected_model(self):
+        """Remove the selected model."""
+        selected_items = self.annotatorModelsList.selectedItems()
         if selected_items:
-            item = selected_items[0]
-            index = self.qualityFunctionsList.row(item)
-            confirm = QtWidgets.QMessageBox.question(self, 'Confirm', f"Are you sure you want to remove function '{item.text()}'?")
+            index = self.annotatorModelsList.row(selected_items[0])
+            confirm = QtWidgets.QMessageBox.question(self, "Confirm", f"Are you sure you want to remove model '{selected_items[0].text()}'?")
             if confirm == QtWidgets.QMessageBox.Yes:
-                self.qualityFunctionsList.takeItem(index)
-                del self.config['QUALITY_CHECKS']['FUNCTIONS'][index]
-                # Save the updated config
-                self.save_config()
+                del self.annotator_data[index]
+                self.annotatorModelsList.takeItem(index)
+        else:
+            QtWidgets.QMessageBox.warning(self, "Warning", "No model selected for removal.")
 
-    def save_quality_checker_settings(self):
+    def save_annotator_settings(self):
+        """Save the annotator data to the configuration file."""
+        self.config['ANNOTATION']['MODELS'] = self.annotator_data
+        self.config['ANNOTATION']['CURRENT_SELECTED'] = self.annotatorModelsList.currentRow()
+        self.save_current_selection()
+        """Save all auto-label settings."""
+        self.config['AUTO_LABEL'] = {
+            'MAX_AUTO_LABEL': self.maxAutoLabelSpinBox.value(),
+            'CHECKBOX_THRESHOLD': self.checkboxThresholdSpinBox.value(),
+            'DEFAULT_COLOR': self.defaultColorComboBox.currentText(),
+            'CONFIDENCE_THRESHOLDS': self.temp_confidence_thresholds
+        }
         self.save_config()
-        QtWidgets.QMessageBox.information(self, "Success", "Quality checker settings saved successfully.")
+        QtWidgets.QMessageBox.information(self, "Success", "Annotator settings saved successfully.")
+
+    def add_confidence_threshold(self):
+        """Add a new confidence threshold with a custom dialog."""
+        # Determine the current maximum threshold
+        existing_thresholds = [t['value'] for t in self.temp_confidence_thresholds]
+        min_value = max(existing_thresholds, default=0.0)  # Start from 0 if no thresholds exist
+        max_value = 1.0  # Thresholds are limited to a maximum of 1
+
+        # Open the AddThresholdDialog
+        dialog = AddThresholdDialog(min_value=min_value, max_value=max_value, parent=self)
+        if dialog.exec_() == QtWidgets.QDialog.Accepted:
+            color, value = dialog.get_data()
+
+            # Update the local thresholds list
+            self.temp_confidence_thresholds.append({'color': color, 'value': value})
+
+            # Update the UI list
+            self.confidenceThresholdList.addItem(f"{color}: {value}")
+
+    def edit_selected_model(self):
+        """Open the dialog to edit the selected model."""
+        selected_items = self.annotatorModelsList.selectedItems()
+        if selected_items:
+            index = self.annotatorModelsList.row(selected_items[0])
+            model_data = self.annotator_data[index]
+            dialog = AnnotatorModelDialog(self, model_data=model_data, is_editing=True)
+            if dialog.exec_() == QtWidgets.QDialog.Accepted:
+                # Update the UI with the new model name
+                self.annotatorModelsList.item(index).setText(model_data["Name"])
+        else:
+            QtWidgets.QMessageBox.warning(self, "Warning", "No model selected for editing.")
 
     # Config Saving Method
     def save_config(self):
         # Use the save_config function from config_reader.py
         save_config(self.config, './config.yaml')
-
     # General Methods
     def on_return(self):
         self.stacked_widget.setCurrentIndex(0)
         print("Returning to the main menu")
+
+
+
+

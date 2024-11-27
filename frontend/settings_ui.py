@@ -67,38 +67,6 @@ class Ui_SettingsWindow(object):
 
         self.verticalLayout.addWidget(self.datasetGroup)
 
-        # Annotator Section
-        self.annotatorGroup = QtWidgets.QGroupBox("Annotator", self.scrollAreaWidgetContents)
-        self.annotatorLayout = QtWidgets.QFormLayout(self.annotatorGroup)
-
-        # Models List
-        self.annotatorModelsList = QtWidgets.QListWidget(self.annotatorGroup)
-        self.annotatorLayout.addRow("Models:", self.annotatorModelsList)
-
-        # Buttons for model management
-        self.addNewAnnotatorModelButton = QtWidgets.QPushButton("Add New Model", self.annotatorGroup)
-        self.removeAnnotatorModelButton = QtWidgets.QPushButton("Remove Model", self.annotatorGroup)
-        self.annotatorModelSettingsButton = QtWidgets.QPushButton("Model Settings", self.annotatorGroup)
-        self.annotatorModelButtonLayout = QtWidgets.QHBoxLayout()
-        self.annotatorModelButtonLayout.addWidget(self.addNewAnnotatorModelButton)
-        self.annotatorModelButtonLayout.addWidget(self.removeAnnotatorModelButton)
-        self.annotatorModelButtonLayout.addWidget(self.annotatorModelSettingsButton)
-        self.annotatorLayout.addRow("", self.annotatorModelButtonLayout)
-
-        # Color-Assisted Mode Checkbox
-        self.colorAssistCheckbox = QtWidgets.QCheckBox("Use Color-Assisted Mode", self.annotatorGroup)
-        self.annotatorLayout.addRow(self.colorAssistCheckbox)
-
-        # Confidence Thresholds
-        self.confidenceThresholdsLineEdit = QtWidgets.QLineEdit(self.annotatorGroup)
-        self.annotatorLayout.addRow("Confidence Thresholds:", self.confidenceThresholdsLineEdit)
-
-        # Save Button
-        self.saveAnnotatorButton = QtWidgets.QPushButton("Save Annotator Settings", self.annotatorGroup)
-        self.annotatorLayout.addRow("", self.saveAnnotatorButton)
-
-        self.verticalLayout.addWidget(self.annotatorGroup)
-
         # Image Generator Section
         self.imageGenGroup = QtWidgets.QGroupBox("Image Generator", self.scrollAreaWidgetContents)
         self.imageGenLayout = QtWidgets.QFormLayout(self.imageGenGroup)
@@ -135,6 +103,7 @@ class Ui_SettingsWindow(object):
 
         self.verticalLayout.addWidget(self.imageGenGroup)
 
+
         # Quality Checker Section
         self.qualityCheckerGroup = QtWidgets.QGroupBox("Quality Checker", self.scrollAreaWidgetContents)
         self.qualityCheckerLayout = QtWidgets.QFormLayout(self.qualityCheckerGroup)
@@ -158,6 +127,72 @@ class Ui_SettingsWindow(object):
         self.qualityCheckerLayout.addRow("", self.saveQualityCheckerButton)
 
         self.verticalLayout.addWidget(self.qualityCheckerGroup)
+
+        # Annotator Section
+        self.annotatorGroup = QtWidgets.QGroupBox("Annotator", self.scrollAreaWidgetContents)
+        self.annotatorLayout = QtWidgets.QFormLayout(self.annotatorGroup)
+
+        self.currentSelectionComboBox = QtWidgets.QComboBox(self.annotatorGroup)
+        self.annotatorLayout.addRow("Current Selection:", self.currentSelectionComboBox)
+
+
+        # Models List
+        self.annotatorModelsList = QtWidgets.QListWidget(self.annotatorGroup)
+        self.annotatorLayout.addRow("Models:", self.annotatorModelsList)
+
+        # Buttons for model management
+        self.addModelButton = QtWidgets.QPushButton("Add Model", self.annotatorGroup)
+        self.editModelButton = QtWidgets.QPushButton("Edit Model", self.annotatorGroup)
+        self.removeModelButton = QtWidgets.QPushButton("Remove Model", self.annotatorGroup)
+
+        self.modelsButtonLayout = QtWidgets.QHBoxLayout()
+        self.modelsButtonLayout.addWidget(self.addModelButton)
+        self.modelsButtonLayout.addWidget(self.editModelButton)
+        self.modelsButtonLayout.addWidget(self.removeModelButton)
+
+        self.annotatorLayout.addRow("", self.modelsButtonLayout)
+
+        # Enable Color-Assisted Mode
+        self.colorAssistCheckbox = QtWidgets.QCheckBox("Enable Color-Assisted Mode", self.annotatorGroup)
+        self.annotatorLayout.addRow(self.colorAssistCheckbox)
+
+        # Max Auto Label
+        self.maxAutoLabelSpinBox = QtWidgets.QSpinBox(self.annotatorGroup)
+        self.maxAutoLabelSpinBox.setMinimum(1)
+        self.maxAutoLabelSpinBox.setMaximum(1000)
+        self.annotatorLayout.addRow("MAX_AUTO_LABEL:", self.maxAutoLabelSpinBox)
+
+        # Checkbox Threshold
+        self.checkboxThresholdSpinBox = QtWidgets.QDoubleSpinBox(self.annotatorGroup)
+        self.checkboxThresholdSpinBox.setMinimum(0.0)
+        self.checkboxThresholdSpinBox.setMaximum(1.0)
+        self.checkboxThresholdSpinBox.setSingleStep(0.01)
+        self.annotatorLayout.addRow("CHECKBOX_THRESHOLD:", self.checkboxThresholdSpinBox)
+
+        # Default Color
+        self.defaultColorComboBox = QtWidgets.QComboBox(self.annotatorGroup)
+        self.defaultColorComboBox.addItems(["red", "green", "blue", "yellow", "orange", "purple"])
+        self.annotatorLayout.addRow("Default Color:", self.defaultColorComboBox)
+
+        # Confidence Thresholds List
+        self.confidenceThresholdList = QtWidgets.QListWidget(self.annotatorGroup)
+        self.addConfidenceButton = QtWidgets.QPushButton("Add Threshold", self.annotatorGroup)
+        self.editConfidenceButton = QtWidgets.QPushButton("Edit Threshold", self.annotatorGroup)
+        self.removeConfidenceButton = QtWidgets.QPushButton("Remove Threshold", self.annotatorGroup)
+        self.confidenceButtonLayout = QtWidgets.QHBoxLayout()
+        self.confidenceButtonLayout.addWidget(self.addConfidenceButton)
+        self.confidenceButtonLayout.addWidget(self.editConfidenceButton)
+        self.confidenceButtonLayout.addWidget(self.removeConfidenceButton)
+        self.annotatorLayout.addRow("Confidence Thresholds:", self.confidenceThresholdList)
+        self.annotatorLayout.addRow("", self.confidenceButtonLayout)
+
+
+        # Save Button
+        self.saveAnnotatorButton = QtWidgets.QPushButton("Save Annotator Settings", self.annotatorGroup)
+        self.annotatorLayout.addRow("", self.saveAnnotatorButton)
+
+        # Add Annotator Section to Main Layout
+        self.verticalLayout.addWidget(self.annotatorGroup)
 
         SettingsWindow.setCentralWidget(self.centralwidget)
         self.retranslateUi(SettingsWindow)
