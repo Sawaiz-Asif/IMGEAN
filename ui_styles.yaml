@@ -8,6 +8,7 @@ colors:
   red: '#ea9999'
   black: '#000000'
   light_blue: '#bfd4fa'
+  light_gray: '#d9d9d9'
   
   button_cancel: '#ff6666'
   button_generate: '#66cc66'
@@ -41,6 +42,9 @@ sizes:
   label_list:
     width: 350
     height: 430
+  settings_save_buttons:
+    width: 300
+    height: 25
 fonts:
   text_font_size: 14
   label_font_size: 18
@@ -60,6 +64,10 @@ paddings:
   spacing_among_elements: 20
   labels_left: 10
   labels_up: 4
+  settings_title_vertical: 5
+  settings_title_horizontal: 15
+  settings_box_from_title: 35
+  settings_buttons_horizontal: 10
 borders:
   main_button_border: 2
   main_button_style: 'solid black'
