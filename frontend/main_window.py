@@ -44,11 +44,11 @@ class MainWindow(QtWidgets.QMainWindow):
         self.main_screen = MainScreen(self, self.ui_styles)
 
         # Add the third screen (Generate Images) to the stacked widget
-        self.ui.stackedWidget.addWidget(self.settingsScreen)
         self.ui.stackedWidget.addWidget(self.main_screen)
         self.ui.stackedWidget.addWidget(self.generator_window)
         self.ui.stackedWidget.addWidget(self.imgQualityCheckScreen)
         self.ui.stackedWidget.addWidget(self.annotateImgSelectScreen)
+        self.ui.stackedWidget.addWidget(self.settingsScreen)
 
     def change_current_screen(self, idx):
         # 0 is the main screen

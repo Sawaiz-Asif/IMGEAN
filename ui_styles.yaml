@@ -22,9 +22,9 @@ sizes:
     width: 80
     height: 20
   prompt_box:
-    height: 100
+    height: 130
   seed_box:
-    width: 65
+    width: 90
   spin_box:
     width: 40
   combo_models:
@@ -45,6 +45,14 @@ sizes:
   settings_save_buttons:
     width: 300
     height: 25
+  generation_spinbox:
+    width: 50
+    height: 30
+  generation_manual_checkbox:
+    width: 190
+    height: 30
+  auto_check_list:
+    height: 130
 fonts:
   text_font_size: 14
   label_font_size: 18
@@ -68,6 +76,7 @@ paddings:
   settings_title_horizontal: 15
   settings_box_from_title: 35
   settings_buttons_horizontal: 10
+  list_default_padding: 10
 borders:
   main_button_border: 2
   main_button_style: 'solid black'

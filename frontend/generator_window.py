@@ -65,10 +65,14 @@ class GeneratorWindow(QtWidgets.QMainWindow):
         selected_checks = self.config['QUALITY_CHECKS'].get('selected_checks', [])
         for i in range(self.ui.auto_check_list.count()):
             item = self.ui.auto_check_list.item(i)
-            if i < len(selected_checks):
-                item.setCheckState(QtCore.Qt.Checked if selected_checks[i] == 1 else QtCore.Qt.Unchecked)
-            else:
-                item.setCheckState(QtCore.Qt.Unchecked)
+            custom_checkbox = self.ui.auto_check_list.itemWidget(item)  # Retrieve the custom checkbox widget
+            if custom_checkbox:
+                if i < len(selected_checks):
+                    # Set the checkbox state based on the selected_checks list
+                    custom_checkbox.setChecked(selected_checks[i] == 1)
+                else:
+                    # Set the checkbox to unchecked if the index is out of bounds
+                    custom_checkbox.setChecked(False)
 
     def generate_images(self):
         """Handle image generation logic."""

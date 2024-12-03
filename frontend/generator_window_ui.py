@@ -3,10 +3,21 @@ from ui_styles_constants import *
 from config_constants import *
 
 from PyQt5.QtWidgets import (
-    QApplication, QMainWindow, QPushButton, QLabel, QVBoxLayout, QHBoxLayout, QWidget, QFrame, QGridLayout, QTextEdit
+    QApplication, QMainWindow, QPushButton, QLabel, QVBoxLayout, QHBoxLayout, QWidget, QFrame, QGridLayout, QTextEdit, QSizePolicy, QSpacerItem
 )
 from PyQt5.QtCore import Qt
 from PyQt5.QtGui import QFontDatabase
+
+from frontend.custom_classes import CustomSpinBox, CustomCheckBox
+
+class BorderedSpinBox(QtWidgets.QSpinBox):
+    def paintEvent(self, event):
+        super().paintEvent(event)
+        painter = QtGui.QPainter(self)
+        rect = self.rect()
+        pen = QtGui.QPen(QtGui.QColor("black"), 2)
+        painter.setPen(pen)
+        painter.drawRect(rect)
 class Ui_generate_images(object):
     def __init__(self, config, ui_styles):
         self.config = config
@@ -88,6 +99,7 @@ class Ui_generate_images(object):
     def setup_left_section(self):
         """Setup the left section with form controls."""
         self.left_layout = QtWidgets.QFormLayout()
+        self.left_layout.setSpacing(self.ui_styles[PADDINGS][SPACING_AMONG_ELEMENTS])
 
         # Prompt Input (Directly set text from config)
         label_prompt = QLabel("Prompt:")
@@ -142,16 +154,14 @@ class Ui_generate_images(object):
             text-align: center;
         """)
 
-        self.spin_images = QtWidgets.QSpinBox()
-        self.spin_images.setStyleSheet(f"""
-        font-family: '{self.regular_font_family}';
-        font-size: {self.ui_styles[FONTS][TEXT_FONT_SIZE]}px;
-        background-color: {self.ui_styles[COLORS][BACKGROUND]};
-        """) # TODO Add borders here
+        self.spin_images = CustomSpinBox(width=self.ui_styles[SIZES][GENERATION_SPINBOX][WIDTH], 
+                                         height=self.ui_styles[SIZES][GENERATION_SPINBOX][HEIGHT], 
+                                         border=self.ui_styles[BORDERS][DEFAULT_BORDER], 
+                                         border_radious=self.ui_styles[BORDERS][DEFAULT_RADIUS], 
+                                         font=self.ui_styles[FONTS][TEXT_FONT_SIZE],
+                                         font_family=self.regular_font_family)
 
         self.spin_images.setRange(1, 100)
-        self.spin_images.setFixedWidth(self.ui_styles[SIZES][SPIN_BOX][WIDTH])
-        self.spin_images.setMaximumWidth(self.ui_styles[SIZES][SPIN_BOX][WIDTH])
 
         self.row_layout.addWidget(label_images, 0, 0)
         self.row_layout.addWidget(self.spin_images, 0, 1)
@@ -166,16 +176,14 @@ class Ui_generate_images(object):
             text-align: center;
         """)
 
-        self.spin_steps = QtWidgets.QSpinBox()
-        self.spin_steps.setStyleSheet(f"""
-        font-family: '{self.regular_font_family}';
-        font-size: {self.ui_styles[FONTS][TEXT_FONT_SIZE]}px;
-        background-color: {self.ui_styles[COLORS][BACKGROUND]};
-        """) # TODO Add borders here
+        self.spin_steps = CustomSpinBox(width=self.ui_styles[SIZES][GENERATION_SPINBOX][WIDTH]-5, 
+                                         height=self.ui_styles[SIZES][GENERATION_SPINBOX][HEIGHT], 
+                                         border=self.ui_styles[BORDERS][DEFAULT_BORDER], 
+                                         border_radious=self.ui_styles[BORDERS][DEFAULT_RADIUS], 
+                                         font=self.ui_styles[FONTS][TEXT_FONT_SIZE],
+                                         font_family=self.regular_font_family)
 
         self.spin_steps.setRange(1, 50)
-        self.spin_steps.setFixedWidth(self.ui_styles[SIZES][SPIN_BOX][WIDTH])
-        self.spin_steps.setMaximumWidth(self.ui_styles[SIZES][SPIN_BOX][WIDTH])
 
         self.row_layout.addWidget(label_steps, 0, 2)
         self.row_layout.addWidget(self.spin_steps, 0, 3)
@@ -197,8 +205,9 @@ class Ui_generate_images(object):
             border: {self.ui_styles[BORDERS][MAIN_BUTTON_BORDER]}px {self.ui_styles[BORDERS][MAIN_BUTTON_STYLE]};
             border-radius: {self.ui_styles[BORDERS][DEFAULT_BORDER]}px;
         """)
-        self.text_seed.setValidator(QtGui.QIntValidator())  # Ensure only integers are accepted
-        self.text_seed.setPlaceholderText("Optional")  # Placeholder text
+        self.text_seed.setValidator(QtGui.QIntValidator())
+        self.text_seed.setPlaceholderText("Optional")
+        self.text_seed.setAlignment(Qt.AlignCenter)
         self.text_seed.setFixedWidth(self.ui_styles[SIZES][SEED_BOX][WIDTH])
         self.text_seed.setMaximumWidth(self.ui_styles[SIZES][SEED_BOX][WIDTH])
 
@@ -206,6 +215,9 @@ class Ui_generate_images(object):
         self.row_layout.addWidget(self.text_seed, 0, 5)
         self.row_layout.setAlignment(label_seed, QtCore.Qt.AlignRight)
         self.row_layout.setAlignment(self.text_seed, QtCore.Qt.AlignLeft)
+
+        for col in range(6):
+            self.row_layout.setColumnStretch(col, 1)
 
         # Add the horizontal layout to your main layout
         self.left_layout.addRow(self.row_layout)
@@ -250,6 +262,7 @@ class Ui_generate_images(object):
             border: {self.ui_styles[BORDERS][MAIN_BUTTON_BORDER]}px {self.ui_styles[BORDERS][MAIN_BUTTON_STYLE]};
             border-radius: {self.ui_styles[BORDERS][DEFAULT_BORDER]}px;
         """)
+        self.text_filename.setAlignment(Qt.AlignCenter)
         self.text_filename.setText(self.config[GENERATION][FILENAME])
         self.text_filename.setPlaceholderText("Enter filename")
         self.text_filename.editingFinished.connect(self.validate_filename)
@@ -261,15 +274,22 @@ class Ui_generate_images(object):
         self.model_filename_layout.setAlignment(label_filename, QtCore.Qt.AlignRight)
         self.model_filename_layout.setAlignment(self.text_filename, QtCore.Qt.AlignLeft)
 
+        self.model_filename_layout.setColumnStretch(1, 1)  # Middle column 1 (expand)
+        self.model_filename_layout.setColumnStretch(2, 1)  # Middle column 2 (expand)
+
+        self.model_filename_layout.setColumnStretch(0, 0)  # First column (no expansion)
+        self.model_filename_layout.setColumnStretch(3, 0)  # Last column (no expansion)
+
         self.left_layout.addRow(self.model_filename_layout)
 
         # Manual Quality Check
-        self.checkbox_manual = QtWidgets.QCheckBox("Manual Quality Check")
-        self.checkbox_manual.setStyleSheet(f"""
-            font-family: '{self.regular_font_family}';
-            font-size: {self.ui_styles[FONTS][LABEL_FONT_SIZE]}px;
-            text-align: center;
-        """)
+        self.checkbox_manual = CustomCheckBox(text="Manual Quality Check",
+                                              width=self.ui_styles[SIZES][GENERATION_MANUAL_CHECKBOX][WIDTH], 
+                                              height=self.ui_styles[SIZES][GENERATION_MANUAL_CHECKBOX][HEIGHT], 
+                                              border=self.ui_styles[BORDERS][DEFAULT_BORDER], 
+                                              border_radious=self.ui_styles[BORDERS][DEFAULT_RADIUS], 
+                                              font=self.ui_styles[FONTS][LABEL_FONT_SIZE],
+                                              font_family=self.regular_font_family)
         self.left_layout.addRow(self.checkbox_manual)
 
         # Quality Checks
@@ -281,13 +301,38 @@ class Ui_generate_images(object):
         """)
         self.auto_check_list = QtWidgets.QListWidget()
         self.auto_check_list.setStyleSheet(f"""
-            font-family: '{self.regular_font_family}';
-            font-size: {self.ui_styles[FONTS][TEXT_FONT_SIZE]}px;
-            border: {self.ui_styles[BORDERS][MAIN_BUTTON_BORDER]}px {self.ui_styles[BORDERS][MAIN_BUTTON_STYLE]};
-            border-radius: {self.ui_styles[BORDERS][DEFAULT_BORDER]}px;
+            QListWidget {{
+                font-family: '{self.regular_font_family}';
+                font-size: {self.ui_styles[FONTS][TEXT_FONT_SIZE]}px;
+                border: {self.ui_styles[BORDERS][MAIN_BUTTON_BORDER]}px {self.ui_styles[BORDERS][MAIN_BUTTON_STYLE]};
+                border-radius: {self.ui_styles[BORDERS][DEFAULT_BORDER]}px;
+                padding: {self.ui_styles[PADDINGS][LIST_DEFAULT_PADDING]}px;
+            }}
+            QListWidget::item {{
+                margin-bottom: {self.ui_styles[PADDINGS][LABELS_UP]}px;
+            }}
+            QScrollBar:vertical {{              
+                width:{self.ui_styles[BORDERS][DEFAULT_BORDER]}px;
+                margin: 0px 0px 0px 0px;
+            }}
+            QScrollBar::handle:vertical {{
+                background: qlineargradient(x1:0, y1:0, x2:1, y2:0,
+                stop: 0 {self.ui_styles[COLORS][BLACK]}, stop: 0.5 {self.ui_styles[COLORS][BLACK]}, stop:1 {self.ui_styles[COLORS][BLACK]});
+                min-height: 0px;
+            }}
+            QScrollBar::add-line:vertical {{
+                height: 0px;
+            }}
+            QScrollBar::sub-line:vertical {{
+                height: 0 px;
+            }}
         """)
-        self.auto_check_list.setFixedHeight(100)
+        self.auto_check_list.setFixedHeight(self.ui_styles[SIZES][AUTO_CHECK_LIST][HEIGHT])
+        self.auto_check_list.setVerticalScrollBarPolicy(QtCore.Qt.ScrollBarAlwaysOn)
         self.left_layout.addRow(label_auto_check, self.auto_check_list)
+
+        spacer = QSpacerItem(20, 40, QSizePolicy.Expanding, QSizePolicy.Expanding)
+        self.left_layout.addItem(spacer)
 
         self.main_grid.addLayout(self.left_layout, 1, 0)
 
@@ -308,8 +353,16 @@ class Ui_generate_images(object):
         # Setup a simple progress bar
         self.progress_bar = QtWidgets.QProgressBar(self.centralwidget)
         self.progress_bar.setStyleSheet(f"""
-            font-family: '{self.regular_font_family}';
-            font-size: {self.ui_styles[FONTS][TEXT_FONT_SIZE]}px;
+            QProgressBar {{
+                border: {self.ui_styles[BORDERS][MAIN_BUTTON_BORDER]}px {self.ui_styles[BORDERS][MAIN_BUTTON_STYLE]};
+                border-radius: {self.ui_styles[BORDERS][DEFAULT_BORDER]}px;
+                text-align: center; 
+                font-family: '{self.regular_font_family}';
+                font-size: {self.ui_styles[FONTS][TEXT_FONT_SIZE]}px; 
+            }}
+            QProgressBar::chunk {{
+                border-radius: {self.ui_styles[BORDERS][DEFAULT_BORDER]}px;
+            }}  
         """) # TODO see how to put borders
         self.progress_bar.setRange(0, 100)
         self.progress_bar.setValue(0)  # Start at 0
@@ -360,10 +413,21 @@ class Ui_generate_images(object):
         """Load quality checks from the configuration into the list."""
         functions = self.config.get('QUALITY_CHECKS', {}).get('FUNCTIONS', [])
         for func in functions:
-            item = QtWidgets.QListWidgetItem(func['name'])
-            item.setFlags(item.flags() | QtCore.Qt.ItemIsUserCheckable)
-            item.setCheckState(QtCore.Qt.Unchecked)
+            custom_checkBox = CustomCheckBox(text=func['name'],
+                                  width=150, 
+                                  height=20, 
+                                  border=self.ui_styles[BORDERS][DEFAULT_BORDER], 
+                                  border_radious=self.ui_styles[BORDERS][DEFAULT_RADIUS], 
+                                  font=self.ui_styles[FONTS][TEXT_FONT_SIZE],
+                                  font_family=self.regular_font_family)
+            item = QtWidgets.QListWidgetItem()
+
             self.auto_check_list.addItem(item)
+            self.auto_check_list.setItemWidget(item, custom_checkBox)
+
+            # item.setFlags(item.flags() | QtCore.Qt.ItemIsUserCheckable)
+            # item.setCheckState(QtCore.Qt.Unchecked)
+            # self.auto_check_list.addItem(item)
 
     def validate_filename(self):
         """Validate the filename input and update the configuration."""
