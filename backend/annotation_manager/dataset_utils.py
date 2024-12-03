@@ -42,13 +42,13 @@ class DatasetManager:
             self.allowed_formats = ['.png', '.jpg']
 
             # Constraints for image dimensions
-            self.image_height = self.config['DATASET']['HEIGHT']
-            self.image_width = self.config['DATASET']['WIDTH']
+            # self.image_height = self.config['DATASET']['HEIGHT']
+            # self.image_width = self.config['DATASET']['WIDTH']
 
             # Other config values
-            self.train_split = self.config['DATASET']['TRAIN_SPLIT']
-            self.val_split = self.config['DATASET']['VAL_SPLIT']
-            self.zero_shot = self.config['DATASET']['ZERO_SHOT']
+            # self.train_split = self.config['DATASET']['TRAIN_SPLIT']
+            # self.val_split = self.config['DATASET']['VAL_SPLIT']
+            # self.zero_shot = self.config['DATASET']['ZERO_SHOT']
 
             self.pickle_file = pickle_file
             if use_default_path:

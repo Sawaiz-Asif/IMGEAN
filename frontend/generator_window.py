@@ -40,17 +40,24 @@ class GeneratorWindow(QtWidgets.QMainWindow, Ui_genrate_images):
 
         self.show_image()
         self.load_initial_values()
+    
 
     def load_initial_values(self):
         """Load saved values from the configuration."""
         # Load prompts
         self.text_prompt.setPlainText(self.config['GENERATION']['PROMPTS'].get('positive', ''))
         self.text_negative_prompt.setPlainText(self.config['GENERATION']['PROMPTS'].get('negative', ''))
+        # Load number of image
         self.spin_images.setValue(self.config['GENERATION'].get('num_images', 1))
+        self.combo_model.clear()
         self.combo_model.setCurrentText(self.config['GENERATION'].get('model', ''))
+        models = self.config.get('GENERATION', {}).get('MODELS', [])
+        for model in models:
+            self.combo_model.addItem(model['name'])
+
         self.spin_steps.setValue(self.config['GENERATION'].get('steps', 20))
         self.text_filename.setText(self.config['GENERATION'].get('filename', 'generated_image'))
-
+        
         # Load seed
         seed = self.config['GENERATION'].get('seed', '')
         self.text_seed.setText(str(seed) if seed else "")
@@ -59,14 +66,23 @@ class GeneratorWindow(QtWidgets.QMainWindow, Ui_genrate_images):
         # Load manual quality check status
         self.checkbox_manual.setChecked(self.config['GENERATION'].get('manual_quality_check', False))
 
+
         # Load the automatic quality check items state using selected_checks list
+        # Get functions and selected states from the config
+        self.auto_check_list.clear()
+        functions = self.config.get('QUALITY_CHECKS', {}).get('FUNCTIONS', [])
         selected_checks = self.config['QUALITY_CHECKS'].get('selected_checks', [])
-        for i in range(self.auto_check_list.count()):
-            item = self.auto_check_list.item(i)
+
+        # Populate the auto_check_list with functions
+        for i, func in enumerate(functions):
+            item = QtWidgets.QListWidgetItem(func['name'])
+            item.setFlags(item.flags() | QtCore.Qt.ItemIsUserCheckable)  # Enable checkboxes
+            # Set the item's check state based on selected_checks
             if i < len(selected_checks):
                 item.setCheckState(QtCore.Qt.Checked if selected_checks[i] == 1 else QtCore.Qt.Unchecked)
             else:
                 item.setCheckState(QtCore.Qt.Unchecked)
+            self.auto_check_list.addItem(item)
 
     def generate_images(self):
         """Handle image generation logic."""

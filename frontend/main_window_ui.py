@@ -39,6 +39,19 @@ class Ui_MainWindow(object):
         self.pushButton_4.setObjectName("pushButton_4")
         self.pushButton_4.setText("Settings & Setup")
 
+        # Label to display the current active project name
+        self.currentProjectLabel = QtWidgets.QLabel(self.mainScreen)
+        self.currentProjectLabel.setGeometry(QtCore.QRect(300, 460, 200, 30))
+        self.currentProjectLabel.setObjectName("currentProjectLabel")
+        self.currentProjectLabel.setAlignment(QtCore.Qt.AlignCenter)
+        self.currentProjectLabel.setText(f"Currently working on: {self.active_project['name']}")
+
+        # Add a button for "Change Project"
+        self.changeProjectButton = QtWidgets.QPushButton(self.mainScreen)
+        self.changeProjectButton.setGeometry(QtCore.QRect(300, 490, 200, 30))  # Positioned right below the label
+        self.changeProjectButton.setObjectName("changeProjectButton")
+        self.changeProjectButton.setText("Change Project")
+
         self.label = QtWidgets.QLabel(self.mainScreen)
         self.label.setGeometry(QtCore.QRect(210, 30, 191, 41))
         font = QtGui.QFont()
@@ -60,6 +73,7 @@ class Ui_MainWindow(object):
         self.label_2.setText("¡Tool for augmenting datasets! ¡An Image Generator & Annotator!")
 
         # Add the first screen to the stacked widget
+
         self.stackedWidget.addWidget(self.mainScreen)
 
         MainWindow.setCentralWidget(self.centralwidget)
@@ -70,3 +84,4 @@ class Ui_MainWindow(object):
     def retranslateUi(self, MainWindow):
         _translate = QtCore.QCoreApplication.translate
         MainWindow.setWindowTitle(_translate("MainWindow", "IMGEAN"))
+        self.changeProjectButton.setText(_translate("MainWindow", "Change Project"))

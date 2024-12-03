@@ -162,6 +162,73 @@ class SettingsWindow(QtWidgets.QMainWindow, Ui_SettingsWindow):
         for function in functions:
             self.qualityFunctionsList.addItem(function.get('name', 'Unknown Function'))
     
+    def refresh_ui(self):
+        """Refresh the UI elements with the updated configuration."""
+        
+        # Refresh Dataset Section
+        dataset_config = self.config.get('DATASET', {})
+        self.descriptionLineEdit.setText(dataset_config.get('NAME', ''))
+        self.pickleFilePathLineEdit.setText(dataset_config.get('PATH', ''))
+
+        # Refresh Labels
+        success, labels = self.dataset_manager.get_dataset_labels()
+        if success:
+            self.labels = labels
+            self.labelsListWidget.clear()
+            self.labelsListWidget.addItems(self.labels)
+        else:
+            QtWidgets.QMessageBox.warning(self, "Warning", "Failed to refresh labels from dataset.")
+
+        # Refresh Annotator Section
+        annotator_config = self.config.get('ANNOTATION', {})
+        self.annotator_data = annotator_config.get('MODELS', []).copy()
+        self.annotatorModelsList.clear()
+        for model in self.annotator_data:
+            self.annotatorModelsList.addItem(model.get('Name', 'Unnamed Model'))
+
+        self.currentSelectionComboBox.clear()
+        for model in self.annotator_data:
+            self.currentSelectionComboBox.addItem(model.get('Name', 'Unnamed Model'))
+        
+        current_selected = annotator_config.get('CURRENT_SELECTED', 0)
+        if 0 <= current_selected < len(self.annotator_data):
+            self.currentSelectionComboBox.setCurrentIndex(current_selected)
+
+        self.colorAssistCheckbox.setChecked(annotator_config.get('ColorAssist', False))
+
+        # Refresh Image Generator Section
+        self.temp_image_config = self.config.get('GENERATION', {}).copy()
+        self.imageModelsList.clear()
+        models = self.temp_image_config.get('MODELS', [])
+        for model in models:
+            self.imageModelsList.addItem(model.get('name', 'Unknown Model'))
+
+        self.outputFolderLineEdit.setText(self.temp_image_config.get('BASE_OUTPUT_PATH', ''))
+        self.comfyUiIpLineEdit.setText(self.temp_image_config.get('IP_COMFY', ''))
+
+        # Refresh Quality Checker Section
+        self.temp_quality_config = self.config.get('QUALITY_CHECKS', {}).copy()
+        self.qualityFunctionsList.clear()
+        functions = self.temp_quality_config.get('FUNCTIONS', [])
+        for function in functions:
+            self.qualityFunctionsList.addItem(function.get('name', 'Unknown Function'))
+
+        # Refresh Auto Label Section
+        auto_label_config = self.config.get('AUTO_LABEL', {})
+        self.maxAutoLabelSpinBox.setValue(auto_label_config.get('MAX_AUTO_LABEL', 12))
+        self.checkboxThresholdSpinBox.setValue(auto_label_config.get('CHECKBOX_THRESHOLD', 0.5))
+
+        default_color = auto_label_config.get('DEFAULT_COLOR', 'blue')
+        if default_color in [self.defaultColorComboBox.itemText(i) for i in range(self.defaultColorComboBox.count())]:
+            self.defaultColorComboBox.setCurrentText(default_color)
+        else:
+            self.defaultColorComboBox.setCurrentIndex(0)
+
+        self.temp_confidence_thresholds = auto_label_config.get('CONFIDENCE_THRESHOLDS', [])
+        self.confidenceThresholdList.clear()
+        for threshold in self.temp_confidence_thresholds:
+            self.confidenceThresholdList.addItem(f"{threshold['color']}: {threshold['value']}")
+
 
     def manage_image_model(self, model_index=None):
         """

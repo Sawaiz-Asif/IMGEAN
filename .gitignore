@@ -18,6 +18,7 @@ config.yaml
 /env/
 
 /imgean-dev
+/projects
 
 .vscode
 config.yaml

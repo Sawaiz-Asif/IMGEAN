@@ -41,9 +41,10 @@ class Ui_genrate_images(object):
         genrate_images.setCentralWidget(self.centralwidget)
         genrate_images.setWindowTitle("IMGEAN")
 
-        self.load_models()  # Load models from configuration
-        self.load_quality_checks()  # Load quality checks from configuration
-        self.load_initial_values()  # Load initial values from config
+        # self.load_models()  # Load models from configuration
+
+        # self.load_quality_checks()  # Load quality checks from configuration
+        # self.load_initial_values()  # Load initial values from config
 
     def setup_top_section(self):
         """Setup the top section with title and return button."""
@@ -164,20 +165,20 @@ class Ui_genrate_images(object):
 
         self.right_layout.addLayout(self.button_layout)
 
-    def load_models(self):
-        """Load models from the configuration into the combo box."""
-        models = self.config.get('GENERATION', {}).get('MODELS', [])
-        for model in models:
-            self.combo_model.addItem(model['name'])
+    # def load_models(self):
+    #     """Load models from the configuration into the combo box."""
+    #     models = self.config.get('GENERATION', {}).get('MODELS', [])
+    #     for model in models:
+    #         self.combo_model.addItem(model['name'])
 
-    def load_quality_checks(self):
-        """Load quality checks from the configuration into the list."""
-        functions = self.config.get('QUALITY_CHECKS', {}).get('FUNCTIONS', [])
-        for func in functions:
-            item = QtWidgets.QListWidgetItem(func['name'])
-            item.setFlags(item.flags() | QtCore.Qt.ItemIsUserCheckable)
-            item.setCheckState(QtCore.Qt.Unchecked)
-            self.auto_check_list.addItem(item)
+    # def load_quality_checks(self):
+    #     """Load quality checks from the configuration into the list."""
+    #     functions = self.config.get('QUALITY_CHECKS', {}).get('FUNCTIONS', [])
+    #     for func in functions:
+    #         item = QtWidgets.QListWidgetItem(func['name'])
+    #         item.setFlags(item.flags() | QtCore.Qt.ItemIsUserCheckable)
+    #         item.setCheckState(QtCore.Qt.Unchecked)
+    #         self.auto_check_list.addItem(item)
 
     def validate_filename(self):
         """Validate the filename input and update the configuration."""
