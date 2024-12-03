@@ -8,6 +8,8 @@ from PyQt5.QtWidgets import (
 from PyQt5.QtCore import Qt
 from PyQt5.QtGui import QFontDatabase
 
+from frontend.custom_classes import CustomCheckBox, CustomSpinBox, CustomDoubleSpinBox, CustomComboBox
+
 class Ui_SettingsWindow(object):
     def __init__(self, config, ui_styles):
         self.config = config
@@ -29,9 +31,26 @@ class Ui_SettingsWindow(object):
         # Create a scrollable area for the main content
         self.scrollArea = QtWidgets.QScrollArea()
         self.scrollArea.setStyleSheet(f"""
-                font-family: '{self.regular_font_family}'; /* Title font family */
-                font-size: {self.ui_styles[FONTS][LABEL_FONT_SIZE]}px; /* Title font size */
-                border: none;
+                QScrollArea {{
+                    font-family: '{self.regular_font_family}'; /* Title font family */
+                    font-size: {self.ui_styles[FONTS][LABEL_FONT_SIZE]}px; /* Title font size */
+                    border: none;
+                }}
+                QScrollBar:vertical {{              
+                width: 6px;
+                margin: 0px 0px 0px 0px;
+                }}
+                QScrollBar::handle:vertical {{
+                    background: qlineargradient(x1:0, y1:0, x2:1, y2:0,
+                    stop: 0 {self.ui_styles[COLORS][BLACK]}, stop: 0.5 {self.ui_styles[COLORS][BLACK]}, stop:1 {self.ui_styles[COLORS][BLACK]});
+                    min-height: 0px;
+                }}
+                QScrollBar::add-line:vertical {{
+                    height: 0px;
+                }}
+                QScrollBar::sub-line:vertical {{
+                    height: 0 px;
+                }}
         """) # TODO format the vertical bar
         self.scrollArea.setWidgetResizable(True)
         self.scrollAreaWidgetContents = QtWidgets.QWidget()
@@ -47,6 +66,8 @@ class Ui_SettingsWindow(object):
         self.datasetGroup = QtWidgets.QGroupBox("Dataset")
         self.datasetGroup.setStyleSheet(f"""
             QGroupBox {{
+                font-family: '{self.regular_font_family}';
+                font-size: {self.ui_styles[FONTS][SETTING_GROUP_TITLE]}px; 
                 background-color: {self.ui_styles[COLORS][BACKGROUND]};
                 border: {self.ui_styles[BORDERS][MAIN_BUTTON_BORDER]}px {self.ui_styles[BORDERS][MAIN_BUTTON_STYLE]};
                 border-top-right-radius: {self.ui_styles[BORDERS][MAIN_BUTTON_RADIUS]}px;
@@ -66,6 +87,11 @@ class Ui_SettingsWindow(object):
         self.datasetLayout = QtWidgets.QFormLayout(self.datasetGroup)
 
         # Description (currently the name)
+        label_description = QLabel("Description:")
+        label_description.setStyleSheet(f"""
+            font-family: '{self.regular_font_family}';
+            font-size: {self.ui_styles[FONTS][LABEL_FONT_SIZE]}px;
+        """)
         self.descriptionLineEdit = QtWidgets.QLineEdit(self.datasetGroup)
         self.descriptionLineEdit.setStyleSheet(f"""
             QLineEdit {{
@@ -73,9 +99,14 @@ class Ui_SettingsWindow(object):
                 border-radius: {self.ui_styles[BORDERS][DEFAULT_RADIUS]}px; 
             }}
         """)
-        self.datasetLayout.addRow("Description:", self.descriptionLineEdit)
+        self.datasetLayout.addRow(label_description, self.descriptionLineEdit)
 
         # Pickle File Path
+        label_pickle = QLabel("Pickle File Path:")
+        label_pickle.setStyleSheet(f"""
+            font-family: '{self.regular_font_family}';
+            font-size: {self.ui_styles[FONTS][LABEL_FONT_SIZE]}px;
+        """)
         self.pickleFilePathLineEdit = QtWidgets.QLineEdit(self.datasetGroup)
         self.pickleFilePathLineEdit.setStyleSheet(f"""
             QLineEdit {{
@@ -95,9 +126,14 @@ class Ui_SettingsWindow(object):
         self.pickleFilePathLayout = QtWidgets.QHBoxLayout()
         self.pickleFilePathLayout.addWidget(self.pickleFilePathLineEdit)
         self.pickleFilePathLayout.addWidget(self.pickleFilePathBrowseButton)
-        self.datasetLayout.addRow("Pickle File Path:", self.pickleFilePathLayout)
+        self.datasetLayout.addRow(label_pickle, self.pickleFilePathLayout)
 
         # Labels List
+        label_dataset_labels = QLabel("Labels:")
+        label_dataset_labels.setStyleSheet(f"""
+            font-family: '{self.regular_font_family}';
+            font-size: {self.ui_styles[FONTS][LABEL_FONT_SIZE]}px;
+        """)
         self.labelsListWidget = QtWidgets.QListWidget(self.datasetGroup)
         self.labelsListWidget.setStyleSheet(f"""
             QListWidget {{
@@ -139,7 +175,7 @@ class Ui_SettingsWindow(object):
         self.labelsButtonLayout.addWidget(self.addLabelButton)
         self.labelsButtonLayout.addWidget(self.editLabelButton)
         self.labelsButtonLayout.addWidget(self.removeLabelButton)
-        self.datasetLayout.addRow("Labels:", self.labelsListWidget)
+        self.datasetLayout.addRow(label_dataset_labels, self.labelsListWidget)
         self.datasetLayout.addRow("", self.labelsButtonLayout)
 
         self.verticalLayout.addWidget(self.datasetGroup)
@@ -164,6 +200,8 @@ class Ui_SettingsWindow(object):
         self.imageGenGroup = QtWidgets.QGroupBox("Image Generator")
         self.imageGenGroup.setStyleSheet(f"""
             QGroupBox {{
+                font-family: '{self.regular_font_family}';
+                font-size: {self.ui_styles[FONTS][SETTING_GROUP_TITLE]}px; 
                 background-color: {self.ui_styles[COLORS][BACKGROUND]};
                 border: {self.ui_styles[BORDERS][MAIN_BUTTON_BORDER]}px {self.ui_styles[BORDERS][MAIN_BUTTON_STYLE]};
                 border-top-right-radius: {self.ui_styles[BORDERS][MAIN_BUTTON_RADIUS]}px;
@@ -183,6 +221,11 @@ class Ui_SettingsWindow(object):
         self.imageGenLayout = QtWidgets.QFormLayout(self.imageGenGroup)
 
         # Default Output Folder
+        label_output = QLabel("Default Output Folder:")
+        label_output.setStyleSheet(f"""
+            font-family: '{self.regular_font_family}';
+            font-size: {self.ui_styles[FONTS][LABEL_FONT_SIZE]}px;
+        """)
         self.outputFolderLineEdit = QtWidgets.QLineEdit(self.imageGenGroup)
         self.outputFolderLineEdit.setStyleSheet(f"""
             QLineEdit {{
@@ -202,9 +245,14 @@ class Ui_SettingsWindow(object):
         self.outputFolderLayout = QtWidgets.QHBoxLayout()
         self.outputFolderLayout.addWidget(self.outputFolderLineEdit)
         self.outputFolderLayout.addWidget(self.outputFolderBrowseButton)
-        self.imageGenLayout.addRow("Default Output Folder:", self.outputFolderLayout)
+        self.imageGenLayout.addRow(label_output, self.outputFolderLayout)
 
         # Default ComfyUI IP
+        label_comfy_ip = QLabel("Default ComfyUI IP:")
+        label_comfy_ip.setStyleSheet(f"""
+            font-family: '{self.regular_font_family}';
+            font-size: {self.ui_styles[FONTS][LABEL_FONT_SIZE]}px;
+        """)
         self.comfyUiIpLineEdit = QtWidgets.QLineEdit(self.imageGenGroup)
         self.comfyUiIpLineEdit.setStyleSheet(f"""
             QLineEdit {{
@@ -212,9 +260,14 @@ class Ui_SettingsWindow(object):
                 border-radius: {self.ui_styles[BORDERS][DEFAULT_RADIUS]}px; 
             }}
         """)
-        self.imageGenLayout.addRow("Default ComfyUI IP:", self.comfyUiIpLineEdit)
+        self.imageGenLayout.addRow(label_comfy_ip, self.comfyUiIpLineEdit)
 
         # Models List
+        label_models = QLabel("Models:")
+        label_models.setStyleSheet(f"""
+            font-family: '{self.regular_font_family}';
+            font-size: {self.ui_styles[FONTS][LABEL_FONT_SIZE]}px;
+        """)
         self.imageModelsList = QtWidgets.QListWidget(self.imageGenGroup)
         self.imageModelsList.setStyleSheet(f"""
             QListWidget {{
@@ -228,7 +281,7 @@ class Ui_SettingsWindow(object):
                 padding: 5px;
             }}
         """)
-        self.imageGenLayout.addRow("Models:", self.imageModelsList)
+        self.imageGenLayout.addRow(label_models, self.imageModelsList)
 
         # Buttons for model management
         self.addNewImageModelButton = QtWidgets.QPushButton("Add New Model", self.imageGenGroup)
@@ -283,6 +336,8 @@ class Ui_SettingsWindow(object):
         self.qualityCheckerGroup = QtWidgets.QGroupBox("Quality Checker")
         self.qualityCheckerGroup.setStyleSheet(f"""
             QGroupBox {{
+                font-family: '{self.regular_font_family}';
+                font-size: {self.ui_styles[FONTS][SETTING_GROUP_TITLE]}px; 
                 background-color: {self.ui_styles[COLORS][BACKGROUND]};
                 border: {self.ui_styles[BORDERS][MAIN_BUTTON_BORDER]}px {self.ui_styles[BORDERS][MAIN_BUTTON_STYLE]};
                 border-top-right-radius: {self.ui_styles[BORDERS][MAIN_BUTTON_RADIUS]}px;
@@ -302,6 +357,11 @@ class Ui_SettingsWindow(object):
         self.qualityCheckerLayout = QtWidgets.QFormLayout(self.qualityCheckerGroup)
 
         # Functions List
+        label_functions = QLabel("Functions:")
+        label_functions.setStyleSheet(f"""
+            font-family: '{self.regular_font_family}';
+            font-size: {self.ui_styles[FONTS][LABEL_FONT_SIZE]}px;
+        """)
         self.qualityFunctionsList = QtWidgets.QListWidget(self.qualityCheckerGroup)
         self.qualityFunctionsList.setStyleSheet(f"""
             QListWidget {{
@@ -315,7 +375,7 @@ class Ui_SettingsWindow(object):
                 padding: 5px;
             }}
         """)
-        self.qualityCheckerLayout.addRow("Functions:", self.qualityFunctionsList)
+        self.qualityCheckerLayout.addRow(label_functions, self.qualityFunctionsList)
 
         # Buttons for function management
         self.addNewQualityFunctionButton = QtWidgets.QPushButton("Add New Function", self.qualityCheckerGroup)
@@ -370,6 +430,8 @@ class Ui_SettingsWindow(object):
         self.annotatorGroup = QtWidgets.QGroupBox("Annotator")
         self.annotatorGroup.setStyleSheet(f"""
             QGroupBox {{
+                font-family: '{self.regular_font_family}';
+                font-size: {self.ui_styles[FONTS][SETTING_GROUP_TITLE]}px; 
                 background-color: {self.ui_styles[COLORS][BACKGROUND]};
                 border: {self.ui_styles[BORDERS][MAIN_BUTTON_BORDER]}px {self.ui_styles[BORDERS][MAIN_BUTTON_STYLE]};
                 border-top-right-radius: {self.ui_styles[BORDERS][MAIN_BUTTON_RADIUS]}px;
@@ -388,6 +450,11 @@ class Ui_SettingsWindow(object):
         """)
         self.annotatorLayout = QtWidgets.QFormLayout(self.annotatorGroup)
 
+        label_current_selection = QLabel("Current Selection:")
+        label_current_selection.setStyleSheet(f"""
+            font-family: '{self.regular_font_family}';
+            font-size: {self.ui_styles[FONTS][LABEL_FONT_SIZE]}px;
+        """)
         self.currentSelectionComboBox = QtWidgets.QComboBox(self.annotatorGroup)
         self.currentSelectionComboBox.setStyleSheet(f"""
             font-family: '{self.regular_font_family}';
@@ -398,67 +465,82 @@ class Ui_SettingsWindow(object):
             color: {self.ui_styles[COLORS][BLACK]};
             padding: 5px;
         """)
-        self.annotatorLayout.addRow("Current Selection:", self.currentSelectionComboBox)
+        self.annotatorLayout.addRow(label_current_selection, self.currentSelectionComboBox)
 
         # Annotator Options Widget Creation
         annotator_options_widget = QtWidgets.QWidget()
-        annotator_options_layout = QtWidgets.QHBoxLayout(annotator_options_widget)  # Use layout for the widget
+        annotator_options_layout = QtWidgets.QHBoxLayout(annotator_options_widget)
         annotator_options_widget.setLayout(annotator_options_layout)
 
 
-        color_assist_label = QtWidgets.QLabel("Enable Color-Assisted Mode", annotator_options_widget)
-        self.colorAssistCheckbox = QtWidgets.QCheckBox("", annotator_options_widget)  # Empty label for the checkbox itself
+        # color_assist_label = QtWidgets.QLabel("Enable Color-Assisted Mode", annotator_options_widget)
+        # self.colorAssistCheckbox = QtWidgets.QCheckBox("", annotator_options_widget)  # Empty label for the checkbox itself
 
-        annotator_options_layout.addWidget(color_assist_label, alignment=Qt.AlignRight)
+        self.colorAssistCheckbox = CustomCheckBox("Enable Color-Assisted Mode",
+                                  width=self.ui_styles[SIZES][SETTINGS_COLOR_CHECKBOX][WIDTH], 
+                                  height=self.ui_styles[SIZES][DEFAULT_CHECKBOX][HEIGHT],  
+                                  border=self.ui_styles[BORDERS][DEFAULT_BORDER], 
+                                  border_radious=self.ui_styles[BORDERS][DEFAULT_RADIUS], 
+                                  font=self.ui_styles[FONTS][LABEL_FONT_SIZE],
+                                  font_family=self.regular_font_family)
+
+        #annotator_options_layout.addWidget(color_assist_label, alignment=Qt.AlignRight)
         annotator_options_layout.addWidget(self.colorAssistCheckbox, alignment=Qt.AlignLeft)
 
+        annotator_options_layout.addStretch() 
+
         # Max Auto Label (SpinBox with Label)
-        max_auto_label_label = QtWidgets.QLabel("MAX_AUTO_LABEL:", annotator_options_widget)
-        self.maxAutoLabelSpinBox = QtWidgets.QSpinBox(annotator_options_widget)
-        self.maxAutoLabelSpinBox.setStyleSheet(f"""
-        font-family: '{self.regular_font_family}';
-        font-size: {self.ui_styles[FONTS][TEXT_FONT_SIZE]}px;
-        background-color: {self.ui_styles[COLORS][BACKGROUND]};
-        border: {self.ui_styles[BORDERS][MAIN_BUTTON_BORDER]}px {self.ui_styles[BORDERS][MAIN_BUTTON_STYLE]};
-        """) # TODO Add arrows here
+        max_auto_label_label = QtWidgets.QLabel("Max auto label:", annotator_options_widget)
+        max_auto_label_label.setStyleSheet(f"""
+            font-family: '{self.regular_font_family}';
+            font-size: {self.ui_styles[FONTS][LABEL_FONT_SIZE]}px;
+        """)
+        self.maxAutoLabelSpinBox = CustomSpinBox(width=self.ui_styles[SIZES][SPIN_BOX][WIDTH], 
+                                         height=self.ui_styles[SIZES][GENERATION_SPINBOX][HEIGHT], 
+                                         border=self.ui_styles[BORDERS][DEFAULT_BORDER], 
+                                         border_radious=self.ui_styles[BORDERS][DEFAULT_RADIUS], 
+                                         font=self.ui_styles[FONTS][TEXT_FONT_SIZE],
+                                         font_family=self.regular_font_family)
         self.maxAutoLabelSpinBox.setRange(1, 1000)
-        self.maxAutoLabelSpinBox.setFixedWidth(self.ui_styles[SIZES][SPIN_BOX][WIDTH])
-        self.maxAutoLabelSpinBox.setMaximumWidth(self.ui_styles[SIZES][SPIN_BOX][WIDTH])
 
         annotator_options_layout.addWidget(max_auto_label_label, alignment=Qt.AlignRight)
         annotator_options_layout.addWidget(self.maxAutoLabelSpinBox, alignment=Qt.AlignLeft)
 
+        annotator_options_layout.addStretch() 
+
         # Checkbox Threshold (DoubleSpinBox with Label)
-        checkbox_threshold_label = QtWidgets.QLabel("CHECKBOX_THRESHOLD:", annotator_options_widget)
-        self.checkboxThresholdSpinBox = QtWidgets.QDoubleSpinBox(annotator_options_widget)
-        self.checkboxThresholdSpinBox.setStyleSheet(f"""
-        font-family: '{self.regular_font_family}';
-        font-size: {self.ui_styles[FONTS][TEXT_FONT_SIZE]}px;
-        background-color: {self.ui_styles[COLORS][BACKGROUND]};
-        border: {self.ui_styles[BORDERS][MAIN_BUTTON_BORDER]}px {self.ui_styles[BORDERS][MAIN_BUTTON_STYLE]};
-        """) # TODO Add arrows here
-        self.checkboxThresholdSpinBox.setMinimum(0.0)
-        self.checkboxThresholdSpinBox.setMaximum(1.0)
+        checkbox_threshold_label = QtWidgets.QLabel("Checkbox threshold:", annotator_options_widget)
+        checkbox_threshold_label.setStyleSheet(f"""
+            font-family: '{self.regular_font_family}';
+            font-size: {self.ui_styles[FONTS][LABEL_FONT_SIZE]}px;
+        """)
+        self.checkboxThresholdSpinBox = CustomDoubleSpinBox(width=self.ui_styles[SIZES][DOUBLE_SPIN_BOX][WIDTH], 
+                                         height=self.ui_styles[SIZES][GENERATION_SPINBOX][HEIGHT], 
+                                         border=self.ui_styles[BORDERS][DEFAULT_BORDER], 
+                                         border_radious=self.ui_styles[BORDERS][DEFAULT_RADIUS], 
+                                         font=self.ui_styles[FONTS][TEXT_FONT_SIZE],
+                                         font_family=self.regular_font_family)
+        self.checkboxThresholdSpinBox.setRange(0.0, 1.0)
         self.checkboxThresholdSpinBox.setSingleStep(0.01)
-        self.checkboxThresholdSpinBox.setFixedWidth(self.ui_styles[SIZES][SPIN_BOX][WIDTH]+self.ui_styles[PADDINGS][MIN_SIDES])
-        self.checkboxThresholdSpinBox.setMaximumWidth(self.ui_styles[SIZES][SPIN_BOX][WIDTH])
 
         # Add both label and spinbox to layout
         annotator_options_layout.addWidget(checkbox_threshold_label, alignment=Qt.AlignRight)
         annotator_options_layout.addWidget(self.checkboxThresholdSpinBox, alignment=Qt.AlignLeft)
 
+        annotator_options_layout.addStretch() 
+
         # Default Color (ComboBox with Label)
         default_color_label = QtWidgets.QLabel("Default Color:", annotator_options_widget)
-        self.defaultColorComboBox = QtWidgets.QComboBox(annotator_options_widget)
-        self.defaultColorComboBox.setStyleSheet(f"""
+        default_color_label.setStyleSheet(f"""
             font-family: '{self.regular_font_family}';
-            font-size: {self.ui_styles[FONTS][TEXT_FONT_SIZE]}px;
-            border: {self.ui_styles[BORDERS][MAIN_BUTTON_BORDER]}px {self.ui_styles[BORDERS][MAIN_BUTTON_STYLE]};
-            border-radius: {self.ui_styles[BORDERS][DEFAULT_BORDER]}px;
-            background-color: {self.ui_styles[COLORS][BACKGROUND]};
-            color: {self.ui_styles[COLORS][BLACK]};
-            padding: 5px;
+            font-size: {self.ui_styles[FONTS][LABEL_FONT_SIZE]}px;
         """)
+        self.defaultColorComboBox = CustomComboBox(width=self.ui_styles[SIZES][SETTINGS_COLOR_COMBO][WIDTH], 
+                                         height=self.ui_styles[SIZES][GENERATION_SPINBOX][HEIGHT], 
+                                         border=self.ui_styles[BORDERS][DEFAULT_BORDER], 
+                                         border_radius=self.ui_styles[BORDERS][DEFAULT_RADIUS], 
+                                         font=self.ui_styles[FONTS][TEXT_FONT_SIZE],
+                                         font_family=self.regular_font_family)
         self.defaultColorComboBox.addItems(["red", "green", "blue", "yellow", "orange", "purple"])
 
         # Add both label and combobox to layout
@@ -507,11 +589,16 @@ class Ui_SettingsWindow(object):
             color: {self.ui_styles[COLORS][BLACK]}
         """)
         
+        label_confidence = QLabel("Confidence Thresholds:")
+        label_confidence.setStyleSheet(f"""
+            font-family: '{self.regular_font_family}';
+            font-size: {self.ui_styles[FONTS][LABEL_FONT_SIZE]}px;
+        """)
         self.confidenceButtonLayout = QtWidgets.QHBoxLayout()
         self.confidenceButtonLayout.addWidget(self.addConfidenceButton)
         self.confidenceButtonLayout.addWidget(self.editConfidenceButton)
         self.confidenceButtonLayout.addWidget(self.removeConfidenceButton)
-        self.annotatorLayout.addRow("Confidence Thresholds:", self.confidenceThresholdList)
+        self.annotatorLayout.addRow(label_confidence, self.confidenceThresholdList)
         self.annotatorLayout.addRow("", self.confidenceButtonLayout)
 
         # Models List
@@ -528,7 +615,7 @@ class Ui_SettingsWindow(object):
                 padding: 5px;
             }}
         """)
-        self.annotatorLayout.addRow("Models:", self.annotatorModelsList)
+        self.annotatorLayout.addRow(label_models, self.annotatorModelsList)
 
         # Buttons for model management
         self.addModelButton = QtWidgets.QPushButton("Add Model", self.annotatorGroup)

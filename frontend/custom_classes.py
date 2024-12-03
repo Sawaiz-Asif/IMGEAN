@@ -1,4 +1,4 @@
-from PyQt5.QtWidgets import QWidget, QSpinBox, QPushButton, QGridLayout, QHBoxLayout, QLabel
+from PyQt5.QtWidgets import QWidget, QSpinBox, QPushButton, QGridLayout, QHBoxLayout, QLabel, QDoubleSpinBox, QComboBox
 from PyQt5.QtCore import Qt
 
 class CustomSpinBox(QWidget):
@@ -8,8 +8,8 @@ class CustomSpinBox(QWidget):
         self.spin_box.setButtonSymbols(QSpinBox.NoButtons)
         self.spin_box.setAlignment(Qt.AlignCenter)
 
-        self.increment_button = QPushButton("+")
-        self.decrement_button = QPushButton("-")
+        self.increment_button = QPushButton("▲")
+        self.decrement_button = QPushButton("▼")
 
         self.increment_button.clicked.connect(self.increment)
         self.decrement_button.clicked.connect(self.decrement)
@@ -146,3 +146,163 @@ class CustomCheckBox(QWidget):
             font-size: {int(self.set_height*0.75)}px; 
             font-family: '{self.font_family}';
         """)
+
+class CustomDoubleSpinBox(QWidget):
+    def __init__(self, width=50, height=40, border=1, border_radious=5, font=15, font_family=None):
+        super().__init__(None)
+        self.spin_box = QDoubleSpinBox()
+        self.spin_box.setButtonSymbols(QSpinBox.NoButtons)
+        self.spin_box.setAlignment(Qt.AlignCenter)
+
+        self.increment_button = QPushButton("▲")
+        self.decrement_button = QPushButton("▼")
+
+        self.increment_button.clicked.connect(self.increment)
+        self.decrement_button.clicked.connect(self.decrement)
+
+        self.spin_box.setFixedSize(int(1.25*width//2), height)
+        self.increment_button.setFixedSize(int(0.75*width//2), height//2)
+        self.decrement_button.setFixedSize(int(0.75*width//2), height//2)
+        self.spin_box.setStyleSheet(f"""
+            border-top-left-radius: {border_radious}px;
+            border-bottom-left-radius: {border_radious}px;
+            font-size: {font}px; 
+            border: {border}px solid black;
+            background-color: #ffffff; 
+            color: #000000;
+            font-family: '{font_family}';
+        """)
+        self.increment_button.setStyleSheet(f"""
+            border-top-right-radius: {border_radious}px; 
+            font-size: {font}px; 
+            border-top: {border}px solid black;
+            border-right: {border}px solid black;
+            background-color: #ffffff; 
+            color: #000000;
+            font-family: '{font_family}';
+        """)
+        self.decrement_button.setStyleSheet(f"""
+            border-bottom-right-radius: {border_radious}px; 
+            font-size: {font}px; 
+            border-top: {border}px solid black;
+            border-right: {border}px solid black;
+            border-bottom: {border}px solid black;
+            background-color: #ffffff; 
+            color: #000000;
+            font-family: '{font_family}';
+        """)
+
+        layout = QGridLayout()
+        layout.addWidget(self.spin_box, 0, 0, 2, 1)
+        layout.addWidget(self.increment_button, 0, 1)
+        layout.addWidget(self.decrement_button, 1, 1)
+
+        layout.setContentsMargins(0, 0, 0, 0)
+        layout.setSpacing(0)
+
+        self.setLayout(layout)
+        self.setFixedSize(self.sizeHint())
+
+        self.setRange(0, 100)
+        self.setValue(0)
+
+    def increment(self):
+        self.spin_box.setValue(self.spin_box.value() + self.spin_box.singleStep())
+
+    def decrement(self):
+        self.spin_box.setValue(self.spin_box.value() - self.spin_box.singleStep())
+
+    def setValue(self, value):
+        self.spin_box.setValue(value)
+
+    def setRange(self, minimum, maximum):
+        self.spin_box.setRange(minimum, maximum)
+
+    def setSingleStep(self, step_size):
+        self.spin_box.setSingleStep(step_size)
+
+    def value(self):
+        return self.spin_box.value()
+    
+class CustomComboBox(QWidget):
+    def __init__(self, width=100, height=40, border=1, border_radius=5, font=15, font_family=None):
+        super().__init__(None)
+        
+        if width < 150:
+            alpha = 0.75
+        else:
+            alpha = 0.9
+
+        self.combo_box = QComboBox()
+        self.combo_box.setEditable(True)  # To allow custom input
+        self.combo_box.lineEdit().setReadOnly(True)  # Read-only like a traditional ComboBox
+        self.combo_box.lineEdit().setAlignment(Qt.AlignCenter)
+        self.combo_box.setFixedSize(int(alpha * width), height)
+
+        # Hide the default dropdown button using stylesheet
+        self.combo_box.setStyleSheet(f"""
+            QComboBox {{
+                border-top-left-radius: {border_radius}px;
+                border-bottom-left-radius: {border_radius}px;
+                font-size: {font}px; 
+                border: {border}px solid black;
+                background-color: #ffffff; 
+                color: #000000;
+                font-family: '{font_family}';
+                padding-right: 0px;
+            }}
+            QComboBox::drop-down {{
+                border: none;
+                width: 0px;
+            }}
+        """)
+
+        self.dropdown_button = QPushButton("▼")
+        self.dropdown_button.clicked.connect(self.toggle_popup)
+        self.dropdown_button.setFixedSize(int((1-alpha) * width), height)
+        self.dropdown_button.setStyleSheet(f"""
+            border-top-right-radius: {border_radius}px; 
+            border-bottom-right-radius: {border_radius}px; 
+            font-size: {font}px; 
+            border: {border}px solid black;
+            border-left: none;
+            background-color: #ffffff; 
+            color: #000000;
+            font-family: '{font_family}';
+        """)
+
+        # Layout setup
+        layout = QGridLayout()
+        layout.addWidget(self.combo_box, 0, 0)
+        layout.addWidget(self.dropdown_button, 0, 1)
+
+        layout.setContentsMargins(0, 0, 0, 0)
+        layout.setSpacing(0)
+
+        self.setLayout(layout)
+        self.setFixedSize(self.sizeHint())
+
+    def toggle_popup(self):
+        """Toggle the visibility of the combobox popup."""
+        if self.combo_box.view().isVisible():
+            self.combo_box.hidePopup()
+        else:
+            self.combo_box.showPopup()
+
+    def addItem(self, item):
+        self.combo_box.addItem(item)
+
+    def addItems(self, items):
+        self.combo_box.addItems(items)
+
+    def currentText(self):
+        return self.combo_box.currentText()
+
+    def setCurrentIndex(self, index):
+        self.combo_box.setCurrentIndex(index)
+
+    def currentIndex(self):
+        return self.combo_box.currentIndex()
+    
+    def setCurrentText(self, text):
+        self.combo_box.setCurrentText(text)

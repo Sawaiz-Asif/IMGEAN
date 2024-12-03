@@ -27,8 +27,10 @@ sizes:
     width: 90
   spin_box:
     width: 40
+  double_spin_box:
+    width: 60
   combo_models:
-    width: 250
+    width: 275
   img_preview:
     width: 420
   dropdown_button:
@@ -56,6 +58,10 @@ sizes:
   default_checkbox:
     width: 150
     height: 20
+  settings_color_checkbox:
+    width: 250
+  settings_color_combo:
+    width: 100
 fonts:
   text_font_size: 14
   label_font_size: 18
@@ -64,6 +70,7 @@ fonts:
   return_button_font_size: 14
   bold_font_file: './frontend/fonts/BalsamiqSans-Bold.ttf'
   regular_font_file: './frontend/fonts/BalsamiqSans-Regular.ttf'
+  setting_group_title: 20
 paddings:
   before_title: 50
   after_title: 100
@@ -77,7 +84,7 @@ paddings:
   labels_up: 4
   settings_title_vertical: 5
   settings_title_horizontal: 15
-  settings_box_from_title: 35
+  settings_box_from_title: 36
   settings_buttons_horizontal: 10
   list_default_padding: 10
 borders:

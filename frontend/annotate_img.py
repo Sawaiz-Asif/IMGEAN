@@ -331,8 +331,6 @@ class AnnotateImg(QtWidgets.QMainWindow):
                 # Reset the label text to its original without confidence score
                 custom_checkbox.setText(self.ui.dataset_manager.annotation.attr_name[i])
 
-                custom_checkbox.modifyColor("#ea9999")
-
     def populate_image_grid(self, grid_layout, image_list):
         # Clear existing widgets from the grid layout
         for i in reversed(range(grid_layout.count())):

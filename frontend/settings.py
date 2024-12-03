@@ -1,25 +1,27 @@
 from PyQt5 import QtWidgets
 from frontend.settings_ui import Ui_SettingsWindow  # Import the UI class
 
-class SettingsWindow(QtWidgets.QMainWindow, Ui_SettingsWindow):
-    def __init__(self,stacked_widget):
+class SettingsWindow(QtWidgets.QMainWindow):
+    def __init__(self,stacked_widget, config, ui_styles):
         super(SettingsWindow, self).__init__()
-        self.setupUi(self)
+
+        self.ui = Ui_SettingsWindow(config, ui_styles)  # Initialize the UI
+        self.ui.setupUi(self)
 
         self.stacked_widget = stacked_widget  # Store reference to the stacked widget
 
         # Connect button clicks to methods
-        self.returnButton.clicked.connect(self.on_return)
-        self.addClassesButton.clicked.connect(self.add_class)
-        self.removeModelButton.clicked.connect(self.remove_model)
-        self.modelSettingsButton.clicked.connect(self.open_model_settings)
-        self.addNewModelButton.clicked.connect(self.add_new_model)
-        self.removeImageModelButton.clicked.connect(self.remove_image_model)
-        self.imageModelSettingsButton.clicked.connect(self.open_image_model_settings)
-        self.addNewImageModelButton.clicked.connect(self.add_new_image_model)
-        self.removeQualityModelButton.clicked.connect(self.remove_quality_model)
-        self.qualityModelSettingsButton.clicked.connect(self.open_quality_model_settings)
-        self.addNewQualityModelButton.clicked.connect(self.add_new_quality_model)
+        """ self.ui.returnButton.clicked.connect(self.on_return)
+        self.ui.addClassesButton.clicked.connect(self.add_class)
+        self.ui.removeModelButton.clicked.connect(self.remove_model)
+        self.ui.modelSettingsButton.clicked.connect(self.open_model_settings)
+        self.ui.addNewModelButton.clicked.connect(self.add_new_model)
+        self.ui.removeImageModelButton.clicked.connect(self.remove_image_model)
+        self.ui.imageModelSettingsButton.clicked.connect(self.open_image_model_settings)
+        self.ui.addNewImageModelButton.clicked.connect(self.add_new_image_model)
+        self.ui.removeQualityModelButton.clicked.connect(self.remove_quality_model)
+        self.ui.qualityModelSettingsButton.clicked.connect(self.open_quality_model_settings)
+        self.ui.addNewQualityModelButton.clicked.connect(self.add_new_quality_model) """
 
     # Methods to handle button actions
     def on_return(self):
