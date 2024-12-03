@@ -80,6 +80,11 @@ class CustomCheckBox(QWidget):
         super().__init__(None)
         
         self.checked = False
+        self.font_size = font
+        self.font_family = font_family
+        self.set_height = height
+        self.border = border
+        self.border_radious = border_radious
 
         self.label = QLabel(text)
         self.label.setAlignment(Qt.AlignLeft | Qt.AlignVCenter)
@@ -128,5 +133,16 @@ class CustomCheckBox(QWidget):
 
     def setChecked(self, state):
         self.checked = state
-        self.toggle_button.setChecked(state)
-        self.toggle()
+        if self.checked:
+            self.toggle_button.setText("X")
+        else:
+            self.toggle_button.setText("")
+
+    def modifyColor(self, color_code):
+        self.toggle_button.setStyleSheet(f"""
+            border-radius: {self.border_radious}px; 
+            border: {self.border}px solid black; 
+            background-color: {color_code};
+            font-size: {int(self.set_height*0.75)}px; 
+            font-family: '{self.font_family}';
+        """)

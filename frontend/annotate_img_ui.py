@@ -11,6 +11,8 @@ from PyQt5.QtWidgets import (
 from PyQt5.QtCore import Qt
 from PyQt5.QtGui import QFontDatabase
 
+from frontend.custom_classes import CustomCheckBox
+
 class Ui_AnnotateImg(object):
     def __init__(self, config, ui_styles):
         self.config = config
@@ -193,27 +195,35 @@ class Ui_AnnotateImg(object):
         # Iterate through the actual labels and create a checkbox for each one
         for label in list_labels:
             # Create a widget to hold both the checkbox and the label name
-            widget = QtWidgets.QWidget()    
-            widget.setStyleSheet(f"""
-                font-family: '{self.regular_font_family}';
-                font-size: {self.ui_styles[FONTS][LABEL_FONT_SIZE]}px;
-                text-align: center;
-            """)
-            layout = QtWidgets.QHBoxLayout(widget)
+            # widget = QtWidgets.QWidget()    
+            # widget.setStyleSheet(f"""
+            #     font-family: '{self.regular_font_family}';
+            #     font-size: {self.ui_styles[FONTS][LABEL_FONT_SIZE]}px;
+            #     text-align: center;
+            # """)
+            # layout = QtWidgets.QHBoxLayout(widget)
 
-            checkbox = QtWidgets.QCheckBox() # TODO add borders
-            label_widget = QtWidgets.QLabel(label)
+            checkbox = CustomCheckBox(text=label,
+                                  width=self.ui_styles[SIZES][DEFAULT_CHECKBOX][WIDTH], 
+                                  height=self.ui_styles[SIZES][DEFAULT_CHECKBOX][HEIGHT], 
+                                  border=self.ui_styles[BORDERS][DEFAULT_BORDER], 
+                                  border_radious=self.ui_styles[BORDERS][DEFAULT_RADIUS], 
+                                  font=self.ui_styles[FONTS][LABEL_FONT_SIZE],
+                                  font_family=self.regular_font_family)
 
-            layout.addWidget(checkbox)
-            layout.addWidget(label_widget)
+            #layout.addWidget(checkbox)
+#
+            #layout.setAlignment(QtCore.Qt.AlignLeft)
+            #layout.setContentsMargins(self.ui_styles[PADDINGS][LABELS_LEFT], self.ui_styles[PADDINGS][LABELS_UP], 0, 0)
 
-            layout.setAlignment(QtCore.Qt.AlignLeft)
-            layout.setContentsMargins(self.ui_styles[PADDINGS][LABELS_LEFT], self.ui_styles[PADDINGS][LABELS_UP], 0, 0)
-
-            # Add the custom widget (with checkbox and label) to the list
             item = QtWidgets.QListWidgetItem()
             self.labelList.addItem(item)
-            self.labelList.setItemWidget(item, widget)
+            self.labelList.setItemWidget(item, checkbox)
+
+            # Add the custom widget (with checkbox and label) to the list
+            # item = QtWidgets.QListWidgetItem()
+            # self.labelList.addItem(item)
+            # self.labelList.setItemWidget(item, widget)
 
         self.labelList.setFixedSize(self.ui_styles[SIZES][LABEL_LIST][WIDTH], self.ui_styles[SIZES][LABEL_LIST][HEIGHT])
 
@@ -237,9 +247,12 @@ class Ui_AnnotateImg(object):
         # Long vertical button on the left (opens image grid)
         self.openImageGridButton = QtWidgets.QPushButton("Images")
         self.openImageGridButton.setStyleSheet(f"""
-            border-radius: {self.ui_styles[BORDERS][DEFAULT_RADIUS]}px; 
+            border-top-right-radius: {self.ui_styles[BORDERS][DEFAULT_RADIUS]}px; 
+            border-bottom-right-radius: {self.ui_styles[BORDERS][DEFAULT_RADIUS]}px; 
             font-size: {self.ui_styles[FONTS][BUTTON_FONT_SIZE]}px; 
-            border: {self.ui_styles[BORDERS][MAIN_BUTTON_BORDER]}px {self.ui_styles[BORDERS][MAIN_BUTTON_STYLE]};
+            border-top: {self.ui_styles[BORDERS][MAIN_BUTTON_BORDER]}px {self.ui_styles[BORDERS][MAIN_BUTTON_STYLE]};
+            border-right: {self.ui_styles[BORDERS][MAIN_BUTTON_BORDER]}px {self.ui_styles[BORDERS][MAIN_BUTTON_STYLE]};
+            border-bottom: {self.ui_styles[BORDERS][MAIN_BUTTON_BORDER]}px {self.ui_styles[BORDERS][MAIN_BUTTON_STYLE]};
             background-color: {self.ui_styles[COLORS][YELLOW]}; 
             color: {self.ui_styles[COLORS][BLACK]}
         """)
@@ -255,7 +268,6 @@ class Ui_AnnotateImg(object):
         self.scroll_widget = QtWidgets.QWidget()
         self.scroll_widget.setStyleSheet(f"""
             font-family: '{self.regular_font_family}';
-            border-radius: {self.ui_styles[BORDERS][MAIN_BUTTON_RADIUS]}px;
             font-size: {self.ui_styles[FONTS][RETURN_BUTTON_FONT_SIZE]}px;
             border: {self.ui_styles[BORDERS][MAIN_BUTTON_BORDER]}px {self.ui_styles[BORDERS][MAIN_BUTTON_STYLE]}; /* Outer border */
         """)
@@ -294,9 +306,12 @@ class Ui_AnnotateImg(object):
 
         self.closeImageGridButton = QtWidgets.QPushButton("Images")
         self.closeImageGridButton.setStyleSheet(f"""
-            border-radius: {self.ui_styles[BORDERS][DEFAULT_RADIUS]}px; 
+            border-top-right-radius: {self.ui_styles[BORDERS][DEFAULT_RADIUS]}px; 
+            border-bottom-right-radius: {self.ui_styles[BORDERS][DEFAULT_RADIUS]}px;  
             font-size: {self.ui_styles[FONTS][BUTTON_FONT_SIZE]}px; 
-            border: {self.ui_styles[BORDERS][MAIN_BUTTON_BORDER]}px {self.ui_styles[BORDERS][MAIN_BUTTON_STYLE]};
+            border-top: {self.ui_styles[BORDERS][MAIN_BUTTON_BORDER]}px {self.ui_styles[BORDERS][MAIN_BUTTON_STYLE]};
+            border-right: {self.ui_styles[BORDERS][MAIN_BUTTON_BORDER]}px {self.ui_styles[BORDERS][MAIN_BUTTON_STYLE]};
+            border-bottom: {self.ui_styles[BORDERS][MAIN_BUTTON_BORDER]}px {self.ui_styles[BORDERS][MAIN_BUTTON_STYLE]};
             background-color: {self.ui_styles[COLORS][YELLOW]}; 
             color: {self.ui_styles[COLORS][BLACK]}
         """)

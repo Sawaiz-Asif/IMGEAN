@@ -15,11 +15,11 @@ AUTO_LABEL:
   BATCH_SIZE: 12
   CHECKBOX_THRESHOLD: 0.5
   CONFIDENCE_THRESHOLDS:
-  - color: green
+  - color: '#b6d7a8'
     value: 0.75
-  - color: yellow
+  - color: '#ffe599'
     value: 0.5
-  DEFAULT_COLOR: red
+  DEFAULT_COLOR: '#ea9999'
 DATASET:
   HEIGHT: 256
   LABEL: eval
@@ -51,7 +51,7 @@ GENERATION:
     positive: 'A highly detailed, ultra high definition image of a single pedestrian
       on an airport, with the pedestrian fully visible and centered in the frame. '
   filename: generated_image
-  manual_quality_check: true
+  manual_quality_check: false
   model: sd3_medium_incl_clips.safetensors
   num_images: 1
   resolution_height: 1024
@@ -81,7 +81,7 @@ QUALITY_CHECKS:
     path: ./backend/quality_checker/check_throws_exception.py
   selected_checks:
   - 0
-  - 1
+  - 0
   - 0
   - 0
   - 0

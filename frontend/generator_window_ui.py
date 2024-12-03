@@ -414,8 +414,8 @@ class Ui_generate_images(object):
         functions = self.config.get('QUALITY_CHECKS', {}).get('FUNCTIONS', [])
         for func in functions:
             custom_checkBox = CustomCheckBox(text=func['name'],
-                                  width=150, 
-                                  height=20, 
+                                  width=self.ui_styles[SIZES][DEFAULT_CHECKBOX][WIDTH], 
+                                  height=self.ui_styles[SIZES][DEFAULT_CHECKBOX][HEIGHT],  
                                   border=self.ui_styles[BORDERS][DEFAULT_BORDER], 
                                   border_radious=self.ui_styles[BORDERS][DEFAULT_RADIUS], 
                                   font=self.ui_styles[FONTS][TEXT_FONT_SIZE],

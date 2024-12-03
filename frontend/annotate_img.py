@@ -303,20 +303,18 @@ class AnnotateImg(QtWidgets.QMainWindow):
         # Iterate over the checkboxes and apply predictions or default dataset labels
         for i in range(self.ui.labelList.count()):
             item = self.ui.labelList.item(i)
-            widget = self.ui.labelList.itemWidget(item)
-            checkbox = widget.findChild(QtWidgets.QCheckBox)
-            label_widget = widget.findChild(QtWidgets.QLabel)
+            custom_checkbox = self.ui.labelList.itemWidget(item)
 
             # If predictions exist, use them; otherwise, fall back to dataset labels
             if predictions[i][1] is not None:  # If confidence is available
                 label, confidence = predictions[i]
                 # Set checkbox based on confidence threshold from config
                 checkbox_threshold = self.config['AUTO_LABEL'].get('CHECKBOX_THRESHOLD', 0.5)
-                checkbox.setChecked(confidence > checkbox_threshold)
+                custom_checkbox.setChecked(confidence > checkbox_threshold)
 
                 # Update the label text with the confidence score
                 percentage_text = f"{confidence * 100:.0f}%"
-                label_widget.setText(f"{label} ({percentage_text})")
+                custom_checkbox.setText(f"{label} ({percentage_text})")
 
                 # Apply color based on confidence score and thresholds
                 thresholds = self.config['AUTO_LABEL']['CONFIDENCE_THRESHOLDS']
@@ -325,15 +323,15 @@ class AnnotateImg(QtWidgets.QMainWindow):
                 for threshold in thresholds:
                     if confidence > threshold['value']:
                         color = threshold.get('color', default_color)
-                label_widget.setStyleSheet(f"color: {color};")
+                custom_checkbox.modifyColor(color)
             else:
                 # No predictions, fall back to the dataset labels (default behavior)
-                checkbox.setChecked(bool(labels_select[i]))
+                custom_checkbox.setChecked(bool(labels_select[i]))
 
                 # Reset the label text to its original without confidence score
-                label_widget.setText(self.ui.dataset_manager.annotation.attr_name[i])
+                custom_checkbox.setText(self.ui.dataset_manager.annotation.attr_name[i])
 
-                label_widget.setStyleSheet("color: black;")
+                custom_checkbox.modifyColor("#ea9999")
 
     def populate_image_grid(self, grid_layout, image_list):
         # Clear existing widgets from the grid layout
@@ -387,15 +385,9 @@ class AnnotateImg(QtWidgets.QMainWindow):
         # Function to get the selection status of checkboxes as a binary array
         selections = []
         for i in range(self.ui.labelList.count()):
-            # Get the list widget item
             item = self.ui.labelList.item(i)
-            
-            # Get the widget associated with the item (which contains the checkbox and label)
-            widget = self.ui.labelList.itemWidget(item)
-            
-            # Extract the checkbox from the widget's layout
-            checkbox = widget.findChild(QtWidgets.QCheckBox)
+            custom_checkbox = self.ui.labelList.itemWidget(item)
             
             # Append 1 if checked, otherwise 0
-            selections.append(1 if checkbox.isChecked() else 0)     
+            selections.append(1 if custom_checkbox.isChecked() else 0)     
         return selections

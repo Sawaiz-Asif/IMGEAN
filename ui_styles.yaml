@@ -33,7 +33,7 @@ sizes:
     width: 420
   dropdown_button:
     width: 100
-    height: 600
+    height: 610
   annotate_img:
     width: 500
     height: 500
@@ -53,6 +53,9 @@ sizes:
     height: 30
   auto_check_list:
     height: 130
+  default_checkbox:
+    width: 150
+    height: 20
 fonts:
   text_font_size: 14
   label_font_size: 18
