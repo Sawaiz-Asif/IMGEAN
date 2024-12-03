@@ -51,7 +51,7 @@ GENERATION:
     positive: 'A highly detailed, ultra high definition image of a single pedestrian
       on an airport, with the pedestrian fully visible and centered in the frame. '
   filename: generated_image
-  manual_quality_check: false
+  manual_quality_check: true
   model: sd3_medium_incl_clips.safetensors
   num_images: 1
   resolution_height: 1024

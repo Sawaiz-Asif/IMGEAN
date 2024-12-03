@@ -27,23 +27,33 @@ class CustomSpinBox(QWidget):
             font-family: '{font_family}';
         """)
         self.increment_button.setStyleSheet(f"""
-            border-top-right-radius: {border_radious}px; 
-            font-size: {font}px; 
-            border-top: {border}px solid black;
-            border-right: {border}px solid black;
-            background-color: #ffffff; 
-            color: #000000;
-            font-family: '{font_family}';
+            QPushButton {{
+                border-top-right-radius: {border_radious}px; 
+                font-size: {font}px; 
+                border-top: {border}px solid black;
+                border-right: {border}px solid black;
+                background-color: #ffffff; 
+                color: #000000;
+                font-family: '{font_family}';
+            }}
+            QPushButton:pressed {{
+                background-color: #f2f2f2;
+            }}
         """)
         self.decrement_button.setStyleSheet(f"""
-            border-bottom-right-radius: {border_radious}px; 
-            font-size: {font}px; 
-            border-top: {border}px solid black;
-            border-right: {border}px solid black;
-            border-bottom: {border}px solid black;
-            background-color: #ffffff; 
-            color: #000000;
-            font-family: '{font_family}';
+            QPushButton {{
+                border-bottom-right-radius: {border_radious}px; 
+                font-size: {font}px; 
+                border-top: {border}px solid black;
+                border-right: {border}px solid black;
+                border-bottom: {border}px solid black;
+                background-color: #ffffff; 
+                color: #000000;
+                font-family: '{font_family}';
+            }}
+            QPushButton:pressed {{
+                background-color: #f2f2f2;
+            }}
         """)
 
         layout = QGridLayout()
@@ -100,11 +110,16 @@ class CustomCheckBox(QWidget):
         self.toggle_button.setFixedSize(height, height)
         self.toggle_button.setCheckable(True)
         self.toggle_button.setStyleSheet(f"""
+            QPushButton {{
             border-radius: {border_radious}px; 
             border: {border}px solid black; 
             background-color: #ffffff;
             font-size: {int(height*0.75)}px; 
             font-family: '{font_family}';
+            }}
+            QPushButton:pressed {{
+                background-color: #f2f2f2;
+            }}
         """)
 
         self.toggle_button.clicked.connect(self.toggle)
@@ -173,23 +188,33 @@ class CustomDoubleSpinBox(QWidget):
             font-family: '{font_family}';
         """)
         self.increment_button.setStyleSheet(f"""
-            border-top-right-radius: {border_radious}px; 
-            font-size: {font}px; 
-            border-top: {border}px solid black;
-            border-right: {border}px solid black;
-            background-color: #ffffff; 
-            color: #000000;
-            font-family: '{font_family}';
+            QPushButton {{
+                border-top-right-radius: {border_radious}px; 
+                font-size: {font}px; 
+                border-top: {border}px solid black;
+                border-right: {border}px solid black;
+                background-color: #ffffff; 
+                color: #000000;
+                font-family: '{font_family}';
+            }}
+            QPushButton:pressed {{
+                background-color: #f2f2f2;
+            }}
         """)
         self.decrement_button.setStyleSheet(f"""
-            border-bottom-right-radius: {border_radious}px; 
-            font-size: {font}px; 
-            border-top: {border}px solid black;
-            border-right: {border}px solid black;
-            border-bottom: {border}px solid black;
-            background-color: #ffffff; 
-            color: #000000;
-            font-family: '{font_family}';
+            QPushButton {{
+                border-bottom-right-radius: {border_radious}px; 
+                font-size: {font}px; 
+                border-top: {border}px solid black;
+                border-right: {border}px solid black;
+                border-bottom: {border}px solid black;
+                background-color: #ffffff; 
+                color: #000000;
+                font-family: '{font_family}';
+            }}
+            QPushButton:pressed {{
+                background-color: #f2f2f2;
+            }}
         """)
 
         layout = QGridLayout()
@@ -261,14 +286,19 @@ class CustomComboBox(QWidget):
         self.dropdown_button.clicked.connect(self.toggle_popup)
         self.dropdown_button.setFixedSize(int((1-alpha) * width), height)
         self.dropdown_button.setStyleSheet(f"""
-            border-top-right-radius: {border_radius}px; 
-            border-bottom-right-radius: {border_radius}px; 
-            font-size: {font}px; 
-            border: {border}px solid black;
-            border-left: none;
-            background-color: #ffffff; 
-            color: #000000;
-            font-family: '{font_family}';
+            QPushButton {{
+                border-top-right-radius: {border_radius}px; 
+                border-bottom-right-radius: {border_radius}px; 
+                font-size: {font}px; 
+                border: {border}px solid black;
+                border-left: none;
+                background-color: #ffffff; 
+                color: #000000;
+                font-family: '{font_family}';
+            }}
+            QPushButton:pressed {{
+                background-color: #f2f2f2;
+            }}
         """)
 
         # Layout setup

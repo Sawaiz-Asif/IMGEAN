@@ -64,10 +64,15 @@ class Ui_AnnotateImg(object):
             self.ui_styles[SIZES][RETURN_BUTTON][HEIGHT]
         )
         returnButton.setStyleSheet(f"""
-            border-radius: {self.ui_styles[BORDERS][MAIN_BUTTON_RADIUS]}px; 
-            font-size: {self.ui_styles[FONTS][RETURN_BUTTON_FONT_SIZE]}px; 
-            border: {self.ui_styles[BORDERS][MAIN_BUTTON_BORDER]}px {self.ui_styles[BORDERS][MAIN_BUTTON_STYLE]};
-            background-color: {self.ui_styles[COLORS][ORANGE]}; 
+            QPushButton {{
+                border-radius: {self.ui_styles[BORDERS][MAIN_BUTTON_RADIUS]}px; 
+                font-size: {self.ui_styles[FONTS][RETURN_BUTTON_FONT_SIZE]}px; 
+                border: {self.ui_styles[BORDERS][MAIN_BUTTON_BORDER]}px {self.ui_styles[BORDERS][MAIN_BUTTON_STYLE]};
+                background-color: {self.ui_styles[COLORS][ORANGE]}; 
+            }}
+            QPushButton:pressed {{
+                background-color: {self.ui_styles[COLORS][ORANGE_PRESSED]};
+            }}
         """)
         self.returnButton = returnButton
         self.top_section_layout.addWidget(self.returnButton, 0, 0, alignment=Qt.AlignTop | Qt.AlignLeft)
@@ -111,10 +116,15 @@ class Ui_AnnotateImg(object):
         # Navigation buttons below the image
         self.prevButton = QtWidgets.QPushButton("Prev")
         self.prevButton.setStyleSheet(f"""
-            border-radius: {self.ui_styles[BORDERS][MAIN_BUTTON_RADIUS]}px; 
-            font-size: {self.ui_styles[FONTS][BUTTON_FONT_SIZE]}px; 
-            border: {self.ui_styles[BORDERS][MAIN_BUTTON_BORDER]}px {self.ui_styles[BORDERS][MAIN_BUTTON_STYLE]};
-            background-color: {self.ui_styles[COLORS][BLUE]}; 
+            QPushButton {{
+                border-radius: {self.ui_styles[BORDERS][MAIN_BUTTON_RADIUS]}px; 
+                font-size: {self.ui_styles[FONTS][BUTTON_FONT_SIZE]}px; 
+                border: {self.ui_styles[BORDERS][MAIN_BUTTON_BORDER]}px {self.ui_styles[BORDERS][MAIN_BUTTON_STYLE]};
+                background-color: {self.ui_styles[COLORS][BLUE]}; 
+            }}
+            QPushButton:pressed {{
+                background-color: {self.ui_styles[COLORS][BLUE_PRESSED]};
+            }}
         """)
         self.prevButton.setFixedWidth(self.ui_styles[SIZES][LABEL_NAV_BUTTON][WIDTH])
 
@@ -122,10 +132,15 @@ class Ui_AnnotateImg(object):
 
         self.discardButton = QtWidgets.QPushButton("Discard")
         self.discardButton.setStyleSheet(f"""
-            border-radius: {self.ui_styles[BORDERS][MAIN_BUTTON_RADIUS]}px; 
-            font-size: {self.ui_styles[FONTS][BUTTON_FONT_SIZE]}px; 
-            border: {self.ui_styles[BORDERS][MAIN_BUTTON_BORDER]}px {self.ui_styles[BORDERS][MAIN_BUTTON_STYLE]};
-            background-color: {self.ui_styles[COLORS][RED]}; 
+            QPushButton {{
+                border-radius: {self.ui_styles[BORDERS][MAIN_BUTTON_RADIUS]}px; 
+                font-size: {self.ui_styles[FONTS][BUTTON_FONT_SIZE]}px; 
+                border: {self.ui_styles[BORDERS][MAIN_BUTTON_BORDER]}px {self.ui_styles[BORDERS][MAIN_BUTTON_STYLE]};
+                background-color: {self.ui_styles[COLORS][RED]}; 
+            }}
+            QPushButton:pressed {{
+                background-color: {self.ui_styles[COLORS][RED_PRESSED]};
+            }}
         """)
         self.discardButton.setFixedWidth(self.ui_styles[SIZES][LABEL_NAV_BUTTON][WIDTH]*2)
 
@@ -133,10 +148,15 @@ class Ui_AnnotateImg(object):
 
         self.nextButton = QtWidgets.QPushButton("Next")
         self.nextButton.setStyleSheet(f"""
-            border-radius: {self.ui_styles[BORDERS][MAIN_BUTTON_RADIUS]}px; 
-            font-size: {self.ui_styles[FONTS][BUTTON_FONT_SIZE]}px; 
-            border: {self.ui_styles[BORDERS][MAIN_BUTTON_BORDER]}px {self.ui_styles[BORDERS][MAIN_BUTTON_STYLE]};
-            background-color: {self.ui_styles[COLORS][BLUE]}; 
+            QPushButton {{
+                border-radius: {self.ui_styles[BORDERS][MAIN_BUTTON_RADIUS]}px; 
+                font-size: {self.ui_styles[FONTS][BUTTON_FONT_SIZE]}px; 
+                border: {self.ui_styles[BORDERS][MAIN_BUTTON_BORDER]}px {self.ui_styles[BORDERS][MAIN_BUTTON_STYLE]};
+                background-color: {self.ui_styles[COLORS][BLUE]}; 
+            }}
+            QPushButton:pressed {{
+                background-color: {self.ui_styles[COLORS][BLUE_PRESSED]};
+            }}
         """)
         self.nextButton.setFixedWidth(self.ui_styles[SIZES][LABEL_NAV_BUTTON][WIDTH])
         self.nav_button_layout.addWidget(self.nextButton)
@@ -154,22 +174,32 @@ class Ui_AnnotateImg(object):
         # Auto-label buttons (on the right side)
         self.autoLabelImgButton = QtWidgets.QPushButton("Auto-label img")
         self.autoLabelImgButton.setStyleSheet(f"""
-            font-family: '{self.regular_font_family}';
-            border-radius: {self.ui_styles[BORDERS][MAIN_BUTTON_RADIUS]}px; 
-            font-size: {self.ui_styles[FONTS][BUTTON_FONT_SIZE]}px; 
-            border: {self.ui_styles[BORDERS][MAIN_BUTTON_BORDER]}px {self.ui_styles[BORDERS][MAIN_BUTTON_STYLE]};
-            background-color: {self.ui_styles[COLORS][PURPLE]}; 
+            QPushButton {{
+                font-family: '{self.regular_font_family}';
+                border-radius: {self.ui_styles[BORDERS][MAIN_BUTTON_RADIUS]}px; 
+                font-size: {self.ui_styles[FONTS][BUTTON_FONT_SIZE]}px; 
+                border: {self.ui_styles[BORDERS][MAIN_BUTTON_BORDER]}px {self.ui_styles[BORDERS][MAIN_BUTTON_STYLE]};
+                background-color: {self.ui_styles[COLORS][PURPLE]}; 
+            }}
+            QPushButton:pressed {{
+                background-color: {self.ui_styles[COLORS][PURPLE_PRESSED]};
+            }}
         """)
 
         self.label_buttons_layout.addWidget(self.autoLabelImgButton)
 
         self.autoLabelAllButton = QtWidgets.QPushButton("Auto-label all")
         self.autoLabelAllButton.setStyleSheet(f"""
-            font-family: '{self.regular_font_family}';
-            border-radius: {self.ui_styles[BORDERS][MAIN_BUTTON_RADIUS]}px; 
-            font-size: {self.ui_styles[FONTS][BUTTON_FONT_SIZE]}px; 
-            border: {self.ui_styles[BORDERS][MAIN_BUTTON_BORDER]}px {self.ui_styles[BORDERS][MAIN_BUTTON_STYLE]};
-            background-color: {self.ui_styles[COLORS][PURPLE]}; 
+            QPushButton {{
+                font-family: '{self.regular_font_family}';
+                border-radius: {self.ui_styles[BORDERS][MAIN_BUTTON_RADIUS]}px; 
+                font-size: {self.ui_styles[FONTS][BUTTON_FONT_SIZE]}px; 
+                border: {self.ui_styles[BORDERS][MAIN_BUTTON_BORDER]}px {self.ui_styles[BORDERS][MAIN_BUTTON_STYLE]};
+                background-color: {self.ui_styles[COLORS][PURPLE]}; 
+            }}
+            QPushButton:pressed {{
+                background-color: {self.ui_styles[COLORS][PURPLE_PRESSED]};
+            }}
         """)
 
         self.label_buttons_layout.addWidget(self.autoLabelAllButton)
@@ -232,11 +262,16 @@ class Ui_AnnotateImg(object):
         # Confirm labeling button
         self.confirmLabelButton = QtWidgets.QPushButton("Confirm labeling")
         self.confirmLabelButton.setStyleSheet(f"""
-            font-family: '{self.regular_font_family}';
-            border-radius: {self.ui_styles[BORDERS][MAIN_BUTTON_RADIUS]}px; 
-            font-size: {self.ui_styles[FONTS][BUTTON_FONT_SIZE]}px; 
-            border: {self.ui_styles[BORDERS][MAIN_BUTTON_BORDER]}px {self.ui_styles[BORDERS][MAIN_BUTTON_STYLE]};
-            background-color: {self.ui_styles[COLORS][GREEN]}; 
+            QPushButton {{
+                font-family: '{self.regular_font_family}';
+                border-radius: {self.ui_styles[BORDERS][MAIN_BUTTON_RADIUS]}px; 
+                font-size: {self.ui_styles[FONTS][BUTTON_FONT_SIZE]}px; 
+                border: {self.ui_styles[BORDERS][MAIN_BUTTON_BORDER]}px {self.ui_styles[BORDERS][MAIN_BUTTON_STYLE]};
+                background-color: {self.ui_styles[COLORS][GREEN]}; 
+            }}
+            QPushButton:pressed {{
+                background-color: {self.ui_styles[COLORS][GREEN_PRESSED]};
+            }}
         """)
 
         self.right_layout.addWidget(self.confirmLabelButton)
@@ -247,14 +282,19 @@ class Ui_AnnotateImg(object):
         # Long vertical button on the left (opens image grid)
         self.openImageGridButton = QtWidgets.QPushButton("Images")
         self.openImageGridButton.setStyleSheet(f"""
-            border-top-right-radius: {self.ui_styles[BORDERS][DEFAULT_RADIUS]}px; 
-            border-bottom-right-radius: {self.ui_styles[BORDERS][DEFAULT_RADIUS]}px; 
-            font-size: {self.ui_styles[FONTS][BUTTON_FONT_SIZE]}px; 
-            border-top: {self.ui_styles[BORDERS][MAIN_BUTTON_BORDER]}px {self.ui_styles[BORDERS][MAIN_BUTTON_STYLE]};
-            border-right: {self.ui_styles[BORDERS][MAIN_BUTTON_BORDER]}px {self.ui_styles[BORDERS][MAIN_BUTTON_STYLE]};
-            border-bottom: {self.ui_styles[BORDERS][MAIN_BUTTON_BORDER]}px {self.ui_styles[BORDERS][MAIN_BUTTON_STYLE]};
-            background-color: {self.ui_styles[COLORS][YELLOW]}; 
-            color: {self.ui_styles[COLORS][BLACK]}
+            QPushButton {{
+                border-top-right-radius: {self.ui_styles[BORDERS][DEFAULT_RADIUS]}px; 
+                border-bottom-right-radius: {self.ui_styles[BORDERS][DEFAULT_RADIUS]}px; 
+                font-size: {self.ui_styles[FONTS][BUTTON_FONT_SIZE]}px; 
+                border-top: {self.ui_styles[BORDERS][MAIN_BUTTON_BORDER]}px {self.ui_styles[BORDERS][MAIN_BUTTON_STYLE]};
+                border-right: {self.ui_styles[BORDERS][MAIN_BUTTON_BORDER]}px {self.ui_styles[BORDERS][MAIN_BUTTON_STYLE]};
+                border-bottom: {self.ui_styles[BORDERS][MAIN_BUTTON_BORDER]}px {self.ui_styles[BORDERS][MAIN_BUTTON_STYLE]};
+                background-color: {self.ui_styles[COLORS][YELLOW]}; 
+                color: {self.ui_styles[COLORS][BLACK]}
+            }}
+            QPushButton:pressed {{
+                background-color: {self.ui_styles[COLORS][YELLOW_PRESSED]};
+            }}
         """)
         self.openImageGridButton.setFixedSize(self.ui_styles[SIZES][DROPDOWN_BUTTON][WIDTH], self.ui_styles[SIZES][DROPDOWN_BUTTON][HEIGHT])
         
@@ -279,11 +319,16 @@ class Ui_AnnotateImg(object):
         # Add the button inside the layout
         self.importButton = QtWidgets.QPushButton("Import dataset images")
         self.importButton.setStyleSheet(f"""
-            border-radius: {self.ui_styles[BORDERS][DEFAULT_RADIUS]}px; 
-            font-size: {self.ui_styles[FONTS][BUTTON_FONT_SIZE]}px; 
-            border: {self.ui_styles[BORDERS][MAIN_BUTTON_BORDER]}px {self.ui_styles[BORDERS][MAIN_BUTTON_STYLE]};
-            background-color: {self.ui_styles[COLORS][BLUE]}; 
-            padding: 3px;
+                QPushButton {{
+                border-radius: {self.ui_styles[BORDERS][DEFAULT_RADIUS]}px; 
+                font-size: {self.ui_styles[FONTS][BUTTON_FONT_SIZE]}px; 
+                border: {self.ui_styles[BORDERS][MAIN_BUTTON_BORDER]}px {self.ui_styles[BORDERS][MAIN_BUTTON_STYLE]};
+                background-color: {self.ui_styles[COLORS][BLUE]}; 
+                padding: 3px;
+            }}
+            QPushButton:pressed {{
+                background-color: {self.ui_styles[COLORS][BLUE_PRESSED]};
+            }}
         """)
         hidden_layout.addWidget(self.importButton, alignment=QtCore.Qt.AlignLeft | QtCore.Qt.AlignTop)
 
@@ -306,14 +351,19 @@ class Ui_AnnotateImg(object):
 
         self.closeImageGridButton = QtWidgets.QPushButton("Images")
         self.closeImageGridButton.setStyleSheet(f"""
-            border-top-right-radius: {self.ui_styles[BORDERS][DEFAULT_RADIUS]}px; 
-            border-bottom-right-radius: {self.ui_styles[BORDERS][DEFAULT_RADIUS]}px;  
-            font-size: {self.ui_styles[FONTS][BUTTON_FONT_SIZE]}px; 
-            border-top: {self.ui_styles[BORDERS][MAIN_BUTTON_BORDER]}px {self.ui_styles[BORDERS][MAIN_BUTTON_STYLE]};
-            border-right: {self.ui_styles[BORDERS][MAIN_BUTTON_BORDER]}px {self.ui_styles[BORDERS][MAIN_BUTTON_STYLE]};
-            border-bottom: {self.ui_styles[BORDERS][MAIN_BUTTON_BORDER]}px {self.ui_styles[BORDERS][MAIN_BUTTON_STYLE]};
-            background-color: {self.ui_styles[COLORS][YELLOW]}; 
-            color: {self.ui_styles[COLORS][BLACK]}
+            QPushButton {{
+                border-top-right-radius: {self.ui_styles[BORDERS][DEFAULT_RADIUS]}px; 
+                border-bottom-right-radius: {self.ui_styles[BORDERS][DEFAULT_RADIUS]}px;  
+                font-size: {self.ui_styles[FONTS][BUTTON_FONT_SIZE]}px; 
+                border-top: {self.ui_styles[BORDERS][MAIN_BUTTON_BORDER]}px {self.ui_styles[BORDERS][MAIN_BUTTON_STYLE]};
+                border-right: {self.ui_styles[BORDERS][MAIN_BUTTON_BORDER]}px {self.ui_styles[BORDERS][MAIN_BUTTON_STYLE]};
+                border-bottom: {self.ui_styles[BORDERS][MAIN_BUTTON_BORDER]}px {self.ui_styles[BORDERS][MAIN_BUTTON_STYLE]};
+                background-color: {self.ui_styles[COLORS][YELLOW]}; 
+                color: {self.ui_styles[COLORS][BLACK]}
+            }}
+            QPushButton:pressed {{
+                background-color: {self.ui_styles[COLORS][YELLOW_PRESSED]};
+            }}
         """)
         self.closeImageGridButton.setFixedSize(self.ui_styles[SIZES][DROPDOWN_BUTTON][WIDTH], self.ui_styles[SIZES][DROPDOWN_BUTTON][HEIGHT])
         

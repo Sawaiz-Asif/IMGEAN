@@ -27,18 +27,28 @@ class Ui_CheckImgQuality(object):
 
         self.tab_selection_discarded = QPushButton("Discarded images")
         self.tab_selection_discarded.setStyleSheet(f"""
+            QPushButton {{
             border-radius: {self.ui_styles[BORDERS][DEFAULT_RADIUS]}px; 
             font-size: {self.ui_styles[FONTS][LABEL_FONT_SIZE]}px; 
             border: {self.ui_styles[BORDERS][DEFAULT_BORDER]}px {self.ui_styles[BORDERS][MAIN_BUTTON_STYLE]};
             background-color: {self.ui_styles[COLORS][LIGHT_BLUE]}; 
+            }}
+            QPushButton:pressed {{
+                background-color: {self.ui_styles[COLORS][LIGHT_BLUE_PRESSED]};
+            }}
         """)
         
         self.tab_selection_check = QPushButton("Images to check")
         self.tab_selection_check.setStyleSheet(f"""
+            QPushButton {{
             border-radius: {self.ui_styles[BORDERS][DEFAULT_RADIUS]}px; 
             font-size: {self.ui_styles[FONTS][LABEL_FONT_SIZE]}px; 
             border: {self.ui_styles[BORDERS][DEFAULT_BORDER]}px {self.ui_styles[BORDERS][MAIN_BUTTON_STYLE]};
             background-color: {self.ui_styles[COLORS][BLUE]}; 
+            }}
+            QPushButton:pressed {{
+                background-color: {self.ui_styles[COLORS][BLUE_PRESSED]};
+            }}
         """)
 
         # Connect button clicks to the update function
@@ -105,10 +115,15 @@ class Ui_CheckImgQuality(object):
             self.ui_styles[SIZES][RETURN_BUTTON][HEIGHT]
         )
         returnButton.setStyleSheet(f"""
-            border-radius: {self.ui_styles[BORDERS][MAIN_BUTTON_RADIUS]}px; 
-            font-size: {self.ui_styles[FONTS][RETURN_BUTTON_FONT_SIZE]}px; 
-            border: {self.ui_styles[BORDERS][MAIN_BUTTON_BORDER]}px {self.ui_styles[BORDERS][MAIN_BUTTON_STYLE]};
-            background-color: {self.ui_styles[COLORS][ORANGE]}; 
+            QPushButton {{
+                border-radius: {self.ui_styles[BORDERS][MAIN_BUTTON_RADIUS]}px; 
+                font-size: {self.ui_styles[FONTS][RETURN_BUTTON_FONT_SIZE]}px; 
+                border: {self.ui_styles[BORDERS][MAIN_BUTTON_BORDER]}px {self.ui_styles[BORDERS][MAIN_BUTTON_STYLE]};
+                background-color: {self.ui_styles[COLORS][ORANGE]}; 
+            }}
+            QPushButton:pressed {{
+                background-color: {self.ui_styles[COLORS][ORANGE_PRESSED]};
+            }}
         """)
         self.returnButton = returnButton
         self.top_section_layout.addWidget(self.returnButton, 0, 0, alignment=Qt.AlignTop | Qt.AlignLeft)
@@ -165,10 +180,15 @@ class Ui_CheckImgQuality(object):
             red_all_button = QtWidgets.QPushButton("Delete all")
     
         red_all_button.setStyleSheet(f"""
-            border-radius: {self.ui_styles[BORDERS][DEFAULT_RADIUS]}px; 
-            font-size: {self.ui_styles[FONTS][LABEL_FONT_SIZE]}px; 
-            border: {self.ui_styles[BORDERS][DEFAULT_BORDER]}px {self.ui_styles[BORDERS][MAIN_BUTTON_STYLE]};
-            background-color: {self.ui_styles[COLORS][RED]}; 
+            QPushButton {{
+                border-radius: {self.ui_styles[BORDERS][DEFAULT_RADIUS]}px; 
+                font-size: {self.ui_styles[FONTS][LABEL_FONT_SIZE]}px; 
+                border: {self.ui_styles[BORDERS][DEFAULT_BORDER]}px {self.ui_styles[BORDERS][MAIN_BUTTON_STYLE]};
+                background-color: {self.ui_styles[COLORS][RED]}; 
+            }}
+            QPushButton:pressed {{
+                background-color: {self.ui_styles[COLORS][RED_PRESSED]};
+            }}
         """)
         self.allBtn = red_all_button
         current_components["red_all_button"] = red_all_button
@@ -178,11 +198,16 @@ class Ui_CheckImgQuality(object):
 
             accept_all = QtWidgets.QPushButton("Accept all")
             accept_all.setStyleSheet(f"""
+            QPushButton {{
                 border-radius: {self.ui_styles[BORDERS][DEFAULT_RADIUS]}px; 
                 font-size: {self.ui_styles[FONTS][LABEL_FONT_SIZE]}px; 
                 border: {self.ui_styles[BORDERS][DEFAULT_BORDER]}px {self.ui_styles[BORDERS][MAIN_BUTTON_STYLE]};
                 background-color: {self.ui_styles[COLORS][GREEN]}; 
-            """)
+            }}
+            QPushButton:pressed {{
+                background-color: {self.ui_styles[COLORS][GREEN_PRESSED]};
+            }}
+        """)
             button_layout.addWidget(red_all_button)
             button_layout.addWidget(accept_all)
             left_layout.addLayout(button_layout)
@@ -237,37 +262,57 @@ class Ui_CheckImgQuality(object):
         nav_layout = QtWidgets.QHBoxLayout()
         prev_button = QtWidgets.QPushButton("Prev")
         prev_button.setStyleSheet(f"""
-            border-radius: {self.ui_styles[BORDERS][DEFAULT_RADIUS]}px; 
-            font-size: {self.ui_styles[FONTS][LABEL_FONT_SIZE]}px; 
-            border: {self.ui_styles[BORDERS][DEFAULT_BORDER]}px {self.ui_styles[BORDERS][MAIN_BUTTON_STYLE]};
-            background-color: {self.ui_styles[COLORS][BLUE]}; 
+                QPushButton {{
+                    border-radius: {self.ui_styles[BORDERS][DEFAULT_RADIUS]}px; 
+                    font-size: {self.ui_styles[FONTS][LABEL_FONT_SIZE]}px; 
+                    border: {self.ui_styles[BORDERS][DEFAULT_BORDER]}px {self.ui_styles[BORDERS][MAIN_BUTTON_STYLE]};
+                    background-color: {self.ui_styles[COLORS][BLUE]}; 
+            }}
+            QPushButton:pressed {{
+                background-color: {self.ui_styles[COLORS][BLUE_PRESSED]};
+            }}
         """)
         self.prevBtn = prev_button
         current_components["prev_button"] = prev_button
         first_button = QtWidgets.QPushButton(first_button_text)  # First button (Discard or Delete)
         first_button.setStyleSheet(f"""
-            border-radius: {self.ui_styles[BORDERS][DEFAULT_RADIUS]}px; 
-            font-size: {self.ui_styles[FONTS][LABEL_FONT_SIZE]}px; 
-            border: {self.ui_styles[BORDERS][DEFAULT_BORDER]}px {self.ui_styles[BORDERS][MAIN_BUTTON_STYLE]};
-            background-color: {self.ui_styles[COLORS][RED]}; 
+            QPushButton {{
+                border-radius: {self.ui_styles[BORDERS][DEFAULT_RADIUS]}px; 
+                font-size: {self.ui_styles[FONTS][LABEL_FONT_SIZE]}px; 
+                border: {self.ui_styles[BORDERS][DEFAULT_BORDER]}px {self.ui_styles[BORDERS][MAIN_BUTTON_STYLE]};
+                background-color: {self.ui_styles[COLORS][RED]}; 
+            }}
+            QPushButton:pressed {{
+                background-color: {self.ui_styles[COLORS][RED_PRESSED]};
+            }}
         """)
         self.firstBtn = first_button
         current_components["first_button"] = first_button
         second_button = QtWidgets.QPushButton(second_button_text)  # Second button (Always Accept)
         second_button.setStyleSheet(f"""
-            border-radius: {self.ui_styles[BORDERS][DEFAULT_RADIUS]}px; 
-            font-size: {self.ui_styles[FONTS][LABEL_FONT_SIZE]}px; 
-            border: {self.ui_styles[BORDERS][DEFAULT_BORDER]}px {self.ui_styles[BORDERS][MAIN_BUTTON_STYLE]};
-            background-color: {self.ui_styles[COLORS][GREEN]}; 
+            QPushButton {{
+                border-radius: {self.ui_styles[BORDERS][DEFAULT_RADIUS]}px; 
+                font-size: {self.ui_styles[FONTS][LABEL_FONT_SIZE]}px; 
+                border: {self.ui_styles[BORDERS][DEFAULT_BORDER]}px {self.ui_styles[BORDERS][MAIN_BUTTON_STYLE]};
+                background-color: {self.ui_styles[COLORS][GREEN]};
+            }}
+            QPushButton:pressed {{
+                background-color: {self.ui_styles[COLORS][GREEN_PRESSED]};
+            }}
         """)
         self.secondBtn = second_button
         current_components["second_button"] = second_button
         next_button = QtWidgets.QPushButton("Next")
         next_button.setStyleSheet(f"""
-            border-radius: {self.ui_styles[BORDERS][DEFAULT_RADIUS]}px; 
-            font-size: {self.ui_styles[FONTS][LABEL_FONT_SIZE]}px; 
-            border: {self.ui_styles[BORDERS][DEFAULT_BORDER]}px {self.ui_styles[BORDERS][MAIN_BUTTON_STYLE]};
-            background-color: {self.ui_styles[COLORS][BLUE]}; 
+            QPushButton {{
+                border-radius: {self.ui_styles[BORDERS][DEFAULT_RADIUS]}px; 
+                font-size: {self.ui_styles[FONTS][LABEL_FONT_SIZE]}px; 
+                border: {self.ui_styles[BORDERS][DEFAULT_BORDER]}px {self.ui_styles[BORDERS][MAIN_BUTTON_STYLE]};
+                background-color: {self.ui_styles[COLORS][BLUE]}; 
+            }}
+            QPushButton:pressed {{
+                background-color: {self.ui_styles[COLORS][BLUE_PRESSED]};
+            }}
         """)
         self.nextBtn = next_button
         current_components["next_button"] = next_button
@@ -308,27 +353,47 @@ class Ui_CheckImgQuality(object):
         """
         if active_button == 1:
             self.tab_selection_check.setStyleSheet(f"""
-            border-radius: {self.ui_styles[BORDERS][DEFAULT_RADIUS]}px; 
-            font-size: {self.ui_styles[FONTS][LABEL_FONT_SIZE]}px; 
-            border: {self.ui_styles[BORDERS][DEFAULT_BORDER]}px {self.ui_styles[BORDERS][MAIN_BUTTON_STYLE]};
-            background-color: {self.ui_styles[COLORS][LIGHT_BLUE]}; 
-            """)
+            QPushButton {{
+                border-radius: {self.ui_styles[BORDERS][DEFAULT_RADIUS]}px; 
+                font-size: {self.ui_styles[FONTS][LABEL_FONT_SIZE]}px; 
+                border: {self.ui_styles[BORDERS][DEFAULT_BORDER]}px {self.ui_styles[BORDERS][MAIN_BUTTON_STYLE]};
+                background-color: {self.ui_styles[COLORS][LIGHT_BLUE]}; 
+            }}
+            QPushButton:pressed {{
+                background-color: {self.ui_styles[COLORS][LIGHT_BLUE_PRESSED]};
+            }}
+        """)
             self.tab_selection_discarded.setStyleSheet(f"""
+            QPushButton {{
             border-radius: {self.ui_styles[BORDERS][DEFAULT_RADIUS]}px; 
             font-size: {self.ui_styles[FONTS][LABEL_FONT_SIZE]}px; 
             border: {self.ui_styles[BORDERS][DEFAULT_BORDER]}px {self.ui_styles[BORDERS][MAIN_BUTTON_STYLE]};
             background-color: {self.ui_styles[COLORS][BLUE]}; 
-            """)
+            }}
+            QPushButton:pressed {{
+                background-color: {self.ui_styles[COLORS][BLUE_PRESSED]};
+            }}
+        """)
         elif active_button == 2:
             self.tab_selection_check.setStyleSheet(f"""
-            border-radius: {self.ui_styles[BORDERS][DEFAULT_RADIUS]}px; 
-            font-size: {self.ui_styles[FONTS][LABEL_FONT_SIZE]}px; 
-            border: {self.ui_styles[BORDERS][DEFAULT_BORDER]}px {self.ui_styles[BORDERS][MAIN_BUTTON_STYLE]};
-            background-color: {self.ui_styles[COLORS][BLUE]}; 
-            """)
+            QPushButton {{
+                border-radius: {self.ui_styles[BORDERS][DEFAULT_RADIUS]}px; 
+                font-size: {self.ui_styles[FONTS][LABEL_FONT_SIZE]}px; 
+                border: {self.ui_styles[BORDERS][DEFAULT_BORDER]}px {self.ui_styles[BORDERS][MAIN_BUTTON_STYLE]};
+                background-color: {self.ui_styles[COLORS][BLUE]}; 
+            }}
+            QPushButton:pressed {{
+                background-color: {self.ui_styles[COLORS][BLUE_PRESSED]};
+            }}
+        """)
             self.tab_selection_discarded.setStyleSheet(f"""
-            border-radius: {self.ui_styles[BORDERS][DEFAULT_RADIUS]}px; 
-            font-size: {self.ui_styles[FONTS][LABEL_FONT_SIZE]}px; 
-            border: {self.ui_styles[BORDERS][DEFAULT_BORDER]}px {self.ui_styles[BORDERS][MAIN_BUTTON_STYLE]};
-            background-color: {self.ui_styles[COLORS][LIGHT_BLUE]}; 
-            """)
+            QPushButton {{
+                border-radius: {self.ui_styles[BORDERS][DEFAULT_RADIUS]}px; 
+                font-size: {self.ui_styles[FONTS][LABEL_FONT_SIZE]}px; 
+                border: {self.ui_styles[BORDERS][DEFAULT_BORDER]}px {self.ui_styles[BORDERS][MAIN_BUTTON_STYLE]};
+                background-color: {self.ui_styles[COLORS][LIGHT_BLUE]};
+            }}
+            QPushButton:pressed {{
+                background-color: {self.ui_styles[COLORS][LIGHT_BLUE_PRESSED]};
+            }}
+        """)

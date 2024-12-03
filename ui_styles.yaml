@@ -9,6 +9,17 @@ colors:
   black: '#000000'
   light_blue: '#bfd4fa'
   light_gray: '#d9d9d9'
+  background_pressed: '#f2f2f2'
+  yellow_pressed: '#ffd966'
+  orange_pressed: '#f6b26b'
+  green_pressed: '#93c47d'
+  purple_pressed: '#8e7cc3'
+  blue_pressed: '#6fa8dc'
+  red_pressed: '#e06666'
+  black_pressed: '#434343'
+  light_blue_pressed: '#a2c4f4'
+  light_gray_pressed: '#bfbfbf'
+
   
   button_cancel: '#ff6666'
   button_generate: '#66cc66'

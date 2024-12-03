@@ -8,16 +8,8 @@ from PyQt5.QtWidgets import (
 from PyQt5.QtCore import Qt
 from PyQt5.QtGui import QFontDatabase
 
-from frontend.custom_classes import CustomSpinBox, CustomCheckBox
+from frontend.custom_classes import CustomSpinBox, CustomCheckBox, CustomComboBox
 
-class BorderedSpinBox(QtWidgets.QSpinBox):
-    def paintEvent(self, event):
-        super().paintEvent(event)
-        painter = QtGui.QPainter(self)
-        rect = self.rect()
-        pen = QtGui.QPen(QtGui.QColor("black"), 2)
-        painter.setPen(pen)
-        painter.drawRect(rect)
 class Ui_generate_images(object):
     def __init__(self, config, ui_styles):
         self.config = config
@@ -73,10 +65,15 @@ class Ui_generate_images(object):
             self.ui_styles[SIZES][RETURN_BUTTON][HEIGHT]
         )
         return_button.setStyleSheet(f"""
-            border-radius: {self.ui_styles[BORDERS][MAIN_BUTTON_RADIUS]}px; 
-            font-size: {self.ui_styles[FONTS][RETURN_BUTTON_FONT_SIZE]}px; 
-            border: {self.ui_styles[BORDERS][MAIN_BUTTON_BORDER]}px {self.ui_styles[BORDERS][MAIN_BUTTON_STYLE]};
-            background-color: {self.ui_styles[COLORS][ORANGE]}; 
+            QPushButton {{
+                border-radius: {self.ui_styles[BORDERS][MAIN_BUTTON_RADIUS]}px; 
+                font-size: {self.ui_styles[FONTS][RETURN_BUTTON_FONT_SIZE]}px; 
+                border: {self.ui_styles[BORDERS][MAIN_BUTTON_BORDER]}px {self.ui_styles[BORDERS][MAIN_BUTTON_STYLE]};
+                background-color: {self.ui_styles[COLORS][ORANGE]}; 
+            }}
+            QPushButton:pressed {{
+                background-color: {self.ui_styles[COLORS][ORANGE_PRESSED]};
+            }}
         """)
         self.return_button = return_button
         self.top_section_layout.addWidget(self.return_button, 0, 0, alignment=Qt.AlignTop | Qt.AlignLeft)
@@ -231,17 +228,12 @@ class Ui_generate_images(object):
             font-size: {self.ui_styles[FONTS][LABEL_FONT_SIZE]}px;
             text-align: center;
         """)
-        self.combo_model = QtWidgets.QComboBox()
-        self.combo_model.setStyleSheet(f"""
-            font-family: '{self.regular_font_family}';
-            font-size: {self.ui_styles[FONTS][TEXT_FONT_SIZE]}px;
-            border: {self.ui_styles[BORDERS][MAIN_BUTTON_BORDER]}px {self.ui_styles[BORDERS][MAIN_BUTTON_STYLE]};
-            border-radius: {self.ui_styles[BORDERS][DEFAULT_BORDER]}px;
-            background-color: {self.ui_styles[COLORS][BACKGROUND]};
-            color: {self.ui_styles[COLORS][BLACK]};
-            padding: 5px;
-        """)
-        self.combo_model.setFixedSize(self.ui_styles[SIZES][COMBO_MODELS][WIDTH], 25)
+        self.combo_model = self.defaultColorComboBox = CustomComboBox(width=self.ui_styles[SIZES][COMBO_MODELS][WIDTH], 
+                                         height=self.ui_styles[SIZES][GENERATION_SPINBOX][HEIGHT], 
+                                         border=self.ui_styles[BORDERS][DEFAULT_BORDER], 
+                                         border_radius=self.ui_styles[BORDERS][DEFAULT_RADIUS], 
+                                         font=self.ui_styles[FONTS][TEXT_FONT_SIZE],
+                                         font_family=self.regular_font_family)
 
         self.model_filename_layout.addWidget(label_model, 0, 0)
         self.model_filename_layout.addWidget(self.combo_model, 0, 1)
@@ -378,11 +370,16 @@ class Ui_generate_images(object):
         cancel_button = QPushButton("Cancel")
         # btn_cancel.setFixedSize(main_button_width, main_button_height)
         cancel_button.setStyleSheet(f"""
-            border-radius: {self.ui_styles[BORDERS][DEFAULT_RADIUS]}px; 
-            font-size: {self.ui_styles[FONTS][BUTTON_FONT_SIZE]}px; 
-            border: {self.ui_styles[BORDERS][MAIN_BUTTON_BORDER]}px {self.ui_styles[BORDERS][MAIN_BUTTON_STYLE]};
-            background-color: {self.ui_styles[COLORS][RED]}; 
-            color: {self.ui_styles[COLORS][BLACK]}
+            QPushButton {{
+                border-radius: {self.ui_styles[BORDERS][DEFAULT_RADIUS]}px; 
+                font-size: {self.ui_styles[FONTS][BUTTON_FONT_SIZE]}px; 
+                border: {self.ui_styles[BORDERS][MAIN_BUTTON_BORDER]}px {self.ui_styles[BORDERS][MAIN_BUTTON_STYLE]};
+                background-color: {self.ui_styles[COLORS][RED]}; 
+                color: {self.ui_styles[COLORS][BLACK]};
+            }}
+            QPushButton:pressed {{
+                background-color: {self.ui_styles[COLORS][RED_PRESSED]};
+            }}
         """)
         self.cancel_button = cancel_button
 
@@ -391,11 +388,16 @@ class Ui_generate_images(object):
         generate_button = QPushButton("Generate")
         # btn_cancel.setFixedSize(main_button_width, main_button_height)
         generate_button.setStyleSheet(f"""
-            border-radius: {self.ui_styles[BORDERS][DEFAULT_RADIUS]}px; 
-            font-size: {self.ui_styles[FONTS][BUTTON_FONT_SIZE]}px; 
-            border: {self.ui_styles[BORDERS][MAIN_BUTTON_BORDER]}px {self.ui_styles[BORDERS][MAIN_BUTTON_STYLE]};
-            background-color: {self.ui_styles[COLORS][GREEN]}; 
-            color: {self.ui_styles[COLORS][BLACK]}
+            QPushButton {{
+                border-radius: {self.ui_styles[BORDERS][DEFAULT_RADIUS]}px; 
+                font-size: {self.ui_styles[FONTS][BUTTON_FONT_SIZE]}px; 
+                border: {self.ui_styles[BORDERS][MAIN_BUTTON_BORDER]}px {self.ui_styles[BORDERS][MAIN_BUTTON_STYLE]};
+                background-color: {self.ui_styles[COLORS][GREEN]}; 
+                color: {self.ui_styles[COLORS][BLACK]};
+            }}
+            QPushButton:pressed {{
+                background-color: {self.ui_styles[COLORS][GREEN_PRESSED]};
+            }}
         """)
         self.generate_button = generate_button
 

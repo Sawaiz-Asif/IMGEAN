@@ -62,37 +62,63 @@ class Ui_MainScreen(object):
         main_button_style = self.ui_styles[BORDERS][MAIN_BUTTON_STYLE]
         main_button_radius = self.ui_styles[BORDERS][MAIN_BUTTON_RADIUS]
 
-        base_button_stylesheet = f"""
-            border-radius: {main_button_radius}px; 
-            font-size: {main_button_font_size}px; 
-            border: {main_button_border}px {main_button_style};
-        """
-
         btn_generate = QPushButton("Generate Images")
         btn_generate.setFixedSize(main_button_width, main_button_height)
-        btn_generate.setStyleSheet(base_button_stylesheet + f"""
-            background-color: {self.ui_styles[COLORS][YELLOW]}; 
+        btn_generate.setStyleSheet(f"""
+            QPushButton {{
+                border-radius: {main_button_radius}px; 
+                font-size: {main_button_font_size}px; 
+                border: {main_button_border}px {main_button_style};
+                background-color: {self.ui_styles[COLORS][YELLOW]};
+            }}
+            QPushButton:pressed {{
+                background-color: {self.ui_styles[COLORS][YELLOW_PRESSED]};
+            }}
         """)
         self.btn_generate = btn_generate
 
         btn_quality = QPushButton("Check Image Quality")
         btn_quality.setFixedSize(main_button_width, main_button_height)
-        btn_quality.setStyleSheet(base_button_stylesheet + f"""
-            background-color: {self.ui_styles[COLORS][ORANGE]}; 
+        btn_quality.setStyleSheet(f"""
+            QPushButton {{
+                border-radius: {main_button_radius}px; 
+                font-size: {main_button_font_size}px; 
+                border: {main_button_border}px {main_button_style};
+                background-color: {self.ui_styles[COLORS][ORANGE]};
+            }}
+            QPushButton:pressed {{
+                background-color: {self.ui_styles[COLORS][ORANGE_PRESSED]};
+            }}
         """)
         self.btn_quality = btn_quality
 
         btn_annotate = QPushButton("Annotate Images")
         btn_annotate.setFixedSize(main_button_width, main_button_height)
-        btn_annotate.setStyleSheet(base_button_stylesheet + f"""
-            background-color: {self.ui_styles[COLORS][GREEN]}; 
+        btn_annotate.setStyleSheet(f"""
+            QPushButton {{
+                border-radius: {main_button_radius}px; 
+                font-size: {main_button_font_size}px; 
+                border: {main_button_border}px {main_button_style};
+                background-color: {self.ui_styles[COLORS][GREEN]};
+            }}
+            QPushButton:pressed {{
+                background-color: {self.ui_styles[COLORS][GREEN_PRESSED]};
+            }}
         """)
         self.btn_annotate = btn_annotate
 
         btn_settings = QPushButton("Settings and Setup")
         btn_settings.setFixedSize(main_button_width, main_button_height)
-        btn_settings.setStyleSheet(base_button_stylesheet + f"""
-            background-color: {self.ui_styles[COLORS][PURPLE]}; 
+        btn_settings.setStyleSheet(f"""
+            QPushButton {{
+                border-radius: {main_button_radius}px; 
+                font-size: {main_button_font_size}px; 
+                border: {main_button_border}px {main_button_style};
+                background-color: {self.ui_styles[COLORS][PURPLE]};
+            }}
+            QPushButton:pressed {{
+                background-color: {self.ui_styles[COLORS][PURPLE_PRESSED]};
+            }}
         """)
         self.btn_settings = btn_settings
 
@@ -111,11 +137,17 @@ class Ui_MainScreen(object):
         """)
         change_project_btn = QPushButton("Change project")
         change_project_btn.setFixedSize(2*main_button_width//3, main_button_height//2)
+
         change_project_btn.setStyleSheet(f"""
-            background-color: {self.ui_styles[COLORS][BLUE]}; 
-            border-radius: {main_button_radius}px; 
-            font-size: {self.ui_styles[FONTS][TITLE_FONT_SIZE]//4}px; 
-            border: {main_button_border}px {main_button_style};
+            QPushButton {{
+                background-color: {self.ui_styles[COLORS][BLUE]}; 
+                border-radius: {main_button_radius}px; 
+                font-size: {self.ui_styles[FONTS][TITLE_FONT_SIZE]//4}px; 
+                border: {main_button_border}px {main_button_style};
+            }}
+            QPushButton:pressed {{
+                background-color: {self.ui_styles[COLORS][BLUE_PRESSED]};
+            }}
         """)
         self.change_project_btn = change_project_btn
 
