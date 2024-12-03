@@ -1,6 +1,7 @@
 import os
 import json
 import re
+import shutil
 from backend.config_reader import create_default_config
 from PyQt5.QtCore import pyqtSignal
 from datetime import datetime
@@ -279,12 +280,21 @@ class ProjectManagement(QMainWindow):
         """Handle deleting a project."""
         confirm = QMessageBox.question(self, "Confirm Delete", f"Are you sure you want to delete '{project['name']}'?")
         if confirm == QMessageBox.Yes:
+            # Check if the project to delete is the active project
+            was_active = project.get("is_active", False)
+
             # Remove the project from the list
             self.projects = [p for p in self.projects if p["name"] != project["name"]]
             
             # Delete the project folder
             self.delete_project_folder(project["path"])
-            
+
+            # If the deleted project was active, make the previous project active
+            if was_active and self.projects:
+                # Set the last project in the list as active
+                self.set_active_project(self.projects[-1])
+
+            # Save and refresh the UI
             self.save_projects()
             self.refresh_projects_ui()
 
@@ -292,7 +302,7 @@ class ProjectManagement(QMainWindow):
         """Delete the folder associated with the project."""
         if os.path.exists(project_path):
             try:
-                os.rmdir(project_path)  # Remove the folder
+                shutil.rmtree(project_path)  # Remove the folder
             except Exception as e:
                 QMessageBox.warning(self, "Error", f"Failed to delete folder: {e}")
     def return_to_main(self):

@@ -2,27 +2,28 @@ import functools
 import yaml
 import json
 import os
+from pathlib import Path
 
 def create_default_config(config_path):
     """Creates a new config file with default values if none exists."""
-    
+    base_dir = str(Path(config_path).parent)
     # Default configuration structure
     default_config = {
         'PROJECT_NAME': 'MyProject',  # Placeholder name for the project
         'FILES': {
-            'BASE_DIR': f'&base_dir {config_path}',
-            'CHECKING_DIR': '!join [ *base_dir, /checking ]',
-            'DISCARDED_DIR': '!join [ *base_dir, /discarded ]',
-            'DISCARDED_TRACKER': '!join [ *base_dir, /discarded/reasons_tracker.txt ]',
-            'GENERATED_DIR': '!join [ *base_dir, /generated ]',
-            'LABELING_DIR': '!join [ *base_dir, /labeling ]'
+            'BASE_DIR': base_dir,
+            'CHECKING_DIR': os.path.join(base_dir, 'checking'),
+            'DISCARDED_DIR': os.path.join(base_dir, 'discarded'),
+            'DISCARDED_TRACKER': os.path.join(base_dir, 'discarded', 'reasons_tracker.txt'),
+            'GENERATED_DIR': os.path.join(base_dir, 'generated'),
+            'LABELING_DIR': os.path.join(base_dir, 'labeling')
         },
         'DATASET': {
             'NAME': None,
-            'PATH': 'data/custom_dataset/dataset_zs_custom.pkl',
+            'PATH': os.path.join(base_dir, 'dataset_custom.pkl'),
         },
         'ANNOTATION': {
-            'BASE_DIR': '!join [ *base_dir, /labeling ]',
+            'BASE_DIR': os.path.join(base_dir, 'labeling'),
             'CURRENT_SELECTED': 0,
             'MODELS': [
 

@@ -1,39 +1,105 @@
+FILES:
+  BASE_DIR: &base_dir ./projects/Project1
+  CHECKING_DIR: !join [ *base_dir, /checking ]
+  DISCARDED_DIR: !join [ *base_dir, /discarded ]
+  DISCARDED_TRACKER: !join [ *base_dir, /discarded/reasons_tracker.txt ]
+  GENERATED_DIR: !join [ *base_dir, /generated ]
+  LABELING_DIR: !join [ *base_dir, /labeling ]
+
+DATASET:
+  NAME: RA1234
+  PATH: data/custom_dataset/dataset_zs_custom.pkl
+
+
 ANNOTATION:
-  BASE_DIR: '!join [ *base_dir, /labeling ]'
+  BASE_DIR: ./data/labeling
   CURRENT_SELECTED: 0
-  MODELS: []
+  MODELS:
+  - BACKBONE_TYPE: resnet50
+    CLASSIFIER:
+      BN: false
+      NAME: linear
+      POOLING: avg
+      SCALE: 1
+    DATASET:
+      HEIGHT: 256
+      WIDTH: 192
+    Name: pr_50_percent
+    PATH: ./models/img_par_model/ckpt_max_2024-04-10_23:26:07.pth
+    TYPE: PAR_MODEL
+  - BACKBONE_TYPE: resnet50
+    CLASSIFIER:
+      BN: false
+      NAME: linear
+      POOLING: avg
+      SCALE: 1
+    DATASET:
+      HEIGHT: 256
+      WIDTH: 192
+    Name: pr_90_percent
+    PATH: ./models/img_par_model/ckpt_max_2024-04-10_23:26:07.pth
+    TYPE: PAR_MODEL
 AUTO_LABEL:
   CHECKBOX_THRESHOLD: 0.5
-  CONFIDENCE_THRESHOLDS: []
+  CONFIDENCE_THRESHOLDS:
+  - color: green
+    value: 0.75
+  - color: blue
+    value: 0.8
+  - color: green
+    value: 0.8
   DEFAULT_COLOR: blue
   MAX_AUTO_LABEL: 11
-DATASET:
-  NAME: null
-  PATH: data/custom_dataset/dataset_zs_custom.pkl
-FILES:
-  BASE_DIR: '&base_dir projects/test/config.yaml'
-  CHECKING_DIR: '!join [ *base_dir, /checking ]'
-  DISCARDED_DIR: '!join [ *base_dir, /discarded ]'
-  DISCARDED_TRACKER: '!join [ *base_dir, /discarded/reasons_tracker.txt ]'
-  GENERATED_DIR: '!join [ *base_dir, /generated ]'
-  LABELING_DIR: '!join [ *base_dir, /labeling ]'
+
 GENERATION:
   BASE_OUTPUT_PATH: ./ComfyUI/output
   IP_COMFY: http://127.0.0.1:8188
-  MODELS: []
+  MODELS:
+  - name: sd3_medium_incl_clips.safetensors
+    path: /autofs/unitytravail/travail/sasifchaudhr/ComfyUI/models/checkpoints/sd3_medium_incl_clips.safetensors
   PROMPTS:
-    negative: ''
-    positive: ''
+    negative: "Partial figures, cropped bodies, low-resolution images, blurred backgrounds,\
+      \ no low-angle shots, no side views, avoid obscured faces. \n"
+    positive: 'A highly detailed, ultra high definition image of a single pedestrian
+      on an airport, with the pedestrian fully visible and centered in the frame. '
   filename: generated_image
   manual_quality_check: true
-  model: ''
+  model: sd3_medium_incl_clips.safetensors
   num_images: 3
   resolution_height: 1024
   resolution_width: 1024
   seed: null
   steps: 1
-PROJECT_NAME: MyProject
+PROJECT_NAME: PAR for zs
 QUALITY_CHECKS:
   BASE_DIR: ./backend/quality_checker
-  FUNCTIONS: []
-  selected_checks: []
+  FUNCTIONS:
+  - args: []
+    name: B&W
+    path: backend/quality_checker/check_black_white.py
+  - args: []
+    name: Always true
+    path: backend/quality_checker/check_always_true.py
+  - args:
+    - 10
+    - 20
+    name: Always false
+    path: backend/quality_checker/check_always_false.py
+  - args: 50
+    name: Random
+    path: ./backend/quality_checker/check_random.py
+  selected_checks:
+  - 0
+  - 1
+  - 0
+  - 0
+UI_STYLES:
+  colors:
+    background: '#f0f0f0'
+    button_cancel: '#ff6666'
+    button_generate: '#66cc66'
+    progress_bar: '#00aaff'
+    text_prompt: '#333333'
+  fonts:
+    text_font_size: 14
+    title_font_size: 24
