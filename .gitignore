@@ -18,7 +18,8 @@ config.yaml
 /env/
 
 /imgean-dev
-/projects
+/projects/*
+!/projects/.gitkeep
 
 .vscode
 config.yaml
