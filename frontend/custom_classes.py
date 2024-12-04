@@ -336,3 +336,9 @@ class CustomComboBox(QWidget):
     
     def setCurrentText(self, text):
         self.combo_box.setCurrentText(text)
+
+    def count(self):
+        return self.combo_box.count()
+    
+    def itemText(self, i):
+        return self.combo_box.itemText(i)

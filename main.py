@@ -10,6 +10,7 @@ if __name__ == "__main__":
     app = QApplication(sys.argv)
     
     config = read_config('./config.yaml')
+    ui_styles = read_config('./ui_styles.yaml')
 
     #process = cu.start_comfyui_server()
 
@@ -21,7 +22,7 @@ if __name__ == "__main__":
 
     try:
         # Create an instance of MainWindow (which includes both UI and logic)
-        main_window = MainWindow(config)
+        main_window = MainWindow(config, ui_styles)
         main_window.show()  # Show the main window
 
         sys.exit(app.exec_())  # Execute the application

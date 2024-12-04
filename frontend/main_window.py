@@ -38,7 +38,7 @@ class MainWindow(QtWidgets.QMainWindow):
         self.annotateImgSelectScreen = AnnotateImg(self, self.config, self.ui_styles)  # Pass the stacked widget
 
         # Setting Screen
-        self.settingsScreen = SettingsWindow(self.ui.stackedWidget, self.config, self.ui_styles)
+        self.settingsScreen = SettingsWindow(self, self.config, self.ui_styles)
 
         # Create the main screen after the others (need them to be properly setted up)
         self.main_screen = MainScreen(self, self.ui_styles)

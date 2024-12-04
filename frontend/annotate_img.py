@@ -22,7 +22,6 @@ class AnnotateImg(QtWidgets.QMainWindow):
         self.main_window = main_window  # Reference to the QStackedWidget for navigation
 
         self.config = config
-        self.dataset_manager = dataset_manager
 
         self.images_labeling_dir = config[FILES][LABELING_DIR]
 
@@ -52,7 +51,7 @@ class AnnotateImg(QtWidgets.QMainWindow):
         self.update_checkboxes_selection()
 
         self.labels = []  # Initialize label list
-        self.refresh_labels()  # Load initial labels
+        # self.refresh_labels()  # Load initial labels. I dont know whats this for, but it throws an exception when i use it
 
     def on_return_click(self):
         # Return to the main screen
@@ -86,9 +85,26 @@ class AnnotateImg(QtWidgets.QMainWindow):
         self.update_checkboxes_selection()
 
     def on_auto_label_img_click(self):
-        # Auto-label the cu,du
-        # For opening the model, we just need the config file and how many labels are there
+        # Auto-label the current image
+        print(f"Auto-labeling image {self.current_image_index + 1}")
+
+        # Check if there are images to label
+        if not self.images_to_label:
+            print("No images to label.")
+            QtWidgets.QMessageBox.warning(self, "Warning", "No images to label.")
+            return
+
+        # Get the image path, construct full path only if it is not a dataset image (already full path in this case)
+        image_path = self.images_to_label[self.current_image_index]
+        if not self.ui.dataset_manager.is_image_in_dataset(image_path):
+            image_path = self.images_to_label[self.current_image_index]
+            image_path = self.ui.dataset_manager.config['FILES']['LABELING_DIR'] + '/' + image_path
+        print(f"Image path: {image_path}")
+        
+        # Get class labels
         class_labels = self.ui.dataset_manager.annotation.attr_name
+
+        # For opening the model, we just need the config file and how many labels are there
         model = open_model(self.ui.dataset_manager.config, number_attributes=len(class_labels))
 
         # Get confidence thresholds and colors from the config (list of thresholds and corresponding colors)
@@ -97,8 +113,7 @@ class AnnotateImg(QtWidgets.QMainWindow):
 
         # Get the checkbox threshold from the config
         checkbox_threshold = self.config['AUTO_LABEL'].get('CHECKBOX_THRESHOLD', 0.5)  # Default to 0.5 if not set
-        image_path = self.images_to_label[self.current_image_index]
-        image_path = self.ui.dataset_manager.config['FILES']['LABELING_DIR'] + '/' + image_path
+
         try:
             # Call the automatic labeling function
             predictions = get_predictions_with_confidence(self.config, model, image_path, class_labels)
@@ -106,19 +121,17 @@ class AnnotateImg(QtWidgets.QMainWindow):
             # Update checkboxes and labels based on the predictions
             for i in range(self.ui.labelList.count()):
                 item = self.ui.labelList.item(i)
-                widget = self.ui.labelList.itemWidget(item)
-                checkbox = widget.findChild(QtWidgets.QCheckBox)
-                label_widget = widget.findChild(QtWidgets.QLabel)
+                custom_checkbox = self.ui.labelList.itemWidget(item)
 
                 # Get the label and confidence for this prediction
                 label, confidence = predictions[i]
 
                 # Update the checkbox based on the threshold from the config
-                checkbox.setChecked(confidence > checkbox_threshold)
+                custom_checkbox.setChecked(confidence > checkbox_threshold)
 
                 # Update the label text to show the confidence percentage
                 percentage_text = f"{confidence * 100:.0f}%"
-                label_widget.setText(f"{label} ({percentage_text})")
+                custom_checkbox.setText(f"{label} ({percentage_text})")
 
                 # Find the appropriate color based on confidence
                 color = default_color  # Default color if no threshold matches
@@ -127,7 +140,7 @@ class AnnotateImg(QtWidgets.QMainWindow):
                         color = threshold.get('color', default_color)  # Use default if color is missing
 
                 # Apply color to the label
-                label_widget.setStyleSheet(f"color: {color};")
+                custom_checkbox.modifyColor(color)
 
             QtWidgets.QMessageBox.information(self, "Success", f"Auto-labeled image {self.current_image_index + 1}")
 
@@ -239,8 +252,7 @@ class AnnotateImg(QtWidgets.QMainWindow):
         self.update_image_display()
         self.update_checkboxes_selection()
 
-        self.ui.imageGridOverlay.setHidden(True)
-        self.ui.imageLabel.setHidden(False)
+        self.on_close_image_grid_click()
 
     def on_import_dataset_click(self):
 
@@ -385,7 +397,7 @@ class AnnotateImg(QtWidgets.QMainWindow):
 
     def refresh_labels(self):
         """Refresh labels from the DatasetManager."""
-        _, self.labels = self.dataset_manager.get_dataset_labels()
+        _, self.labels = self.ui.dataset_manager.get_dataset_labels()
         self.update_ui_labels()
 
     def update_ui_labels(self):

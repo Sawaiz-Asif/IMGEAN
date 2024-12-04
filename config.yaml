@@ -63,13 +63,13 @@ GENERATION:
     positive: 'A highly detailed, ultra high definition image of a single pedestrian
       on an airport, with the pedestrian fully visible and centered in the frame. '
   filename: generated_image
-  manual_quality_check: true
+  manual_quality_check: false
   model: sd3_medium_incl_clips.safetensors
   num_images: 3
   resolution_height: 1024
   resolution_width: 1024
   seed: null
-  steps: 1
+  steps: 4
 PROJECT_NAME: PAR for zs
 QUALITY_CHECKS:
   BASE_DIR: ./backend/quality_checker
@@ -89,7 +89,6 @@ QUALITY_CHECKS:
     name: Random
     path: ./backend/quality_checker/check_random.py
   selected_checks:
-  - 0
   - 0
   - 0
   - 0
