@@ -22,6 +22,7 @@ class AnnotateImg(QtWidgets.QMainWindow):
         self.main_window = main_window  # Reference to the QStackedWidget for navigation
 
         self.config = config
+        self.dataset_manager = dataset_manager
 
         self.images_labeling_dir = config[FILES][LABELING_DIR]
 
@@ -50,6 +51,9 @@ class AnnotateImg(QtWidgets.QMainWindow):
         self.update_image_display()
         self.update_checkboxes_selection()
 
+        self.labels = []  # Initialize label list
+        self.refresh_labels()  # Load initial labels
+
     def on_return_click(self):
         # Return to the main screen
         self.on_close_image_grid_click()
@@ -62,6 +66,7 @@ class AnnotateImg(QtWidgets.QMainWindow):
                 self.current_image_index -= 1
         self.update_image_display()
         self.update_checkboxes_selection()
+
 
     def on_discard_click(self):
         # Discard the current image
@@ -81,26 +86,9 @@ class AnnotateImg(QtWidgets.QMainWindow):
         self.update_checkboxes_selection()
 
     def on_auto_label_img_click(self):
-        # Auto-label the current image
-        print(f"Auto-labeling image {self.current_image_index + 1}")
-
-        # Check if there are images to label
-        if not self.images_to_label:
-            print("No images to label.")
-            QtWidgets.QMessageBox.warning(self, "Warning", "No images to label.")
-            return
-
-        # Get the image path, construct full path only if it is not a dataset image (already full path in this case)
-        image_path = self.images_to_label[self.current_image_index]
-        if not self.ui.dataset_manager.is_image_in_dataset(image_path):
-            image_path = self.images_to_label[self.current_image_index]
-            image_path = self.ui.dataset_manager.config['FILES']['LABELING_DIR'] + '/' + image_path
-        print(f"Image path: {image_path}")
-        
-        # Get class labels
-        class_labels = self.ui.dataset_manager.annotation.attr_name
-
+        # Auto-label the cu,du
         # For opening the model, we just need the config file and how many labels are there
+        class_labels = self.ui.dataset_manager.annotation.attr_name
         model = open_model(self.ui.dataset_manager.config, number_attributes=len(class_labels))
 
         # Get confidence thresholds and colors from the config (list of thresholds and corresponding colors)
@@ -109,7 +97,8 @@ class AnnotateImg(QtWidgets.QMainWindow):
 
         # Get the checkbox threshold from the config
         checkbox_threshold = self.config['AUTO_LABEL'].get('CHECKBOX_THRESHOLD', 0.5)  # Default to 0.5 if not set
-
+        image_path = self.images_to_label[self.current_image_index]
+        image_path = self.ui.dataset_manager.config['FILES']['LABELING_DIR'] + '/' + image_path
         try:
             # Call the automatic labeling function
             predictions = get_predictions_with_confidence(self.config, model, image_path, class_labels)
@@ -161,7 +150,7 @@ class AnnotateImg(QtWidgets.QMainWindow):
 
         # Determine how many images to label, starting from the current index
         # Get the batch size from the config
-        num_images_to_label = self.ui.dataset_manager.config.get('AUTO_LABEL', {}).get('BATCH_SIZE', 10)  # Default to 10 if not set
+        num_images_to_label = self.ui.dataset_manager.config.get('AUTO_LABEL', {}).get('MAX_AUTO_LABEL', 10)  # Default to 10 if not set
 
         # Create a modal progress dialog (loader)
         progress_dialog = QtWidgets.QProgressDialog(f"Auto-labeling {num_images_to_label} images...", None, 0, num_images_to_label)
@@ -389,3 +378,42 @@ class AnnotateImg(QtWidgets.QMainWindow):
             # Append 1 if checked, otherwise 0
             selections.append(1 if custom_checkbox.isChecked() else 0)     
         return selections
+        
+    def connect_to_settings(self, settings_window):
+        """Connect to the settings window's dataset_updated signal."""
+        settings_window.dataset_updated.connect(self.refresh_labels)
+
+    def refresh_labels(self):
+        """Refresh labels from the DatasetManager."""
+        _, self.labels = self.dataset_manager.get_dataset_labels()
+        self.update_ui_labels()
+
+    def update_ui_labels(self):
+        """Update the label list in the annotation UI."""
+        self.ui.labelList.clear()
+        for label in self.labels:
+            widget = QtWidgets.QWidget()
+            layout = QtWidgets.QHBoxLayout(widget)
+            checkbox = QtWidgets.QCheckBox()
+            label_widget = QtWidgets.QLabel(label)
+            layout.addWidget(checkbox)
+            layout.addWidget(label_widget)
+            layout.setAlignment(QtCore.Qt.AlignLeft)
+            layout.setContentsMargins(0, 0, 0, 0)
+            item = QtWidgets.QListWidgetItem()
+            self.ui.labelList.addItem(item)
+            self.ui.labelList.setItemWidget(item, widget)
+        """Update the label list in the annotation UI."""
+        self.ui.labelList.clear()
+        for label in self.labels:
+            widget = QtWidgets.QWidget()
+            layout = QtWidgets.QHBoxLayout(widget)
+            checkbox = QtWidgets.QCheckBox()
+            label_widget = QtWidgets.QLabel(label)
+            layout.addWidget(checkbox)
+            layout.addWidget(label_widget)
+            layout.setAlignment(QtCore.Qt.AlignLeft)
+            layout.setContentsMargins(0, 0, 0, 0)
+            item = QtWidgets.QListWidgetItem()
+            self.ui.labelList.addItem(item)
+            self.ui.labelList.setItemWidget(item, widget)

@@ -1,7 +1,8 @@
 ANNOTATION:
   BASE_DIR: ./data/labeling
-  PAR_MODEL:
-    BACKBONE_TYPE: resnet50
+  CURRENT_SELECTED: 0
+  MODELS:
+  - BACKBONE_TYPE: resnet50
     CLASSIFIER:
       BN: false
       NAME: linear
@@ -10,9 +11,22 @@ ANNOTATION:
     DATASET:
       HEIGHT: 256
       WIDTH: 192
+    Name: pr_50_percent
     PATH: ./models/img_par_model/ckpt_max_2024-04-10_23:26:07.pth
+    TYPE: PAR_MODEL
+  - BACKBONE_TYPE: resnet50
+    CLASSIFIER:
+      BN: false
+      NAME: linear
+      POOLING: avg
+      SCALE: 1
+    DATASET:
+      HEIGHT: 256
+      WIDTH: 192
+    Name: pr_90_percent
+    PATH: ./models/img_par_model/ckpt_max_2024-04-10_23:26:07.pth
+    TYPE: PAR_MODEL
 AUTO_LABEL:
-  BATCH_SIZE: 12
   CHECKBOX_THRESHOLD: 0.5
   CONFIDENCE_THRESHOLDS:
   - color: '#b6d7a8'
@@ -23,8 +37,8 @@ AUTO_LABEL:
 DATASET:
   HEIGHT: 256
   LABEL: eval
-  NAME: RAP2
-  PATH: ./data/custom_dataset/dataset_info.pkl
+  NAME: RA1234
+  PATH: data/custom_dataset/dataset_zs_custom.pkl
   TRAIN_SPLIT: trainval
   TYPE: pedes
   VAL_SPLIT: test
@@ -38,13 +52,11 @@ FILES:
   GENERATED_DIR: ./data/generated
   LABELING_DIR: ./data/labeling
 GENERATION:
-  BASE_OUTPUT_PATH: ../ComfyUI/output
-  IP_COMFY: ''
+  BASE_OUTPUT_PATH: ./ComfyUI/output
+  IP_COMFY: http://127.0.0.1:8188
   MODELS:
   - name: sd3_medium_incl_clips.safetensors
-    path: ./models/sd_v1.safetensors
-  - name: Stable Diffusion v2
-    path: ./models/sd_v2.safetensors
+    path: /autofs/unitytravail/travail/sasifchaudhr/ComfyUI/models/checkpoints/sd3_medium_incl_clips.safetensors
   PROMPTS:
     negative: "Partial figures, cropped bodies, low-resolution images, blurred backgrounds,\
       \ no low-angle shots, no side views, avoid obscured faces. \n"
@@ -53,32 +65,29 @@ GENERATION:
   filename: generated_image
   manual_quality_check: true
   model: sd3_medium_incl_clips.safetensors
-  num_images: 1
+  num_images: 3
   resolution_height: 1024
   resolution_width: 1024
   seed: null
-  steps: 4
+  steps: 1
 PROJECT_NAME: PAR for zs
 QUALITY_CHECKS:
   BASE_DIR: ./backend/quality_checker
   FUNCTIONS:
-  - args: 10
+  - args: []
     name: B&W
-    path: ./backend/quality_checker/check_black_white.py
-  - args: null
+    path: backend/quality_checker/check_black_white.py
+  - args: []
     name: Always true
-    path: ./backend/quality_checker/check_always_true.py
+    path: backend/quality_checker/check_always_true.py
   - args:
     - 10
     - 20
     name: Always false
-    path: ./backend/quality_checker/check_always_false.py
+    path: backend/quality_checker/check_always_false.py
   - args: 50
     name: Random
     path: ./backend/quality_checker/check_random.py
-  - args: null
-    name: Always exception
-    path: ./backend/quality_checker/check_throws_exception.py
   selected_checks:
   - 0
   - 0
