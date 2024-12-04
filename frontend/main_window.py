@@ -50,7 +50,7 @@ class MainWindow(QtWidgets.QMainWindow, Ui_MainWindow):
         cfg = self.config[FILES]
 
         # Generate Images Screen
-        self.generator_window = GeneratorWindow(self.stackedWidget, self.config)
+        self.generator_window = GeneratorWindow(self.stackedWidget, self.config,self.active_project)
 
         # Img Quality Check Screen
         self.imgQualityCheckScreen = CheckImgQuality(self.stackedWidget, self.config, images_checking_dir=cfg[CHECKING_DIR],  images_discarded_dir=cfg[DISCARDED_DIR])  # Pass the stacked widget
@@ -58,7 +58,7 @@ class MainWindow(QtWidgets.QMainWindow, Ui_MainWindow):
         self.annotateImgSelectScreen = AnnotateImg(self.stackedWidget, self.config,self.dataset_manager, images_labeling_dir=cfg[LABELING_DIR])  # Pass the stacked widget
 
         # Setting Screen
-        self.settingsScreen = SettingsWindow(self.stackedWidget, self.config,self.dataset_manager)
+        self.settingsScreen = SettingsWindow(self.stackedWidget, self.config,self.dataset_manager,self.active_project)
 
         # Add Project Management Screen
         self.projectManagementScreen = ProjectManagement(self.stackedWidget, self.config)
@@ -122,7 +122,9 @@ class MainWindow(QtWidgets.QMainWindow, Ui_MainWindow):
             return None
     def refresh_on_project_change(self):
         # Read the active project from the projects.json file
-        self.active_project = self.read_active_project()
+        self.active_project.clear()
+
+        self.active_project.update(self.read_active_project())
         self.currentProjectLabel.setText(f"Current Project: {self.active_project['name']}")
         config_path = os.path.join(self.active_project['path'], CONFIG_FILE)
         self.config.clear()  # Clear current config
@@ -131,7 +133,7 @@ class MainWindow(QtWidgets.QMainWindow, Ui_MainWindow):
         # self.config  = read_config(config_path)
         fu.verify_or_create_dirs(self.config)
         dataset_path = self.config['DATASET']['PATH']
-        self.dataset_manager = DatasetManager(dataset_path, self.config)
+        self.dataset_manager.update_with_new_file(dataset_path, self.config)
         # self.dataset_manager.clear()
         # self.dataset_manager.update(DatasetManager(dataset_path, self.config))
         # Refresh the setting UI

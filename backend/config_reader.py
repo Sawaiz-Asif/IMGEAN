@@ -116,6 +116,7 @@ def save_config(config, config_path):
         # Write the configuration to the file
         with open(config_path, 'w') as file:
             yaml.dump(config, file, Dumper=yaml.SafeDumper, default_flow_style=False)
+        print("Path :" , config_path)
         print("Configuration saved successfully.")
     except Exception as e:
         print(f"Failed to save configuration: {e}")

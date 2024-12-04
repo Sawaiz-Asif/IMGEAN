@@ -14,11 +14,12 @@ import time
 
 
 class GeneratorWindow(QtWidgets.QMainWindow, Ui_genrate_images):
-    def __init__(self, stacked_widget, config):
+    def __init__(self, stacked_widget, config,active_project):
         super(GeneratorWindow, self).__init__()
         self.setupUi(self, config)
         self.stacked_widget = stacked_widget
         self.config = config
+        self.active_project=active_project
 
         # Set up the QGraphicsScene
         self.scene = QGraphicsScene()
@@ -251,7 +252,8 @@ class GeneratorWindow(QtWidgets.QMainWindow, Ui_genrate_images):
 
     def save_config(self):
         """Save the updated configuration to the YAML file."""
-        config_path = './config.yaml'
+        # config_path = './config.yaml'
+        config_path = self.active_project["path"] + '/config.yaml'
         save_config(self.config, config_path)
         print("Configuration saved!")
     

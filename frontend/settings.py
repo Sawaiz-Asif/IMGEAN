@@ -23,11 +23,12 @@ from PyQt5.QtCore import pyqtSignal
 class SettingsWindow(QtWidgets.QMainWindow, Ui_SettingsWindow):
     dataset_updated = pyqtSignal()# Signal to notify updates
 
-    def __init__(self, stacked_widget, config,dataset_manager):
+    def __init__(self, stacked_widget, config,dataset_manager,active_project):
         super(SettingsWindow, self).__init__()
         self.setupUi(self)
         self.stacked_widget = stacked_widget
         self.config = config
+        self.active_project = active_project
 
         # Initialize DatasetManager
         # self.dataset_manager = DatasetManager(
@@ -667,7 +668,9 @@ class SettingsWindow(QtWidgets.QMainWindow, Ui_SettingsWindow):
     # Config Saving Method
     def save_config(self):
         # Use the save_config function from config_reader.py
-        save_config(self.config, './config.yaml')
+        config_path = self.active_project["path"] + '/config.yaml'
+        save_config(self.config, config_path)
+        
     # General Methods
     def on_return(self):
         self.stacked_widget.setCurrentIndex(0)
