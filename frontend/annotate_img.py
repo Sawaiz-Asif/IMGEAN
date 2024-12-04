@@ -50,6 +50,9 @@ class AnnotateImg(QtWidgets.QMainWindow):
         self.update_image_display()
         self.update_checkboxes_selection()
 
+        # Dictionary to store predictions for each image
+        self.predictions_for_images = {}
+
         self.labels = []  # Initialize label list
         # self.refresh_labels()  # Load initial labels. I dont know whats this for, but it throws an exception when i use it
 
@@ -142,6 +145,7 @@ class AnnotateImg(QtWidgets.QMainWindow):
                 # Apply color to the label
                 custom_checkbox.modifyColor(color)
 
+            self.predictions_for_images[self.images_to_label[self.current_image_index]] = predictions
             QtWidgets.QMessageBox.information(self, "Success", f"Auto-labeled image {self.current_image_index + 1}")
 
         except Exception as e:
@@ -157,9 +161,6 @@ class AnnotateImg(QtWidgets.QMainWindow):
             print("No images to label.")
             QtWidgets.QMessageBox.warning(self, "Warning", "No images to label.")
             return
-
-        # Dictionary to store predictions for each image
-        self.predictions_for_images = {}
 
         # Determine how many images to label, starting from the current index
         # Get the batch size from the config
@@ -234,14 +235,14 @@ class AnnotateImg(QtWidgets.QMainWindow):
 
     def on_open_image_grid_click(self):
         # Show the image grid overlay
-        self.ui.scroll_widget.setHidden(False)
+        self.ui.scroll_area.setHidden(False)
         self.ui.closeImageGridButton.setHidden(False)
 
         self.populate_image_grid(self.ui.imageGridLayout, self.images_to_label)
 
     def on_close_image_grid_click(self):
         # Show the image grid overlay
-        self.ui.scroll_widget.setHidden(True)
+        self.ui.scroll_area.setHidden(True)
         self.ui.closeImageGridButton.setHidden(True)
 
     def on_image_clicked(self, index):
@@ -331,6 +332,7 @@ class AnnotateImg(QtWidgets.QMainWindow):
 
                 # Reset the label text to its original without confidence score
                 custom_checkbox.setText(self.ui.dataset_manager.annotation.attr_name[i])
+                custom_checkbox.modifyColor('#ffffff')
 
     def populate_image_grid(self, grid_layout, image_list):
         # Clear existing widgets from the grid layout

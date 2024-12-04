@@ -32,6 +32,7 @@ class SettingsWindow(QtWidgets.QMainWindow):
 
         self.main_window = main_window
         self.config = config
+        self.ui_styles = ui_styles
 
         # Initialize DatasetManager
         # self.dataset_manager = DatasetManager(
@@ -344,7 +345,7 @@ class SettingsWindow(QtWidgets.QMainWindow):
 
         if is_editing:
             # Pre-fill existing data for editing
-            function_data = self.temp_quality_config['QUALITY_CHECKS']['FUNCTIONS'][function_index]
+            function_data = self.config['QUALITY_CHECKS']['FUNCTIONS'][function_index]
             current_name = function_data.get('name', '')
             current_path = function_data.get('path', '')
             current_path = os.path.relpath(current_path, start=os.path.abspath("."))  # Normalize to relative path
@@ -408,7 +409,7 @@ class SettingsWindow(QtWidgets.QMainWindow):
 
             # Update or add the function entry in the config
             if is_editing:
-                self.temp_quality_config['QUALITY_CHECKS']['FUNCTIONS'][function_index] = {
+                self.config['QUALITY_CHECKS']['FUNCTIONS'][function_index] = {
                     'name': new_name,
                     'path': new_path,
                     'args': new_args
@@ -469,12 +470,13 @@ class SettingsWindow(QtWidgets.QMainWindow):
     def add_confidence_threshold(self):
         """Add a new confidence threshold."""
         # Determine the current maximum threshold
-        existing_thresholds = [t['value'] for t in self.temp_confidence_thresholds]
-        min_value = max(existing_thresholds, default=0.0)
+        #existing_thresholds = [t['value'] for t in self.temp_confidence_thresholds]
+        #min_value = max(existing_thresholds, default=0.0)
+        min_value = 0.1
         max_value = 1.0
 
         # Open the AddThresholdDialog
-        dialog = AddThresholdDialog(min_value=min_value, max_value=max_value, parent=self)
+        dialog = AddThresholdDialog(min_value=min_value, max_value=max_value, parent=self, color_mapping=self.ui.getPosibleColorsMapping())
         if dialog.exec_() == QtWidgets.QDialog.Accepted:
             color, value = dialog.get_data()
             self.temp_confidence_thresholds.append({'color': color, 'value': value})
@@ -493,8 +495,8 @@ class SettingsWindow(QtWidgets.QMainWindow):
         threshold = self.temp_confidence_thresholds[index]
 
         # Determine the valid range for editing
-        existing_thresholds = [t['value'] for i, t in enumerate(self.temp_confidence_thresholds) if i != index]
-        min_value = max(existing_thresholds, default=0.0)
+        #existing_thresholds = [t['value'] for i, t in enumerate(self.temp_confidence_thresholds) if i != index]
+        min_value = 0.1
         max_value = 1.0
 
         # Open the dialog with the existing values
@@ -503,7 +505,8 @@ class SettingsWindow(QtWidgets.QMainWindow):
             max_value=max_value,
             color=threshold['color'],
             value=threshold['value'],
-            parent=self
+            parent=self,
+            color_mapping=self.ui.getPosibleColorsMapping()
         )
 
         if dialog.exec_() == QtWidgets.QDialog.Accepted:
@@ -573,8 +576,9 @@ class SettingsWindow(QtWidgets.QMainWindow):
     def add_confidence_threshold(self):
         """Add a new confidence threshold with a custom dialog."""
         # Determine the current maximum threshold
-        existing_thresholds = [t['value'] for t in self.temp_confidence_thresholds]
-        min_value = max(existing_thresholds, default=0.0)  # Start from 0 if no thresholds exist
+        # existing_thresholds = [t['value'] for t in self.temp_confidence_thresholds]
+        # min_value = max(existing_thresholds, default=0.0)  # Start from 0 if no thresholds exist
+        min_value = 0.1
         max_value = 1.0  # Thresholds are limited to a maximum of 1
 
         # Open the AddThresholdDialog

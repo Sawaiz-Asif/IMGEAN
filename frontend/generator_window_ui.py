@@ -341,6 +341,9 @@ class Ui_generate_images(object):
         """)
         self.graphics_view.setScene(QtWidgets.QGraphicsScene(self.graphics_view))
         self.graphics_view.setAlignment(QtCore.Qt.AlignCenter)
+        self.graphics_view.setFixedSize(self.ui_styles[SIZES][GENERATOR_GRAPHIC_VIEW][WIDTH], self.ui_styles[SIZES][GENERATOR_GRAPHIC_VIEW][HEIGHT])
+        self.graphics_view.setHorizontalScrollBarPolicy(QtCore.Qt.ScrollBarAlwaysOff)
+        self.graphics_view.setVerticalScrollBarPolicy(QtCore.Qt.ScrollBarAlwaysOff)
         self.right_layout.addWidget(self.graphics_view)
         # Setup a simple progress bar
         self.progress_bar = QtWidgets.QProgressBar(self.centralwidget)

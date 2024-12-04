@@ -96,7 +96,9 @@ class Ui_SettingsWindow(object):
         self.descriptionLineEdit.setStyleSheet(f"""
             QLineEdit {{
                 border: {self.ui_styles[BORDERS][DEFAULT_BORDER]}px {self.ui_styles[BORDERS][MAIN_BUTTON_STYLE]};
-                border-radius: {self.ui_styles[BORDERS][DEFAULT_RADIUS]}px; 
+                border-radius: {self.ui_styles[BORDERS][DEFAULT_RADIUS]}px;
+                font-family: '{self.regular_font_family}';
+                font-size: {self.ui_styles[FONTS][TEXT_FONT_SIZE]}px;
             }}
         """)
         self.datasetLayout.addRow(label_description, self.descriptionLineEdit)
@@ -111,7 +113,9 @@ class Ui_SettingsWindow(object):
         self.pickleFilePathLineEdit.setStyleSheet(f"""
             QLineEdit {{
                 border: {self.ui_styles[BORDERS][DEFAULT_BORDER]}px {self.ui_styles[BORDERS][MAIN_BUTTON_STYLE]};
-                border-radius: {self.ui_styles[BORDERS][DEFAULT_RADIUS]}px; 
+                border-radius: {self.ui_styles[BORDERS][DEFAULT_RADIUS]}px;
+                font-family: '{self.regular_font_family}';
+                font-size: {self.ui_styles[FONTS][TEXT_FONT_SIZE]}px;
             }}
         """)
         self.pickleFilePathBrowseButton = QtWidgets.QPushButton("Browse", self.datasetGroup)
@@ -148,10 +152,14 @@ class Ui_SettingsWindow(object):
                 border-radius: {self.ui_styles[BORDERS][DEFAULT_BORDER]}px;
             }}
             QListWidget::item {{
-                border: none;
-                padding: 5px;
+                background-color: {self.ui_styles[COLORS][BACKGROUND]};
+            }}
+            QListWidget::item:selected {{
+                background-color: {self.ui_styles[COLORS][BACKGROUND_PRESSED]};
+                color: black;
             }}
         """)
+        self.labelsListWidget.setFixedHeight(self.ui_styles[SIZES][SETTINGS_LISTS][HEIGHT])
         self.addLabelButton = QtWidgets.QPushButton("Add Label", self.datasetGroup)
         self.addLabelButton.setStyleSheet(f"""
             QPushButton {{
@@ -255,7 +263,9 @@ class Ui_SettingsWindow(object):
         self.outputFolderLineEdit.setStyleSheet(f"""
             QLineEdit {{
                 border: {self.ui_styles[BORDERS][DEFAULT_BORDER]}px {self.ui_styles[BORDERS][MAIN_BUTTON_STYLE]};
-                border-radius: {self.ui_styles[BORDERS][DEFAULT_RADIUS]}px; 
+                border-radius: {self.ui_styles[BORDERS][DEFAULT_RADIUS]}px;
+                font-family: '{self.regular_font_family}';
+                font-size: {self.ui_styles[FONTS][TEXT_FONT_SIZE]}px;
             }}
         """)
         self.outputFolderBrowseButton = QtWidgets.QPushButton("Browse", self.imageGenGroup)
@@ -287,7 +297,9 @@ class Ui_SettingsWindow(object):
         self.comfyUiIpLineEdit.setStyleSheet(f"""
             QLineEdit {{
                 border: {self.ui_styles[BORDERS][DEFAULT_BORDER]}px {self.ui_styles[BORDERS][MAIN_BUTTON_STYLE]};
-                border-radius: {self.ui_styles[BORDERS][DEFAULT_RADIUS]}px; 
+                border-radius: {self.ui_styles[BORDERS][DEFAULT_RADIUS]}px;
+                font-family: '{self.regular_font_family}';
+                font-size: {self.ui_styles[FONTS][TEXT_FONT_SIZE]}px; 
             }}
         """)
         self.imageGenLayout.addRow(label_comfy_ip, self.comfyUiIpLineEdit)
@@ -307,10 +319,14 @@ class Ui_SettingsWindow(object):
                 border-radius: {self.ui_styles[BORDERS][DEFAULT_BORDER]}px;
             }}
             QListWidget::item {{
-                border: none;
-                padding: 5px;
+                background-color: {self.ui_styles[COLORS][BACKGROUND]};
+            }}
+            QListWidget::item:selected {{
+                background-color: {self.ui_styles[COLORS][BACKGROUND_PRESSED]};
+                color: black;
             }}
         """)
+        self.imageModelsList.setFixedHeight(self.ui_styles[SIZES][SETTINGS_LISTS][HEIGHT])
         self.imageGenLayout.addRow(label_models, self.imageModelsList)
 
         # Buttons for model management
@@ -421,10 +437,14 @@ class Ui_SettingsWindow(object):
                 border-radius: {self.ui_styles[BORDERS][DEFAULT_BORDER]}px;
             }}
             QListWidget::item {{
-                border: none;
-                padding: 5px;
+                background-color: {self.ui_styles[COLORS][BACKGROUND]};
+            }}
+            QListWidget::item:selected {{
+                background-color: {self.ui_styles[COLORS][BACKGROUND_PRESSED]};
+                color: black;
             }}
         """)
+        self.qualityFunctionsList.setFixedHeight(self.ui_styles[SIZES][SETTINGS_LISTS][HEIGHT])
         self.qualityCheckerLayout.addRow(label_functions, self.qualityFunctionsList)
 
         # Buttons for function management
@@ -525,16 +545,12 @@ class Ui_SettingsWindow(object):
             font-family: '{self.regular_font_family}';
             font-size: {self.ui_styles[FONTS][LABEL_FONT_SIZE]}px;
         """)
-        self.currentSelectionComboBox = QtWidgets.QComboBox(self.annotatorGroup)
-        self.currentSelectionComboBox.setStyleSheet(f"""
-            font-family: '{self.regular_font_family}';
-            font-size: {self.ui_styles[FONTS][TEXT_FONT_SIZE]}px;
-            border: {self.ui_styles[BORDERS][MAIN_BUTTON_BORDER]}px {self.ui_styles[BORDERS][MAIN_BUTTON_STYLE]};
-            border-radius: {self.ui_styles[BORDERS][DEFAULT_BORDER]}px;
-            background-color: {self.ui_styles[COLORS][BACKGROUND]};
-            color: {self.ui_styles[COLORS][BLACK]};
-            padding: 5px;
-        """)
+        self.currentSelectionComboBox = CustomComboBox(width=self.ui_styles[SIZES][SETTINGS_ANNOTATOR_COMBO][WIDTH], 
+                                         height=self.ui_styles[SIZES][SETTINGS_ANNOTATOR_COMBO][HEIGHT], 
+                                         border=self.ui_styles[BORDERS][DEFAULT_BORDER], 
+                                         border_radius=self.ui_styles[BORDERS][DEFAULT_RADIUS], 
+                                         font=self.ui_styles[FONTS][TEXT_FONT_SIZE],
+                                         font_family=self.regular_font_family)
         self.annotatorLayout.addRow(label_current_selection, self.currentSelectionComboBox)
 
         # Annotator Options Widget Creation
@@ -611,7 +627,7 @@ class Ui_SettingsWindow(object):
                                          border_radius=self.ui_styles[BORDERS][DEFAULT_RADIUS], 
                                          font=self.ui_styles[FONTS][TEXT_FONT_SIZE],
                                          font_family=self.regular_font_family)
-        self.defaultColorComboBox.addItems(["red", "green", "blue", "yellow", "orange", "purple"])
+        self.defaultColorComboBox.addItems(['red'] + [color for color in self.ui_styles[COLORS] if color != 'red']) # All colors in config + red at the front
 
         # Add both label and combobox to layout
         annotator_options_layout.addWidget(default_color_label, alignment=Qt.AlignRight)
@@ -630,10 +646,14 @@ class Ui_SettingsWindow(object):
                 border-radius: {self.ui_styles[BORDERS][DEFAULT_BORDER]}px;
             }}
             QListWidget::item {{
-                border: none;
-                padding: 5px;
+                background-color: {self.ui_styles[COLORS][BACKGROUND]};
+            }}
+            QListWidget::item:selected {{
+                background-color: {self.ui_styles[COLORS][BACKGROUND_PRESSED]};
+                color: black;
             }}
         """)
+        self.confidenceThresholdList.setFixedHeight(self.ui_styles[SIZES][SETTINGS_LISTS][HEIGHT])
         self.addConfidenceButton = QtWidgets.QPushButton("Add Threshold", self.annotatorGroup)
         self.addConfidenceButton.setStyleSheet(f"""
             QPushButton {{
@@ -696,10 +716,14 @@ class Ui_SettingsWindow(object):
                 border-radius: {self.ui_styles[BORDERS][DEFAULT_BORDER]}px;
             }}
             QListWidget::item {{
-                border: none;
-                padding: 5px;
+                background-color: {self.ui_styles[COLORS][BACKGROUND]};
+            }}
+            QListWidget::item:selected {{
+                background-color: {self.ui_styles[COLORS][BACKGROUND_PRESSED]};
+                color: black;
             }}
         """)
+        self.annotatorModelsList.setFixedHeight(self.ui_styles[SIZES][SETTINGS_LISTS][HEIGHT])
         self.annotatorLayout.addRow(label_models, self.annotatorModelsList)
 
         # Buttons for model management
@@ -825,3 +849,6 @@ class Ui_SettingsWindow(object):
 
         # Add the top section layout to the main grid
         self.main_layout.addLayout(self.top_section_layout, 0, 0)
+
+    def getPosibleColorsMapping(self):
+        return self.ui_styles[COLORS]

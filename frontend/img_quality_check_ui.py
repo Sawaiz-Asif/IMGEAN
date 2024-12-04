@@ -253,6 +253,8 @@ class Ui_CheckImgQuality(object):
             text-align: center;
         """)
             self.reasonLabel.setAlignment(QtCore.Qt.AlignCenter)
+            self.reasonLabel.setWordWrap(True)
+            self.reasonLabel.setFixedWidth(self.ui_styles[SIZES][IMG_PREVIEW][WIDTH])
             right_layout.addWidget(self.reasonLabel)
 
         # Add spacer to push the buttons down to the bottom

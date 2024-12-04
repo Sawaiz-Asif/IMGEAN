@@ -220,6 +220,21 @@ class Ui_AnnotateImg(object):
                 border: none;
                 padding: 5px;
             }}
+            QScrollBar:vertical {{              
+                width:{self.ui_styles[BORDERS][DEFAULT_BORDER]}px;
+                margin: 0px 0px 0px 0px;
+            }}
+            QScrollBar::handle:vertical {{
+                background: qlineargradient(x1:0, y1:0, x2:1, y2:0,
+                stop: 0 {self.ui_styles[COLORS][BLACK]}, stop: 0.5 {self.ui_styles[COLORS][BLACK]}, stop:1 {self.ui_styles[COLORS][BLACK]});
+                min-height: 0px;
+            }}
+            QScrollBar::add-line:vertical {{
+                height: 0px;
+            }}
+            QScrollBar::sub-line:vertical {{
+                height: 0 px;
+            }}
         """)
 
         # Iterate through the actual labels and create a checkbox for each one
@@ -309,8 +324,37 @@ class Ui_AnnotateImg(object):
         self.scroll_widget.setStyleSheet(f"""
             font-family: '{self.regular_font_family}';
             font-size: {self.ui_styles[FONTS][RETURN_BUTTON_FONT_SIZE]}px;
-            border: {self.ui_styles[BORDERS][MAIN_BUTTON_BORDER]}px {self.ui_styles[BORDERS][MAIN_BUTTON_STYLE]}; /* Outer border */
         """)
+
+        self.scroll_area = QtWidgets.QScrollArea()
+        self.scroll_area.setWidgetResizable(True)
+        self.scroll_area.setStyleSheet(f"""
+            QScrollArea {{
+                border: {self.ui_styles[BORDERS][MAIN_BUTTON_BORDER]}px {self.ui_styles[BORDERS][MAIN_BUTTON_STYLE]};             
+            }}
+            QScrollBar:vertical {{              
+                width:{self.ui_styles[BORDERS][DEFAULT_BORDER]}px;
+                margin: 0px 0px 0px 0px;
+            }}
+            QScrollBar:horizontal {{              
+                height:0px;
+                margin: 0px 0px 0px 0px;
+            }}
+            QScrollBar::handle:vertical {{
+                background: qlineargradient(x1:0, y1:0, x2:1, y2:0,
+                stop: 0 {self.ui_styles[COLORS][BLACK]}, stop: 0.5 {self.ui_styles[COLORS][BLACK]}, stop:1 {self.ui_styles[COLORS][BLACK]});
+                min-height: 0px;
+            }}
+            QScrollBar::add-line:vertical {{
+                height: 0px;
+            }}
+            QScrollBar::sub-line:vertical {{
+                height: 0 px;
+            }}
+        """)
+
+        self.scroll_area.setWidget(self.scroll_widget)
+        self.scroll_area.setFixedSize(self.ui_styles[SIZES][DROPDOWN_MENU][WIDTH], self.ui_styles[SIZES][DROPDOWN_BUTTON][HEIGHT])
 
         # Create the layout for the scroll widget
         hidden_layout = QtWidgets.QVBoxLayout(self.scroll_widget)
@@ -334,14 +378,13 @@ class Ui_AnnotateImg(object):
 
         self.imageGridWidget = QtWidgets.QWidget()
         self.imageGridWidget.setSizePolicy(QtWidgets.QSizePolicy.Fixed, QtWidgets.QSizePolicy.Expanding)
-
         self.imageGridLayout = QtWidgets.QGridLayout(self.imageGridWidget)
         self.imageGridLayout.setContentsMargins(0, 0, 0, 0)  # No margins for the grid layout
         self.imageGridLayout.setAlignment(QtCore.Qt.AlignTop | QtCore.Qt.AlignLeft)
 
         hidden_layout.addWidget(self.imageGridWidget)
 
-        self.dropdown_layout.addWidget(self.scroll_widget)
+        self.dropdown_layout.addWidget(self.scroll_area)
 
         self.imageGridWidget.setStyleSheet("""
             QWidget {
@@ -368,7 +411,7 @@ class Ui_AnnotateImg(object):
         self.closeImageGridButton.setFixedSize(self.ui_styles[SIZES][DROPDOWN_BUTTON][WIDTH], self.ui_styles[SIZES][DROPDOWN_BUTTON][HEIGHT])
         
 
-        self.scroll_widget.setHidden(True)
+        self.scroll_area.setHidden(True)
         self.closeImageGridButton.setHidden(True)
 
         self.dropdown_layout.addWidget(self.closeImageGridButton, alignment=QtCore.Qt.AlignLeft)

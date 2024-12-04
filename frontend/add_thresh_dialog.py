@@ -1,6 +1,8 @@
 from PyQt5 import QtCore, QtGui, QtWidgets
+from ui_styles_constants import *
+
 class AddThresholdDialog(QtWidgets.QDialog):
-    def __init__(self, min_value, max_value, color=None, value=None, parent=None):
+    def __init__(self, min_value, max_value, color=None, value=None, parent=None, color_mapping=None):
         """
         Dialog for adding/editing a confidence threshold.
         If `color` and `value` are provided, the dialog works in edit mode.
@@ -14,8 +16,11 @@ class AddThresholdDialog(QtWidgets.QDialog):
         # Color selection dropdown
         self.colorLabel = QtWidgets.QLabel("Select Color:")
         self.colorComboBox = QtWidgets.QComboBox()
-        self.colorComboBox.addItems(["red", "green", "blue", "yellow", "orange", "purple"])
-        if color:
+        if color and color_mapping:
+            self.colorComboBox.addItems(color_mapping.keys())
+            self.colorComboBox.setCurrentText(color_mapping[color])
+        elif color:
+            self.colorComboBox.addItems(["red", "green", "blue", "yellow", "orange", "purple"])
             self.colorComboBox.setCurrentText(color)
 
         # Threshold value spin box

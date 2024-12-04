@@ -162,6 +162,12 @@ class CustomCheckBox(QWidget):
             font-family: '{self.font_family}';
         """)
 
+    def checkState(self):
+        return self.checked
+    
+    def text(self):
+        return self.label.text()
+
 class CustomDoubleSpinBox(QWidget):
     def __init__(self, width=50, height=40, border=1, border_radious=5, font=15, font_family=None):
         super().__init__(None)
@@ -342,3 +348,6 @@ class CustomComboBox(QWidget):
     
     def itemText(self, i):
         return self.combo_box.itemText(i)
+    
+    def clear(self):
+        return self.combo_box.clear()

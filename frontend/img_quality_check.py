@@ -201,16 +201,14 @@ class CheckImgQuality(QtWidgets.QMainWindow):
         current_tab_index = self.ui.tab_widget.currentIndex()
 
         if current_tab_index == 1:  # "Images to Check" tab (Accept action)
-            fu.accept_all_checking(self.config)
+            fu.discard_all_checking(self.config)
             self.images_to_check = []
-            self.populate_image_grid(self.ui.gridLayoutToCheck, self.images_to_check, is_discarded=False)
         else:  # "Discarded" tab (Re-accept action)
             fu.delete_all_discarded(self.config)
             self.discarded_images = []
-            self.populate_image_grid(self.ui.gridLayoutDiscarded, self.discarded_images, is_discarded=True)
             self.ui.reasonLabel.setText(f"")
 
-        self.load_current_image()
+        self.refresh_window_info()
 
     def on_accept_all_click(self):
         fu.accept_all_checking(self.config)

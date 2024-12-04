@@ -29,9 +29,9 @@ ANNOTATION:
 AUTO_LABEL:
   CHECKBOX_THRESHOLD: 0.5
   CONFIDENCE_THRESHOLDS:
-  - color: '#b6d7a8'
+  - color: green
     value: 0.75
-  - color: '#ffe599'
+  - color: yellow
     value: 0.5
   DEFAULT_COLOR: '#ea9999'
 DATASET:
@@ -52,20 +52,22 @@ FILES:
   GENERATED_DIR: ./data/generated
   LABELING_DIR: ./data/labeling
 GENERATION:
-  BASE_OUTPUT_PATH: ./ComfyUI/output
+  BASE_OUTPUT_PATH: ../ComfyUI/output
   IP_COMFY: http://127.0.0.1:8188
   MODELS:
   - name: sd3_medium_incl_clips.safetensors
     path: /autofs/unitytravail/travail/sasifchaudhr/ComfyUI/models/checkpoints/sd3_medium_incl_clips.safetensors
   PROMPTS:
-    negative: "Partial figures, cropped bodies, low-resolution images, blurred backgrounds,\
-      \ no low-angle shots, no side views, avoid obscured faces. \n"
-    positive: 'A highly detailed, ultra high definition image of a single pedestrian
-      on an airport, with the pedestrian fully visible and centered in the frame. '
+    negative: 'Partial figures, cropped bodies, low-resolution images, blurred backgrounds,
+      no low-angle shots, no side views, avoid obscured faces.
+
+      '
+    positive: A highly detailed, ultra high definition image of a single pedestrian
+      on an airport, with the pedestrian fully visible and centered in the frame.
   filename: generated_image
-  manual_quality_check: false
+  manual_quality_check: true
   model: sd3_medium_incl_clips.safetensors
-  num_images: 3
+  num_images: 2
   resolution_height: 1024
   resolution_width: 1024
   seed: null

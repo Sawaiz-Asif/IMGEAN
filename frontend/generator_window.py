@@ -25,6 +25,7 @@ class GeneratorWindow(QtWidgets.QMainWindow):
         # Set up the QGraphicsScene
         self.scene = QGraphicsScene()
         self.ui.graphics_view.setScene(self.scene)
+        self.scene
 
         # Initialize system tray icon for notifications
         self.tray_icon = QSystemTrayIcon(self)
@@ -125,6 +126,13 @@ class GeneratorWindow(QtWidgets.QMainWindow):
             if pixmap and not pixmap.isNull():
                 item = QGraphicsPixmapItem(pixmap)
                 self.scene.addItem(item)
+
+                scene_rect = self.scene.sceneRect()
+                item_rect = item.boundingRect()
+
+                # Center the item within the scene
+                item.setPos(scene_rect.center() - item_rect.center())
+
                 self.ui.graphics_view.fitInView(item, QtCore.Qt.KeepAspectRatio)
                 return
         
@@ -153,10 +161,11 @@ class GeneratorWindow(QtWidgets.QMainWindow):
         # --- Automatic quality checking starts here ---
         # Get the selection of the quality functions to be used
         selected_quality_function_checkboxes = []
-        for row in range(self.ui.auto_check_list.count()):
-            item = self.ui.auto_check_list.item(row)
-            if item.checkState() == QtCore.Qt.Checked:
-                selected_quality_function_checkboxes.append(item.text())
+        for i in range(self.ui.auto_check_list.count()):
+            item = self.ui.auto_check_list.item(i)
+            custom_checkbox = self.ui.auto_check_list.itemWidget(item)
+            if custom_checkbox.checkState() == True:
+                selected_quality_function_checkboxes.append(custom_checkbox.text())
 
         # Get the pointers to all the quality functions (on the directory)
         quality_checkers_functions = load_quality_checkers(self.config)

@@ -47,6 +47,8 @@ sizes:
   dropdown_button:
     width: 100
     height: 610
+  dropdown_menu:
+    width: 460
   annotate_img:
     width: 500
     height: 500
@@ -72,7 +74,16 @@ sizes:
   settings_color_checkbox:
     width: 250
   settings_color_combo:
-    width: 100
+    width: 175
+  settings_annotator_combo:
+    width: 160
+    height: 30
+  settings_lists:
+    height: 125
+  generator_graphic_view:
+    width: 545
+    height: 582
+
 fonts:
   text_font_size: 14
   label_font_size: 18
