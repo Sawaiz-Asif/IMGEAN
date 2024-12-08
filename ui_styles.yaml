@@ -83,7 +83,18 @@ sizes:
   generator_graphic_view:
     width: 545
     height: 582
-
+  popup_buttons:
+    width: 250
+    height: 30
+  popup_generator:
+    width: 500
+    height: 120
+  popup_checker:
+    width: 500
+    height: 140
+  popup_annotator_confidence:
+    width: 300
+    height: 200
 fonts:
   text_font_size: 14
   label_font_size: 18

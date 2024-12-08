@@ -11,7 +11,7 @@ from PyQt5.QtWidgets import (
 from PyQt5.QtCore import Qt
 from PyQt5.QtGui import QFontDatabase
 
-from frontend.custom_classes import CustomCheckBox
+from frontend.custom_ui_widgets import CustomCheckBox
 
 class Ui_AnnotateImg(object):
     def __init__(self, config, ui_styles):

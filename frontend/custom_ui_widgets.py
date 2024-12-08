@@ -1,5 +1,12 @@
-from PyQt5.QtWidgets import QWidget, QSpinBox, QPushButton, QGridLayout, QHBoxLayout, QLabel, QDoubleSpinBox, QComboBox
+from PyQt5.QtWidgets import QWidget, QSpinBox, QPushButton, QGridLayout, QHBoxLayout, QLabel, QDoubleSpinBox, QComboBox, QInputDialog, QInputDialog, QDialogButtonBox, QMessageBox
 from PyQt5.QtCore import Qt
+
+from PyQt5.QtGui import QFontDatabase, QIcon
+
+from ui_styles_constants import *
+
+from PyQt5 import QtWidgets, QtGui
+import os
 
 class CustomSpinBox(QWidget):
     def __init__(self, width=50, height=40, border=1, border_radious=5, font=15, font_family=None):

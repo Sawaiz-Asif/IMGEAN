@@ -8,7 +8,7 @@ from PyQt5.QtWidgets import (
 from PyQt5.QtCore import Qt
 from PyQt5.QtGui import QFontDatabase
 
-from frontend.custom_classes import CustomSpinBox, CustomCheckBox, CustomComboBox
+from frontend.custom_ui_widgets import CustomSpinBox, CustomCheckBox, CustomComboBox
 
 class Ui_generate_images(object):
     def __init__(self, config, ui_styles):

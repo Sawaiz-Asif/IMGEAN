@@ -1,6 +1,6 @@
 from PyQt5 import QtWidgets, QtGui, QtCore
 from frontend.generator_window_ui import Ui_generate_images
-from backend.image_generator.image_generation_thread import ImageGenerationThread
+#from backend.image_generator.image_generation_thread import ImageGenerationThread
 # from backend.image_generator.comfyui_utils import execute_prompt
 from backend.config_reader import save_config
 import backend.file_utils as fu
@@ -101,13 +101,13 @@ class GeneratorWindow(QtWidgets.QMainWindow):
         self.ui.progress_bar.setTextVisible(True)
         self.ui.progress_bar.setFormat(f"Generating 0/{num_images}")
 
-        self.generation_thread = ImageGenerationThread(
-            positive_prompt, negative_prompt, num_images, model_name, steps, filename, seed, self.config
-        )
-        self.generation_thread.progress_signal.connect(self.update_progress_bar)
-        self.generation_thread.image_signal.connect(self.show_image)
-        self.generation_thread.finished.connect(self.on_generation_complete)
-        self.generation_thread.start()
+        # self.generation_thread = ImageGenerationThread(
+        #     positive_prompt, negative_prompt, num_images, model_name, steps, filename, seed, self.config
+        # )
+        # self.generation_thread.progress_signal.connect(self.update_progress_bar)
+        # self.generation_thread.image_signal.connect(self.show_image)
+        # self.generation_thread.finished.connect(self.on_generation_complete)
+        # self.generation_thread.start()
 
     def update_progress_bar(self, current, total):
         """Update the progress bar with 'Generating {current}/{total}'."""

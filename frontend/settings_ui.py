@@ -8,7 +8,7 @@ from PyQt5.QtWidgets import (
 from PyQt5.QtCore import Qt
 from PyQt5.QtGui import QFontDatabase
 
-from frontend.custom_classes import CustomCheckBox, CustomSpinBox, CustomDoubleSpinBox, CustomComboBox
+from frontend.custom_ui_widgets import CustomCheckBox, CustomSpinBox, CustomDoubleSpinBox, CustomComboBox
 
 class Ui_SettingsWindow(object):
     def __init__(self, config, ui_styles):
@@ -51,7 +51,7 @@ class Ui_SettingsWindow(object):
                 QScrollBar::sub-line:vertical {{
                     height: 0 px;
                 }}
-        """) # TODO format the vertical bar
+        """)
         self.scrollArea.setWidgetResizable(True)
         self.scrollAreaWidgetContents = QtWidgets.QWidget()
         self.scrollArea.setWidget(self.scrollAreaWidgetContents)

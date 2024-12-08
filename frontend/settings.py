@@ -1,15 +1,12 @@
 from PyQt5 import QtWidgets
 from frontend.settings_ui import Ui_SettingsWindow  # Import the UI class
-# dialogs
-from frontend.model_settings_dialog import ModelSettingsDialog
-from frontend.quality_checker_dialog import QualityCheckerDialog
-from frontend.annotator_model_dialog import AnnotatorModelDialog
-from frontend.add_thresh_dialog import AddThresholdDialog
 
 import ast
 
 import os
 import logging
+
+from frontend.custom_popups import CustomQInputDialog, CustomQMessageBox, ModelSettingsDialog, QualityCheckerDialog, AnnotatorModelDialog, AddThresholdDialog
 
 # Import the save_config function from config_reader.py
 from backend.config_reader import save_config
@@ -18,7 +15,7 @@ from backend.annotation_manager.dataset_utils import DatasetManager
 
 from PyQt5.QtCore import pyqtSignal
 
-from backend.annotation_manager.dataset_utils import DatasetManager
+from config_constants import *
 
 
 class SettingsWindow(QtWidgets.QMainWindow):
@@ -40,7 +37,7 @@ class SettingsWindow(QtWidgets.QMainWindow):
         #     config=self.config,
         #     use_default_path=True
         # )
-        self.dataset_manager = DatasetManager(config['DATASET']['PATH'], config)
+        self.dataset_manager = DatasetManager(config[DATASET][PATH], config)
         if not self.dataset_manager.initialized:
             QtWidgets.QMessageBox.critical(self, "Error", "Failed to initialize Dataset Manager.")
             return
@@ -88,13 +85,13 @@ class SettingsWindow(QtWidgets.QMainWindow):
 
     def initialize_ui(self):
         # Initialize Dataset section
-        dataset_config = self.config.get('DATASET', {})
+        dataset_config = self.config.get(DATASET, {})
 
         # Description (currently the name)
-        self.ui.descriptionLineEdit.setText(dataset_config.get('NAME', ''))
+        self.ui.descriptionLineEdit.setText(dataset_config.get(NAME, ''))
 
         # Pickle file path
-        pickle_file_path = dataset_config.get('PATH', '')
+        pickle_file_path = dataset_config.get(PATH, '')
         self.ui.pickleFilePathLineEdit.setText(pickle_file_path)
 
         # Labels (use DatasetManager to get labels)
@@ -104,11 +101,12 @@ class SettingsWindow(QtWidgets.QMainWindow):
             self.ui.labelsListWidget.addItems(self.labels)
         else:
             self.labels = []
-            QtWidgets.QMessageBox.warning(self, "Warning", "Failed to load labels from dataset.")
+            dialog = CustomQMessageBox(self.ui_styles)
+            dialog.warning(self, "Warning", "Failed to load labels from dataset.")
 
         # Initialize Annotator section
-        annotator_config = self.config.get('ANNOTATION', {})
-        self.annotator_data = annotator_config.get('MODELS', []).copy()  # Work on a copy of the models
+        annotator_config = self.config.get(ANNOTATION, {})
+        self.annotator_data = annotator_config.get(MODELS, []).copy()  # Work on a copy of the models
         self.ui.annotatorModelsList.clear()
         for model in self.annotator_data:
             self.ui.annotatorModelsList.addItem(model.get('Name', 'Unnamed Model'))
@@ -118,7 +116,7 @@ class SettingsWindow(QtWidgets.QMainWindow):
             self.ui.currentSelectionComboBox.addItem(model.get('Name', 'Unnamed Model'))
 
         # Set the current selection
-        current_selected = self.config.get('ANNOTATION', {}).get('CURRENT_SELECTED', 0)
+        current_selected = self.config.get(ANNOTATION, {}).get(CURRENT_SELECTED, 0)
         if 0 <= current_selected < len(self.annotator_data):
             self.ui.currentSelectionComboBox.setCurrentIndex(current_selected)
 
@@ -128,41 +126,41 @@ class SettingsWindow(QtWidgets.QMainWindow):
         self.ui.colorAssistCheckbox.setChecked(annotator_config.get('ColorAssist', False))
         auto_label_config = self.config.get('AUTO_LABEL', {})
         # Load MAX_AUTO_LABEL
-        self.ui.maxAutoLabelSpinBox.setValue(auto_label_config.get('MAX_AUTO_LABEL', 12))
+        self.ui.maxAutoLabelSpinBox.setValue(auto_label_config.get(MAX_AUTO_LABEL, 12))
 
         # Load CHECKBOX_THRESHOLD
-        self.ui.checkboxThresholdSpinBox.setValue(auto_label_config.get('CHECKBOX_THRESHOLD', 0.5))
+        self.ui.checkboxThresholdSpinBox.setValue(auto_label_config.get(CHECKBOX_THRESHOLD, 0.5))
 
         # Load DEFAULT_COLOR
-        default_color = auto_label_config.get('DEFAULT_COLOR', 'blue')
+        default_color = auto_label_config.get(DEFAULT_COLOR, 'blue')
         if default_color in [self.ui.defaultColorComboBox.itemText(i) for i in range(self.ui.defaultColorComboBox.count())]:
             self.ui.defaultColorComboBox.setCurrentText(default_color)
         else:
             self.ui.defaultColorComboBox.setCurrentIndex(0)  # Fallback to the first color
 
         # Load CONFIDENCE_THRESHOLDS
-        self.temp_confidence_thresholds = auto_label_config.get('CONFIDENCE_THRESHOLDS', [])
+        self.temp_confidence_thresholds = auto_label_config.get(CONFIDENCE_THRESHOLDS, [])
         self.ui.confidenceThresholdList.clear()
         for threshold in self.temp_confidence_thresholds:
             self.ui.confidenceThresholdList.addItem(f"{threshold['color']}: {threshold['value']}")
 
         # Load Color-Assisted Mode (if applicable in the config)
-        self.ui.colorAssistCheckbox.setChecked(auto_label_config.get('ENABLE_COLOR_ASSIST', False))
+        self.ui.colorAssistCheckbox.setChecked(auto_label_config.get(ENABLE_COLOR_ASSIST, False))
 
 
         # Initialize Image Generator section
-        self.temp_image_config = self.config.get('GENERATION', {}).copy()
-        models = self.temp_image_config.get('MODELS', [])
+        self.temp_image_config = self.config.get(GENERATION, {}).copy()
+        models = self.temp_image_config.get(MODELS, [])
         self.ui.imageModelsList.clear()
         for model in models:
             self.ui.imageModelsList.addItem(model.get('name', 'Unknown Model'))
 
-        self.ui.outputFolderLineEdit.setText(self.temp_image_config.get('BASE_OUTPUT_PATH', '../ComfyUI/output'))
-        self.ui.comfyUiIpLineEdit.setText(self.temp_image_config.get('IP_COMFY', 'http://127.0.0.1:8188'))
+        self.ui.outputFolderLineEdit.setText(self.temp_image_config.get(BASE_OUTPUT_PATH, '../ComfyUI/output'))
+        self.ui.comfyUiIpLineEdit.setText(self.temp_image_config.get(IP_COMFY, 'http://127.0.0.1:8188'))
 
         # Initialize Quality Checker section
-        self.temp_quality_config = self.config.get('QUALITY_CHECKS', {}).copy()
-        functions = self.temp_quality_config.get('FUNCTIONS', [])
+        self.temp_quality_config = self.config.get(QUALITY_CHECKS, {}).copy()
+        functions = self.temp_quality_config.get(FUNCTIONS, [])
         self.ui.qualityFunctionsList.clear()
         for function in functions:
             self.ui.qualityFunctionsList.addItem(function.get('name', 'Unknown Function'))
@@ -176,7 +174,7 @@ class SettingsWindow(QtWidgets.QMainWindow):
         # Determine if we are editing an existing model or creating a new one
         title=''
         if model_index is not None:
-            model_data = self.temp_image_config['MODELS'][model_index]
+            model_data = self.temp_image_config[MODELS][model_index]
             current_name = model_data.get('name', '')
             current_path = model_data.get('path', '')
             title = 'Edit Model'
@@ -186,7 +184,7 @@ class SettingsWindow(QtWidgets.QMainWindow):
             title = 'Add New Model'
         
         # Open the dialog
-        dialog = ModelSettingsDialog(self,title=title, model_name=current_name, model_path=current_path)
+        dialog = ModelSettingsDialog(self.ui_styles,title=title, model_name=current_name, model_path=current_path)
         if dialog.exec_() == QtWidgets.QDialog.Accepted:
             new_name, new_path = dialog.get_model_data()
 
@@ -196,17 +194,16 @@ class SettingsWindow(QtWidgets.QMainWindow):
 
             if model_index is None:  # Creating a new model
                 model_entry = {'name': new_name, 'path': new_path}
-                self.temp_image_config['MODELS'].append(model_entry)
+                self.temp_image_config[MODELS].append(model_entry)
                 self.ui.imageModelsList.addItem(new_name)
             else:  # Editing an existing model
-                self.temp_image_config['MODELS'][model_index]['name'] = new_name
-                self.temp_image_config['MODELS'][model_index]['path'] = new_path
+                self.temp_image_config[MODELS][model_index]['name'] = new_name
+                self.temp_image_config[MODELS][model_index]['path'] = new_path
                 self.ui.imageModelsList.item(model_index).setText(new_name)
 
             # Save the updated configuration
             QtWidgets.QMessageBox.information(self, "Success", "Model settings saved successfully.")
     def edit_selected_image_model(self):
-        print("hi i am here")
         selected_items = self.ui.imageModelsList.selectedItems()
         if selected_items:
             index = self.ui.imageModelsList.row(selected_items[0])
@@ -232,16 +229,20 @@ class SettingsWindow(QtWidgets.QMainWindow):
             self.ui.labelsListWidget.addItems(self.labels)
         else:
             self.labels = []
-            QtWidgets.QMessageBox.warning(self, "Warning", "Failed to load labels from dataset.")
+            dialog = CustomQMessageBox(self.ui_styles)
+            dialog.warning(self, "Warning", "Failed to load labels from dataset.")
 
     def add_label(self):
-        text, ok = QtWidgets.QInputDialog.getText(self, 'Add Label', 'Enter new label:')
+        dialog = CustomQInputDialog(self.ui_styles)
+        text, ok = dialog.getText('Add Label', 'Enter new label:')
         if ok and text:
             success = self.dataset_manager.add_label(new_label=text)
             if success:
                 self.labels.append(text)
                 self.ui.labelsListWidget.addItem(text)
             else:
+                dialog = CustomQMessageBox(self.ui_styles)
+                dialog.warning(self, "Warning", "Failed to load labels from dataset.")
                 QtWidgets.QMessageBox.warning(self, "Warning", "Failed to add label.")
 
     def edit_label(self):
@@ -249,14 +250,16 @@ class SettingsWindow(QtWidgets.QMainWindow):
         if selected_items:
             item = selected_items[0]
             index = self.ui.labelsListWidget.row(item)
-            text, ok = QtWidgets.QInputDialog.getText(self, 'Edit Label', 'Modify label:', text=item.text())
+            dialog = CustomQInputDialog(self.ui_styles)
+            text, ok = dialog.getText('Edit Label', 'Modify label:', text=item.text())
             if ok and text:
                 success = self.dataset_manager.edit_label(label_index=index, new_label=text)
                 if success:
                     self.labels[index] = text
                     item.setText(text)
                 else:
-                    QtWidgets.QMessageBox.warning(self, "Warning", "Failed to edit label.")
+                    dialog = CustomQMessageBox(self.ui_styles)
+                    dialog.warning(self, "Warning", "Failed to edit label.")
 
     def remove_label(self):
         selected_items = self.ui.labelsListWidget.selectedItems()
@@ -264,8 +267,8 @@ class SettingsWindow(QtWidgets.QMainWindow):
             item = selected_items[0]
             index = self.ui.labelsListWidget.row(item)
             print(f"[INFO] Selected label to remove: '{item.text()}' at index {index}.")
-            
-            confirm = QtWidgets.QMessageBox.question(
+            dialog = CustomQMessageBox(self.ui_styles)
+            confirm = dialog.question(
                 self, 'Confirm', f"Are you sure you want to remove label '{item.text()}'?"
             )
             
@@ -280,7 +283,8 @@ class SettingsWindow(QtWidgets.QMainWindow):
                     #del self.labels[index]
                 else:
                     print(f"[ERROR] Failed to remove label: '{item.text()}'.")
-                    QtWidgets.QMessageBox.warning(self, "Warning", "Failed to remove label.")
+                    dialog = CustomQMessageBox(self.ui_styles)
+                    dialog.warning(self, "Warning", "Failed to remove label.")
             else:
                 print(f"[INFO] User canceled removal of label: '{item.text()}'.")
         else:
@@ -288,10 +292,10 @@ class SettingsWindow(QtWidgets.QMainWindow):
 
     def save_dataset_settings(self):
         # Update config
-        self.config['DATASET']['NAME'] = self.ui.descriptionLineEdit.text()
-        self.config['DATASET']['PATH'] = self.ui.pickleFilePathLineEdit.text()
+        self.config[DATASET][NAME] = self.ui.descriptionLineEdit.text()
+        self.config[DATASET][PATH] = self.ui.pickleFilePathLineEdit.text()
         # Update dataset manager
-        self.dataset_manager.pickle_file = self.config['DATASET']['PATH']
+        self.dataset_manager.pickle_file = self.config[DATASET][PATH]
         self.dataset_manager.save_annotation()
         # Save config file
         self.save_config()
@@ -304,13 +308,16 @@ class SettingsWindow(QtWidgets.QMainWindow):
         if selected_items:
             item = selected_items[0]
             index = self.ui.qualityFunctionsList.row(item)
-            confirm = QtWidgets.QMessageBox.question(self, 'Confirm', f"Are you sure you want to remove function '{item.text()}'?")
+            dialog = CustomQMessageBox(self.ui_styles)
+            confirm = dialog.question(
+                self, 'Confirm', f"Are you sure you want to remove function '{item.text()}'?"
+            )
             if confirm == QtWidgets.QMessageBox.Yes:
                 self.ui.qualityFunctionsList.takeItem(index)
-                del self.temp_quality_config['QUALITY_CHECKS']['FUNCTIONS'][index]
+                del self.temp_quality_config[QUALITY_CHECKS][FUNCTIONS][index]
 
     def save_quality_checker_settings(self):
-        self.config['QUALITY_CHECKS'] = self.temp_quality_config.copy()  # Save temp_config to main config
+        self.config[QUALITY_CHECKS] = self.temp_quality_config.copy()  # Save temp_config to main config
         self.save_config()  # Write to file
         QtWidgets.QMessageBox.information(self, "Success", "Quality checker settings saved successfully.")
 
@@ -345,7 +352,7 @@ class SettingsWindow(QtWidgets.QMainWindow):
 
         if is_editing:
             # Pre-fill existing data for editing
-            function_data = self.config['QUALITY_CHECKS']['FUNCTIONS'][function_index]
+            function_data = self.config[QUALITY_CHECKS][FUNCTIONS][function_index]
             current_name = function_data.get('name', '')
             current_path = function_data.get('path', '')
             current_path = os.path.relpath(current_path, start=os.path.abspath("."))  # Normalize to relative path
@@ -362,7 +369,8 @@ class SettingsWindow(QtWidgets.QMainWindow):
 
         # Open dialog for user input
         dialog = QualityCheckerDialog(
-            self,
+            self.ui_styles,
+            parent=self,
             function_name=current_name,
             file_path=current_path,
             args=current_args,
@@ -395,7 +403,8 @@ class SettingsWindow(QtWidgets.QMainWindow):
                     # Move the file to the directory
                     destination_path = os.path.join(checking_dir, os.path.basename(new_path))
                     if os.path.exists(destination_path):
-                        QtWidgets.QMessageBox.warning(
+                        dialog = CustomQMessageBox(self.ui_styles)
+                        dialog.warning(
                             self, "Error",
                             f"A file with the name '{os.path.basename(new_path)}' already exists in the checking directory."
                         )
@@ -409,7 +418,7 @@ class SettingsWindow(QtWidgets.QMainWindow):
 
             # Update or add the function entry in the config
             if is_editing:
-                self.config['QUALITY_CHECKS']['FUNCTIONS'][function_index] = {
+                self.config[QUALITY_CHECKS][FUNCTIONS][function_index] = {
                     'name': new_name,
                     'path': new_path,
                     'args': new_args
@@ -417,7 +426,7 @@ class SettingsWindow(QtWidgets.QMainWindow):
                 self.ui.qualityFunctionsList.item(function_index).setText(new_name)
             else:
                 function_entry = {'name': new_name, 'path': new_path, 'args': new_args}
-                self.temp_quality_config['QUALITY_CHECKS']['FUNCTIONS'].append(function_entry)
+                self.temp_quality_config[QUALITY_CHECKS][FUNCTIONS].append(function_entry)
                 self.ui.qualityFunctionsList.addItem(new_name)
 
             QtWidgets.QMessageBox.information(self, "Success", "Quality function settings saved successfully.")
@@ -443,25 +452,29 @@ class SettingsWindow(QtWidgets.QMainWindow):
             path, _ = QtWidgets.QFileDialog.getOpenFileName(self, 'Select Model File', '', 'Model Files (*.safetensors *.ckpt)')
             if path and os.path.exists(path):
                 model_entry = {'name': name, 'path': path}
-                self.temp_image_config['GENERATION']['MODELS'].append(model_entry)
+                self.temp_image_config[GENERATION][MODELS].append(model_entry)
                 self.ui.imageModelsList.addItem(name)
             else:
-                QtWidgets.QMessageBox.warning(self, 'Error', 'Selected file does not exist.')
+                dialog = CustomQMessageBox(self.ui_styles)
+                dialog.warning(self, 'Error', 'Selected file does not exist.')
 
     def remove_image_model(self):
         selected_items = self.ui.imageModelsList.selectedItems()
         if selected_items:
             item = selected_items[0]
             index = self.ui.imageModelsList.row(item)
-            confirm = QtWidgets.QMessageBox.question(self, 'Confirm', f"Are you sure you want to remove model '{item.text()}'?")
+            dialog = CustomQMessageBox(self.ui_styles)
+            confirm = dialog.question(
+                self, 'Confirm', f"Are you sure you want to remove model '{item.text()}'?"
+            )
             if confirm == QtWidgets.QMessageBox.Yes:
                 self.ui.imageModelsList.takeItem(index)
-                del self.temp_image_config['GENERATION']['MODELS'][index]
+                del self.temp_image_config[GENERATION][MODELS][index]
 
     def save_image_generator_settings(self):
-        self.temp_image_config['BASE_OUTPUT_PATH'] = self.ui.outputFolderLineEdit.text()
-        self.temp_image_config['IP_COMFY'] = self.ui.comfyUiIpLineEdit.text()
-        self.config['GENERATION'] = self.temp_image_config
+        self.temp_image_config[BASE_OUTPUT_PATH] = self.ui.outputFolderLineEdit.text()
+        self.temp_image_config[IP_COMFY] = self.ui.comfyUiIpLineEdit.text()
+        self.config[GENERATION] = self.temp_image_config
         self.save_config()
         QtWidgets.QMessageBox.information(self, "Success", "Image generator settings saved successfully.")
 
@@ -476,7 +489,7 @@ class SettingsWindow(QtWidgets.QMainWindow):
         max_value = 1.0
 
         # Open the AddThresholdDialog
-        dialog = AddThresholdDialog(min_value=min_value, max_value=max_value, parent=self, color_mapping=self.ui.getPosibleColorsMapping())
+        dialog = AddThresholdDialog(self.ui_styles, min_value=min_value, max_value=max_value, parent=self, color_mapping=self.ui.getPosibleColorsMapping())
         if dialog.exec_() == QtWidgets.QDialog.Accepted:
             color, value = dialog.get_data()
             self.temp_confidence_thresholds.append({'color': color, 'value': value})
@@ -486,7 +499,8 @@ class SettingsWindow(QtWidgets.QMainWindow):
         """Edit the selected confidence threshold."""
         selected_items = self.ui.confidenceThresholdList.selectedItems()
         if not selected_items:
-            QtWidgets.QMessageBox.warning(self, "No Selection", "Please select a threshold to edit.")
+            dialog = CustomQMessageBox(self.ui_styles)
+            dialog.warning(self, "No Selection", "Please select a threshold to edit.")
             return
 
         # Get selected threshold
@@ -501,6 +515,7 @@ class SettingsWindow(QtWidgets.QMainWindow):
 
         # Open the dialog with the existing values
         dialog = AddThresholdDialog(
+            self.ui_styles, 
             min_value=min_value,
             max_value=max_value,
             color=threshold['color'],
@@ -518,7 +533,8 @@ class SettingsWindow(QtWidgets.QMainWindow):
         """Remove the selected confidence threshold."""
         selected_items = self.ui.confidenceThresholdList.selectedItems()
         if not selected_items:
-            QtWidgets.QMessageBox.warning(self, "No Selection", "Please select a threshold to remove.")
+            dialog = CustomQMessageBox(self.ui_styles)
+            dialog.warning(self, "No Selection", "Please select a threshold to remove.")
             return
 
         for item in selected_items:
@@ -528,7 +544,7 @@ class SettingsWindow(QtWidgets.QMainWindow):
     
     def save_current_selection(self):
         current_index = self.ui.currentSelectionComboBox.currentIndex()
-        self.config["ANNOTATION"]["CURRENT_SELECTED"] = current_index
+        self.config[ANNOTATION][CURRENT_SELECTED] = current_index
 
     def add_new_model(self):
         """Open the dialog to add a new model."""
@@ -541,7 +557,7 @@ class SettingsWindow(QtWidgets.QMainWindow):
             'ColorAssist': False,
             'ConfidenceThresholds': ''
         }
-        dialog = AnnotatorModelDialog(self, model_data=new_model, is_editing=False)
+        dialog = AnnotatorModelDialog(self.ui_styles, self, model_data=new_model, is_editing=False)
         if dialog.exec_() == QtWidgets.QDialog.Accepted:
             self.annotator_data.append(new_model)
             self.ui.annotatorModelsList.addItem(new_model["Name"])
@@ -551,20 +567,24 @@ class SettingsWindow(QtWidgets.QMainWindow):
         selected_items = self.ui.annotatorModelsList.selectedItems()
         if selected_items:
             index = self.ui.annotatorModelsList.row(selected_items[0])
-            confirm = QtWidgets.QMessageBox.question(self, "Confirm", f"Are you sure you want to remove model '{selected_items[0].text()}'?")
+            dialog = CustomQMessageBox(self.ui_styles)
+            confirm = dialog.question(
+                self, "Confirm", f"Are you sure you want to remove model '{selected_items[0].text()}'?"
+            )
             if confirm == QtWidgets.QMessageBox.Yes:
                 del self.annotator_data[index]
                 self.ui.annotatorModelsList.takeItem(index)
         else:
-            QtWidgets.QMessageBox.warning(self, "Warning", "No model selected for removal.")
+            dialog = CustomQMessageBox(self.ui_styles)
+            dialog.warning(self, "Warning", "No model selected for removal.")
 
     def save_annotator_settings(self):
         """Save the annotator data to the configuration file."""
-        self.config['ANNOTATION']['MODELS'] = self.annotator_data
-        self.config['ANNOTATION']['CURRENT_SELECTED'] = self.ui.annotatorModelsList.currentRow()
+        self.config[ANNOTATION][MODELS] = self.annotator_data
+        self.config[ANNOTATION][CURRENT_SELECTED] = self.ui.annotatorModelsList.currentRow()
         self.save_current_selection()
         """Save all auto-label settings."""
-        self.config['AUTO_LABEL'] = {
+        self.config[AUTO_LABEL] = {
             'MAX_AUTO_LABEL': self.ui.maxAutoLabelSpinBox.value(),
             'CHECKBOX_THRESHOLD': self.ui.checkboxThresholdSpinBox.value(),
             'DEFAULT_COLOR': self.ui.defaultColorComboBox.currentText(),
@@ -582,7 +602,7 @@ class SettingsWindow(QtWidgets.QMainWindow):
         max_value = 1.0  # Thresholds are limited to a maximum of 1
 
         # Open the AddThresholdDialog
-        dialog = AddThresholdDialog(min_value=min_value, max_value=max_value, parent=self)
+        dialog = AddThresholdDialog(self.ui_styles, min_value=min_value, max_value=max_value, parent=self, color_mapping=self.ui.getPosibleColorsMapping())
         if dialog.exec_() == QtWidgets.QDialog.Accepted:
             color, value = dialog.get_data()
 
@@ -598,12 +618,13 @@ class SettingsWindow(QtWidgets.QMainWindow):
         if selected_items:
             index = self.ui.annotatorModelsList.row(selected_items[0])
             model_data = self.annotator_data[index]
-            dialog = AnnotatorModelDialog(self, model_data=model_data, is_editing=True)
+            dialog = AnnotatorModelDialog(self.ui_styles, self, model_data=model_data, is_editing=True)
             if dialog.exec_() == QtWidgets.QDialog.Accepted:
                 # Update the UI with the new model name
                 self.ui.annotatorModelsList.item(index).setText(model_data["Name"])
         else:
-            QtWidgets.QMessageBox.warning(self, "Warning", "No model selected for editing.")
+            dialog = CustomQMessageBox(self.ui_styles)
+            dialog.warning(self, "Warning", "No model selected for editing.")
 
     # Config Saving Method
     def save_config(self):
