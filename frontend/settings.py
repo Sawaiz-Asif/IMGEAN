@@ -4,7 +4,6 @@ from frontend.settings_ui import Ui_SettingsWindow  # Import the UI class
 import ast
 
 import os
-import logging
 
 from frontend.custom_popups import CustomQInputDialog, CustomQMessageBox, ModelSettingsDialog, QualityCheckerDialog, AnnotatorModelDialog, AddThresholdDialog
 

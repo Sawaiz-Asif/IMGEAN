@@ -3,7 +3,7 @@ from ui_styles_constants import *
 from config_constants import *
 
 from PyQt5.QtWidgets import (
-    QApplication, QMainWindow, QPushButton, QLabel, QVBoxLayout, QHBoxLayout, QWidget, QFrame, QGridLayout, QTextEdit, QSizePolicy, QSpacerItem
+    QPushButton, QLabel, QTextEdit, QSizePolicy, QSpacerItem
 )
 from PyQt5.QtCore import Qt
 from PyQt5.QtGui import QFontDatabase

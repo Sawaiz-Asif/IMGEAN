@@ -7,10 +7,7 @@ import backend.file_utils as fu
 from PyQt5.QtGui import QPixmap
 from PyQt5.QtWidgets import QGraphicsPixmapItem, QGraphicsScene, QSystemTrayIcon, QMessageBox
 import os
-from PyQt5.QtCore import QThread, pyqtSignal
 from backend.quality_checker.quality_checker_loader import load_quality_checkers
-import shutil
-import time
 
 
 class GeneratorWindow(QtWidgets.QMainWindow):

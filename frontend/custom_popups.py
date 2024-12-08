@@ -1,5 +1,4 @@
-from PyQt5.QtWidgets import QWidget, QSpinBox, QPushButton, QGridLayout, QHBoxLayout, QLabel, QDoubleSpinBox, QComboBox, QInputDialog, QInputDialog, QDialogButtonBox, QMessageBox
-from PyQt5.QtCore import Qt
+from PyQt5.QtWidgets import QInputDialog, QInputDialog, QDialogButtonBox, QMessageBox
 
 from PyQt5.QtGui import QFontDatabase, QIcon
 

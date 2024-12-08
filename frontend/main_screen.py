@@ -1,12 +1,6 @@
-from PyQt5 import QtWidgets, QtGui, QtCore
+from PyQt5 import QtWidgets
 from frontend.main_screen_ui import Ui_MainScreen  # Import the UI
-import os
-import backend.file_utils as fu
-from backend.annotation_manager.automatic_labeling import open_model,get_predictions_with_confidence
 
-from PyQt5.QtCore import Qt
-from PyQt5.QtGui import QPainter, QColor
-from PyQt5.QtWidgets import QWidget
 
 class MainScreen(QtWidgets.QWidget):
     def __init__(self, main_window, ui_styles):

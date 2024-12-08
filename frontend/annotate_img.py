@@ -1,6 +1,5 @@
 from PyQt5 import QtWidgets, QtGui, QtCore
 from frontend.annotate_img_ui import Ui_AnnotateImg  # Import the UI
-from frontend.img_quality_check_ui import Ui_CheckImgQuality
 import os
 import backend.file_utils as fu
 from backend.annotation_manager.automatic_labeling import open_model,get_predictions_with_confidence

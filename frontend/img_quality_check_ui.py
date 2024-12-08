@@ -1,9 +1,9 @@
-from PyQt5 import QtCore, QtGui, QtWidgets
+from PyQt5 import QtCore, QtWidgets
 from ui_styles_constants import *
 from config_constants import *
 
 from PyQt5.QtWidgets import (
-    QApplication, QMainWindow, QPushButton, QLabel, QVBoxLayout, QHBoxLayout, QWidget, QFrame, QGridLayout, QTextEdit
+    QPushButton, QLabel, QHBoxLayout, QWidget
 )
 from PyQt5.QtCore import Qt
 from PyQt5.QtGui import QFontDatabase
