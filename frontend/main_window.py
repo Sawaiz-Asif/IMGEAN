@@ -122,6 +122,7 @@ class MainWindow(QtWidgets.QMainWindow, Ui_MainWindow):
             return None
     def refresh_on_project_change(self):
         # Read the active project from the projects.json file
+        print("Project is Changed Refreshing all the important data")
         self.active_project.clear()
 
         self.active_project.update(self.read_active_project())
@@ -139,6 +140,8 @@ class MainWindow(QtWidgets.QMainWindow, Ui_MainWindow):
         # Refresh the setting UI
         self.settingsScreen.refresh_ui()
         self.generator_window.load_initial_values()
+        self.annotateImgSelectScreen.refresh_on_project_change()
+        self.imgQualityCheckScreen.refresh_window_info()
 # Run the application
 if __name__ == "__main__":
     import sys

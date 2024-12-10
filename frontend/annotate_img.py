@@ -19,14 +19,16 @@ class ClickableLabel(QtWidgets.QLabel):
 class AnnotateImg(QtWidgets.QWidget):
     def __init__(self, stacked_widget, config, dataset_manager, images_labeling_dir="data"):
         super(AnnotateImg, self).__init__()
-        self.ui = Ui_AnnotateImg(config)  # Initialize the UI
-        self.ui.setupUi(self)
-        self.stacked_widget = stacked_widget  # Reference to the QStackedWidget for navigation
 
         self.config = config
         self.dataset_manager = dataset_manager
-
         self.images_labeling_dir = images_labeling_dir
+
+        self.ui = Ui_AnnotateImg(config,dataset_manager)  # Initialize the UI
+        self.ui.setupUi(self)
+        self.stacked_widget = stacked_widget  # Reference to the QStackedWidget for navigation
+
+
 
         # Initialize predictions storage
         self.predictions_for_images = {}  # Initialize an empty dictionary to store predictions for all images
@@ -395,7 +397,9 @@ class AnnotateImg(QtWidgets.QWidget):
         """Refresh labels from the DatasetManager."""
         _, self.labels = self.dataset_manager.get_dataset_labels()
         self.update_ui_labels()
-
+    def refresh_on_project_change(self):
+        self.images_labeling_dir = self.config["FILES"]["LABELING_DIR"]
+        self.refresh_labels()
     def update_ui_labels(self):
         """Update the label list in the annotation UI."""
         self.ui.labelList.clear()

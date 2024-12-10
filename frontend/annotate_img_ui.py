@@ -1,13 +1,14 @@
 from PyQt5 import QtCore, QtGui, QtWidgets
-import backend.annotation_manager.dataset_utils as du
+# import backend.annotation_manager.dataset_utils as du
 
 DATASET = 'DATASET'
 PATH = 'PATH'
 
 class Ui_AnnotateImg(object):
-    def __init__(self, config):
+    def __init__(self, config,dataset_manager):
         self.config = config
-        self.dataset_manager = du.DatasetManager(config[DATASET][PATH], config)
+        self.dataset_manager =dataset_manager
+        # self.dataset_manager = du.DatasetManager(config[DATASET][PATH], config)
 
     def setupUi(self, AnnotateImg):
         AnnotateImg.setObjectName("AnnotateImg")

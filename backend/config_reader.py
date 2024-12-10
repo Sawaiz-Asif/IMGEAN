@@ -120,3 +120,30 @@ def save_config(config, config_path):
         print("Configuration saved successfully.")
     except Exception as e:
         print(f"Failed to save configuration: {e}")
+
+def update_base_dir(config_path, new_base_dir):
+    """
+    Updates the BASE_DIR in the configuration file and updates all dependent paths manually.
+    """
+    try:
+        # Load the existing configuration
+        config = read_config(config_path)
+
+        # Update the BASE_DIR
+        config['FILES']['BASE_DIR'] = new_base_dir
+
+        # Manually update dependent paths
+        config['FILES']['CHECKING_DIR'] = os.path.join(new_base_dir, 'checking')
+        config['FILES']['DISCARDED_DIR'] = os.path.join(new_base_dir, 'discarded')
+        config['FILES']['DISCARDED_TRACKER'] = os.path.join(new_base_dir, 'discarded', 'reasons_tracker.txt')
+        config['FILES']['GENERATED_DIR'] = os.path.join(new_base_dir, 'generated')
+        config['FILES']['LABELING_DIR'] = os.path.join(new_base_dir, 'labeling')
+        config['DATASET']['PATH'] = os.path.join(new_base_dir, 'dataset_custom.pkl')
+        config['ANNOTATION']['BASE_DIR'] = os.path.join(new_base_dir, 'labeling')
+
+        # Save the updated configuration
+        save_config(config, config_path)
+        print(f"BASE_DIR and dependent paths updated successfully in {config_path}")
+
+    except Exception as e:
+        print(f"Failed to update paths: {e}")

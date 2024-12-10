@@ -2,7 +2,7 @@ import os
 import json
 import re
 import shutil
-from backend.config_reader import create_default_config
+from backend.config_reader import create_default_config,update_base_dir
 from PyQt5.QtCore import pyqtSignal
 from datetime import datetime
 from PyQt5 import QtWidgets, QtCore  # <-- Import QtCore here
@@ -33,6 +33,7 @@ class ProjectManagement(QMainWindow):
         self.projects = []
         self.current_active_project = None  # Track the currently active project
         self.initial_active_project = None  # Track the initially active project
+        self.check_change = False
         self.load_projects()
 
 
@@ -226,9 +227,10 @@ class ProjectManagement(QMainWindow):
             if any(p["name"] == name for p in self.projects):
                 QMessageBox.warning(self, "Error", f"Project '{name}' already exists.")
                 return
+            new_base_dir = f"projects/{name}"
             new_project = {
                 "name": name,
-                "path": f"projects/{name}",
+                "path": new_base_dir,
                 "last_modified": datetime.now().strftime("%Y-%m-%dT%H:%M:%S"),
             }
             os.makedirs(new_project["path"], exist_ok=True)  # Create the project folder
@@ -265,6 +267,8 @@ class ProjectManagement(QMainWindow):
             self.rename_project_folder(old_path, new_path)
             
             self.save_projects()
+            update_base_dir(new_path+"/config.yaml",new_path)
+            self.check_change = True
             self.refresh_projects_ui()
 
     def rename_project_folder(self, old_path, new_path):
@@ -307,8 +311,9 @@ class ProjectManagement(QMainWindow):
                 QMessageBox.warning(self, "Error", f"Failed to delete folder: {e}")
     def return_to_main(self):
         """Navigate back to the main screen."""
-        if self.initial_active_project != self.current_active_project:
+        if self.initial_active_project != self.current_active_project or self.check_change :
             # Emit the signal only if the active project has changed
             self.project_changed.emit(self.current_active_project)
             self.initial_active_project = self.current_active_project
+            self.check_change = False
         self.stacked_widget.setCurrentIndex(0)

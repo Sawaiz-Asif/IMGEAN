@@ -304,6 +304,7 @@ class SettingsWindow(QtWidgets.QMainWindow, Ui_SettingsWindow):
             if success:
                 self.labels.append(text)
                 self.labelsListWidget.addItem(text)
+                self.dataset_updated.emit()
             else:
                 QtWidgets.QMessageBox.warning(self, "Warning", "Failed to add label.")
 
@@ -318,6 +319,7 @@ class SettingsWindow(QtWidgets.QMainWindow, Ui_SettingsWindow):
                 if success:
                     self.labels[index] = text
                     item.setText(text)
+                    self.dataset_updated.emit()
                 else:
                     QtWidgets.QMessageBox.warning(self, "Warning", "Failed to edit label.")
 
