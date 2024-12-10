@@ -3,6 +3,8 @@ from PyQt5 import QtWidgets, QtGui, QtCore
 from frontend.img_quality_check_ui import Ui_CheckImgQuality  # Import the UI file
 import backend.file_utils as fu
 
+from config_constants import *
+
 # Custom QLabel to handle image clicks
 class ClickableLabel(QtWidgets.QLabel):
     clicked = QtCore.pyqtSignal()  # Custom signal to emit when clicked
@@ -12,15 +14,17 @@ class ClickableLabel(QtWidgets.QLabel):
         super().mousePressEvent(event)
 
 class CheckImgQuality(QtWidgets.QMainWindow):
-    def __init__(self, stacked_widget, config, images_checking_dir="data", images_discarded_dir="data"):
+    def __init__(self, main_window, config, ui_styles):
         super(CheckImgQuality, self).__init__()
-        self.stacked_widget = stacked_widget  # Reference to the QStackedWidget for navigation
-        self.images_checking_dir = images_checking_dir  # Folder where the images are stored
-        self.images_discarded_dir = images_discarded_dir
-        self.ui = Ui_CheckImgQuality()  # Initialize the UI
-        self.ui.setupUi(self)
+        self.main_window = main_window  # Reference to the QStackedWidget for navigation
+        self.images_checking_dir = config[FILES][CHECKING_DIR]  # Folder where the images are stored
+        self.images_discarded_dir = config[FILES][DISCARDED_DIR]
 
         self.config = config
+
+        self.ui = Ui_CheckImgQuality(config, ui_styles)  # Initialize the UI
+        self.ui.setupUi(self)
+
 
         self.current_tab_index = self.ui.tab_widget.currentIndex()
 
@@ -45,6 +49,10 @@ class CheckImgQuality(QtWidgets.QMainWindow):
             tab["next_button"].clicked.connect(self.on_next_click)
             tab["first_button"].clicked.connect(self.on_first_action_click)  # Discard/Delete
             tab["second_button"].clicked.connect(self.on_accept_click)  # Accept action
+            tab["red_all_button"].clicked.connect(self.on_all_button_click)
+            if tab_name == "checking":
+                tab["accept_all"].clicked.connect(self.on_accept_all_click)
+                
         
         self.ui.returnButton.clicked.connect(self.on_return_click)  # Return button to go back to previous screen
         self.ui.tab_widget.currentChanged.connect(self.on_tab_change)
@@ -59,6 +67,9 @@ class CheckImgQuality(QtWidgets.QMainWindow):
 
         if not image_list:  # If no images exist, show a message
             label = QtWidgets.QLabel("No images to display")
+            label.setStyleSheet("""
+                padding: 20px;
+            """)
             label.setAlignment(QtCore.Qt.AlignCenter)
             grid_layout.addWidget(label, 0, 0, 1, 4)  # Spans the entire grid
             return
@@ -102,6 +113,8 @@ class CheckImgQuality(QtWidgets.QMainWindow):
                 self.ui.tab_components["discarded"]["image_preview"].setPixmap(
                     pixmap.scaled(self.ui.tab_components["discarded"]["image_preview"].size(), QtCore.Qt.KeepAspectRatio, QtCore.Qt.SmoothTransformation)
                 )
+
+                self.ui.reasonLabel.setText(f"Reason: {fu.get_discarded_reasons(self.config, image_name)}")
             else:
                 self.ui.tab_components["discarded"]["image_preview"].setText("No discarded images")
 
@@ -184,11 +197,30 @@ class CheckImgQuality(QtWidgets.QMainWindow):
                 self.populate_image_grid(self.ui.gridLayoutDiscarded, self.discarded_images, is_discarded=True)
                 self.load_current_image()
 
+    def on_all_button_click(self):
+        current_tab_index = self.ui.tab_widget.currentIndex()
+
+        if current_tab_index == 1:  # "Images to Check" tab (Accept action)
+            fu.discard_all_checking(self.config)
+            self.images_to_check = []
+        else:  # "Discarded" tab (Re-accept action)
+            fu.delete_all_discarded(self.config)
+            self.discarded_images = []
+            self.ui.reasonLabel.setText(f"")
+
+        self.refresh_window_info()
+
+    def on_accept_all_click(self):
+        fu.accept_all_checking(self.config)
+        self.images_to_check = []
+        self.populate_image_grid(self.ui.gridLayoutToCheck, self.images_to_check, is_discarded=False)
+        self.load_current_image()
+
     # Button logic: Return to the previous screen
     def on_return_click(self):
         # You can modify this logic depending on what screen the user should return to
         # Example: Move to the main screen of the stacked widget
-        self.stacked_widget.setCurrentIndex(0)
+        self.main_window.change_current_screen(0)
 
     def on_tab_change(self, index):
         self.current_tab_index = self.ui.tab_widget.currentIndex()

@@ -3,10 +3,7 @@ from frontend.annotate_img_ui import Ui_AnnotateImg  # Import the UI
 import os
 import backend.file_utils as fu
 from backend.annotation_manager.automatic_labeling import open_model,get_predictions_with_confidence
-import backend.annotation_manager.dataset_utils as du
-
-DATASET = 'DATASET'
-PATH = 'PATH'
+from config_constants import *
 
 # Custom QLabel to handle image clicks
 class ClickableLabel(QtWidgets.QLabel):
@@ -16,17 +13,16 @@ class ClickableLabel(QtWidgets.QLabel):
         self.clicked.emit()  # Emit signal when label is clicked
         super().mousePressEvent(event)
 
-class AnnotateImg(QtWidgets.QWidget):
-    def __init__(self, stacked_widget, config, dataset_manager, images_labeling_dir="data"):
+class AnnotateImg(QtWidgets.QMainWindow):
+    def __init__(self, main_window, config, ui_styles):
         super(AnnotateImg, self).__init__()
-        self.ui = Ui_AnnotateImg(config)  # Initialize the UI
+        self.ui = Ui_AnnotateImg(config, ui_styles)  # Initialize the UI
         self.ui.setupUi(self)
-        self.stacked_widget = stacked_widget  # Reference to the QStackedWidget for navigation
+        self.main_window = main_window  # Reference to the QStackedWidget for navigation
 
         self.config = config
-        self.dataset_manager = dataset_manager
 
-        self.images_labeling_dir = images_labeling_dir
+        self.images_labeling_dir = config[FILES][LABELING_DIR]
 
         # Initialize predictions storage
         self.predictions_for_images = {}  # Initialize an empty dictionary to store predictions for all images
@@ -42,6 +38,7 @@ class AnnotateImg(QtWidgets.QWidget):
         self.ui.confirmLabelButton.clicked.connect(self.on_confirm_label_click)
         self.ui.openImageGridButton.clicked.connect(self.on_open_image_grid_click)
         self.ui.importButton.clicked.connect(self.on_import_dataset_click)
+        self.ui.closeImageGridButton.clicked.connect(self.on_close_image_grid_click)
 
         # Track the current image index for navigation
         self.current_image_index = 0
@@ -52,16 +49,17 @@ class AnnotateImg(QtWidgets.QWidget):
         self.update_image_display()
         self.update_checkboxes_selection()
 
+        # Dictionary to store predictions for each image
+        self.predictions_for_images = {}
+
         self.labels = []  # Initialize label list
-        self.refresh_labels()  # Load initial labels
+        # self.refresh_labels()  # Load initial labels. I dont know whats this for, but it throws an exception when i use it
 
     def on_return_click(self):
         # Return to the main screen
+        self.on_close_image_grid_click()
+        self.main_window.change_current_screen(0)
 
-        self.ui.imageGridOverlay.setHidden(True)
-        self.ui.imageLabel.setHidden(False)
-
-        self.stacked_widget.setCurrentIndex(0)
 
     def on_prev_click(self):
         # Go to the previous image
@@ -89,9 +87,26 @@ class AnnotateImg(QtWidgets.QWidget):
         self.update_checkboxes_selection()
 
     def on_auto_label_img_click(self):
-        # Auto-label the cu,du
-        # For opening the model, we just need the config file and how many labels are there
+        # Auto-label the current image
+        print(f"Auto-labeling image {self.current_image_index + 1}")
+
+        # Check if there are images to label
+        if not self.images_to_label:
+            print("No images to label.")
+            QtWidgets.QMessageBox.warning(self, "Warning", "No images to label.")
+            return
+
+        # Get the image path, construct full path only if it is not a dataset image (already full path in this case)
+        image_path = self.images_to_label[self.current_image_index]
+        if not self.ui.dataset_manager.is_image_in_dataset(image_path):
+            image_path = self.images_to_label[self.current_image_index]
+            image_path = self.ui.dataset_manager.config['FILES']['LABELING_DIR'] + '/' + image_path
+        print(f"Image path: {image_path}")
+        
+        # Get class labels
         class_labels = self.ui.dataset_manager.annotation.attr_name
+
+        # For opening the model, we just need the config file and how many labels are there
         model = open_model(self.ui.dataset_manager.config, number_attributes=len(class_labels))
 
         # Get confidence thresholds and colors from the config (list of thresholds and corresponding colors)
@@ -100,8 +115,7 @@ class AnnotateImg(QtWidgets.QWidget):
 
         # Get the checkbox threshold from the config
         checkbox_threshold = self.config['AUTO_LABEL'].get('CHECKBOX_THRESHOLD', 0.5)  # Default to 0.5 if not set
-        image_path = self.images_to_label[self.current_image_index]
-        image_path = self.ui.dataset_manager.config['FILES']['LABELING_DIR'] + '/' + image_path
+
         try:
             # Call the automatic labeling function
             predictions = get_predictions_with_confidence(self.config, model, image_path, class_labels)
@@ -109,19 +123,17 @@ class AnnotateImg(QtWidgets.QWidget):
             # Update checkboxes and labels based on the predictions
             for i in range(self.ui.labelList.count()):
                 item = self.ui.labelList.item(i)
-                widget = self.ui.labelList.itemWidget(item)
-                checkbox = widget.findChild(QtWidgets.QCheckBox)
-                label_widget = widget.findChild(QtWidgets.QLabel)
+                custom_checkbox = self.ui.labelList.itemWidget(item)
 
                 # Get the label and confidence for this prediction
                 label, confidence = predictions[i]
 
                 # Update the checkbox based on the threshold from the config
-                checkbox.setChecked(confidence > checkbox_threshold)
+                custom_checkbox.setChecked(confidence > checkbox_threshold)
 
                 # Update the label text to show the confidence percentage
                 percentage_text = f"{confidence * 100:.0f}%"
-                label_widget.setText(f"{label} ({percentage_text})")
+                custom_checkbox.setText(f"{label} ({percentage_text})")
 
                 # Find the appropriate color based on confidence
                 color = default_color  # Default color if no threshold matches
@@ -130,8 +142,9 @@ class AnnotateImg(QtWidgets.QWidget):
                         color = threshold.get('color', default_color)  # Use default if color is missing
 
                 # Apply color to the label
-                label_widget.setStyleSheet(f"color: {color};")
+                custom_checkbox.modifyColor(color)
 
+            self.predictions_for_images[self.images_to_label[self.current_image_index]] = predictions
             QtWidgets.QMessageBox.information(self, "Success", f"Auto-labeled image {self.current_image_index + 1}")
 
         except Exception as e:
@@ -147,9 +160,6 @@ class AnnotateImg(QtWidgets.QWidget):
             print("No images to label.")
             QtWidgets.QMessageBox.warning(self, "Warning", "No images to label.")
             return
-
-        # Dictionary to store predictions for each image
-        self.predictions_for_images = {}
 
         # Determine how many images to label, starting from the current index
         # Get the batch size from the config
@@ -224,11 +234,15 @@ class AnnotateImg(QtWidgets.QWidget):
 
     def on_open_image_grid_click(self):
         # Show the image grid overlay
-        self.ui.imageGridOverlay.setHidden(False)
+        self.ui.scroll_area.setHidden(False)
+        self.ui.closeImageGridButton.setHidden(False)
 
         self.populate_image_grid(self.ui.imageGridLayout, self.images_to_label)
 
-        self.ui.imageLabel.setHidden(True)  # Hide the image display
+    def on_close_image_grid_click(self):
+        # Show the image grid overlay
+        self.ui.scroll_area.setHidden(True)
+        self.ui.closeImageGridButton.setHidden(True)
 
     def on_image_clicked(self, index):
         # Update current_image_index based on the clicked image
@@ -238,8 +252,7 @@ class AnnotateImg(QtWidgets.QWidget):
         self.update_image_display()
         self.update_checkboxes_selection()
 
-        self.ui.imageGridOverlay.setHidden(True)
-        self.ui.imageLabel.setHidden(False)
+        self.on_close_image_grid_click()
 
     def on_import_dataset_click(self):
 
@@ -291,20 +304,18 @@ class AnnotateImg(QtWidgets.QWidget):
         # Iterate over the checkboxes and apply predictions or default dataset labels
         for i in range(self.ui.labelList.count()):
             item = self.ui.labelList.item(i)
-            widget = self.ui.labelList.itemWidget(item)
-            checkbox = widget.findChild(QtWidgets.QCheckBox)
-            label_widget = widget.findChild(QtWidgets.QLabel)
+            custom_checkbox = self.ui.labelList.itemWidget(item)
 
             # If predictions exist, use them; otherwise, fall back to dataset labels
             if predictions[i][1] is not None:  # If confidence is available
                 label, confidence = predictions[i]
                 # Set checkbox based on confidence threshold from config
                 checkbox_threshold = self.config['AUTO_LABEL'].get('CHECKBOX_THRESHOLD', 0.5)
-                checkbox.setChecked(confidence > checkbox_threshold)
+                custom_checkbox.setChecked(confidence > checkbox_threshold)
 
                 # Update the label text with the confidence score
                 percentage_text = f"{confidence * 100:.0f}%"
-                label_widget.setText(f"{label} ({percentage_text})")
+                custom_checkbox.setText(f"{label} ({percentage_text})")
 
                 # Apply color based on confidence score and thresholds
                 thresholds = self.config['AUTO_LABEL']['CONFIDENCE_THRESHOLDS']
@@ -313,15 +324,14 @@ class AnnotateImg(QtWidgets.QWidget):
                 for threshold in thresholds:
                     if confidence > threshold['value']:
                         color = threshold.get('color', default_color)
-                label_widget.setStyleSheet(f"color: {color};")
+                custom_checkbox.modifyColor(color)
             else:
                 # No predictions, fall back to the dataset labels (default behavior)
-                checkbox.setChecked(bool(labels_select[i]))
+                custom_checkbox.setChecked(bool(labels_select[i]))
 
                 # Reset the label text to its original without confidence score
-                label_widget.setText(self.ui.dataset_manager.annotation.attr_name[i])
-
-                label_widget.setStyleSheet("color: black;")
+                custom_checkbox.setText(self.ui.dataset_manager.annotation.attr_name[i])
+                custom_checkbox.modifyColor('#ffffff')
 
     def populate_image_grid(self, grid_layout, image_list):
         # Clear existing widgets from the grid layout
@@ -352,8 +362,9 @@ class AnnotateImg(QtWidgets.QWidget):
             label.setFrameShape(QtWidgets.QFrame.Box)
             label.clicked.connect(lambda idx=i: self.on_image_clicked(idx))
 
+            # TODO meter esto en un metodo y asi puedo controlar color y demas, y shape del grid
             # Add the label to the grid layout
-            grid_layout.addWidget(label, i // 4, i % 4)
+            self.ui.populate_grid(label, i)
 
     def refresh_window_info(self):
         self.images_to_label =  self.get_labeling_images()
@@ -374,17 +385,11 @@ class AnnotateImg(QtWidgets.QWidget):
         # Function to get the selection status of checkboxes as a binary array
         selections = []
         for i in range(self.ui.labelList.count()):
-            # Get the list widget item
             item = self.ui.labelList.item(i)
-            
-            # Get the widget associated with the item (which contains the checkbox and label)
-            widget = self.ui.labelList.itemWidget(item)
-            
-            # Extract the checkbox from the widget's layout
-            checkbox = widget.findChild(QtWidgets.QCheckBox)
+            custom_checkbox = self.ui.labelList.itemWidget(item)
             
             # Append 1 if checked, otherwise 0
-            selections.append(1 if checkbox.isChecked() else 0)     
+            selections.append(1 if custom_checkbox.isChecked() else 0)     
         return selections
         
     def connect_to_settings(self, settings_window):
@@ -393,7 +398,7 @@ class AnnotateImg(QtWidgets.QWidget):
 
     def refresh_labels(self):
         """Refresh labels from the DatasetManager."""
-        _, self.labels = self.dataset_manager.get_dataset_labels()
+        _, self.labels = self.ui.dataset_manager.get_dataset_labels()
         self.update_ui_labels()
 
     def update_ui_labels(self):
