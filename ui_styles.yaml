@@ -1,0 +1,130 @@
+colors:
+  background: '#ffffff'
+  yellow: '#ffe599'
+  orange: '#f9cb9c'
+  green: '#b6d7a8'
+  purple: '#b4a7d6'
+  blue: '#9fc5f8'
+  red: '#ea9999'
+  black: '#000000'
+  light_blue: '#bfd4fa'
+  light_gray: '#d9d9d9'
+  background_pressed: '#f2f2f2'
+  yellow_pressed: '#ffd966'
+  orange_pressed: '#f6b26b'
+  green_pressed: '#93c47d'
+  purple_pressed: '#8e7cc3'
+  blue_pressed: '#6fa8dc'
+  red_pressed: '#e06666'
+  black_pressed: '#434343'
+  light_blue_pressed: '#a2c4f4'
+  light_gray_pressed: '#bfbfbf'
+
+  
+  button_cancel: '#ff6666'
+  button_generate: '#66cc66'
+  progress_bar: '#00aaff'
+  text_prompt: '#333333'
+sizes:
+  main_buttons:
+    width: 275
+    height: 100
+  return_button:
+    width: 80
+    height: 20
+  prompt_box:
+    height: 130
+  seed_box:
+    width: 90
+  spin_box:
+    width: 40
+  double_spin_box:
+    width: 60
+  combo_models:
+    width: 275
+  img_preview:
+    width: 420
+  dropdown_button:
+    width: 100
+    height: 610
+  dropdown_menu:
+    width: 460
+  annotate_img:
+    width: 500
+    height: 500
+  label_nav_button:
+    width: 100
+  label_list:
+    width: 350
+    height: 430
+  settings_save_buttons:
+    width: 300
+    height: 25
+  generation_spinbox:
+    width: 50
+    height: 30
+  generation_manual_checkbox:
+    width: 190
+    height: 30
+  auto_check_list:
+    height: 130
+  default_checkbox:
+    width: 150
+    height: 20
+  settings_color_checkbox:
+    width: 250
+  settings_color_combo:
+    width: 175
+  settings_annotator_combo:
+    width: 160
+    height: 30
+  settings_lists:
+    height: 125
+  generator_graphic_view:
+    width: 545
+    height: 582
+  popup_buttons:
+    width: 250
+    height: 30
+  popup_generator:
+    width: 500
+    height: 120
+  popup_checker:
+    width: 500
+    height: 140
+  popup_annotator_confidence:
+    width: 300
+    height: 200
+fonts:
+  text_font_size: 14
+  label_font_size: 18
+  title_font_size: 75
+  button_font_size: 18
+  return_button_font_size: 14
+  bold_font_file: './frontend/fonts/BalsamiqSans-Bold.ttf'
+  regular_font_file: './frontend/fonts/BalsamiqSans-Regular.ttf'
+  setting_group_title: 20
+paddings:
+  before_title: 50
+  after_title: 100
+  screen_ending: 20
+  main_buttons_horizontal: 50
+  main_buttons_vertical: 25
+  sides: 25
+  min_sides: 15
+  spacing_among_elements: 20
+  labels_left: 10
+  labels_up: 4
+  settings_title_vertical: 5
+  settings_title_horizontal: 15
+  settings_box_from_title: 36
+  settings_buttons_horizontal: 10
+  list_default_padding: 10
+borders:
+  main_button_border: 2
+  main_button_style: 'solid black'
+  main_button_radius: 10
+  default_border: 2
+  default_radius: 5
+window_height: 720
+num_imgs_labeling_grid: 5

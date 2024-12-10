@@ -39,7 +39,7 @@ class DatasetManager:
                     return
 
             # Allowed formats (could be added to the config)
-            self.allowed_formats = ['.png', '.jpg']
+            self.allowed_formats = ['.png', '.jpg' , '.jpeg']
 
             # Constraints for image dimensions
             # self.image_height = self.config['DATASET']['HEIGHT']

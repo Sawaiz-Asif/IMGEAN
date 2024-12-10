@@ -7,6 +7,7 @@ from frontend.generator_window import GeneratorWindow  # Import the logic class
 from frontend.project_management import ProjectManagement
 import backend.file_utils as fu
 from backend.config_reader import read_config
+from frontend.main_screen import MainScreen
 from backend.annotation_manager.dataset_utils import DatasetManager
 import json
 import os
@@ -17,9 +18,15 @@ DISCARDED_DIR = 'DISCARDED_DIR'
 LABELING_DIR = 'LABELING_DIR'
 CONFIG_FILE = 'config.yaml'
 
-class MainWindow(QtWidgets.QMainWindow, Ui_MainWindow):
-    def __init__(self):
+class MainWindow(QtWidgets.QMainWindow):
+    def __init__(self, ui_styles):
         super(MainWindow, self).__init__()
+
+        self.ui = Ui_MainWindow(ui_styles)
+        self.ui.setupUi(self)
+
+        # self.config = config
+        self.ui_styles = ui_styles
         # Read the active project from the projects.json file
         self.active_project = self.read_active_project()
         config_path = os.path.join(self.active_project['path'], CONFIG_FILE)
@@ -30,69 +37,65 @@ class MainWindow(QtWidgets.QMainWindow, Ui_MainWindow):
         dataset_path = self.config['DATASET']['PATH']
         self.dataset_manager = DatasetManager(dataset_path, self.config)
 
-        self.setupUi(self)  # Set up the UI
+        # self.setupUi(self)  # Set up the UI
 
-        # Set up the additional screens
         self.setup_screens()
 
-        # Connect button clicks to screen navigation methods
-        self.pushButton.clicked.connect(self.goToGenerateImages)  # Button 1 (set as Go to Main)
-        self.pushButton_2.clicked.connect(self.goToImgQualityCheckScreen)   # Button 2 (navigate to Screen 2)
-        self.pushButton_3.clicked.connect(self.goToAnnotateImgSelectScreen)  # Button 3 (go to Generate Images)
-        self.pushButton_4.clicked.connect(self.goToSettingScreen)  # Button 4 (go back to Main)
+        # # Connect button clicks to screen navigation methods
+        # self.pushButton.clicked.connect(self.goToGenerateImages)  # Button 1 (set as Go to Main)
+        # self.pushButton_2.clicked.connect(self.goToImgQualityCheckScreen)   # Button 2 (navigate to Screen 2)
+        # self.pushButton_3.clicked.connect(self.goToAnnotateImgSelectScreen)  # Button 3 (go to Generate Images)
+        # self.pushButton_4.clicked.connect(self.goToSettingScreen)  # Button 4 (go back to Main)
 
         # Connect Change Project button to the navigation method
-        self.changeProjectButton.clicked.connect(self.goToProjectManagement)      
+        #self.changeProjectButton.clicked.connect(self.goToProjectManagement)      
 
     def setup_screens(self):
         """Add additional screens to the QStackedWidget."""
 
         cfg = self.config[FILES]
 
+
         # Generate Images Screen
-        self.generator_window = GeneratorWindow(self.stackedWidget, self.config,self.active_project)
+        self.generator_window = GeneratorWindow(self, self.config, self.ui_styles,self.active_project)
 
         # Img Quality Check Screen
-        self.imgQualityCheckScreen = CheckImgQuality(self.stackedWidget, self.config, images_checking_dir=cfg[CHECKING_DIR],  images_discarded_dir=cfg[DISCARDED_DIR])  # Pass the stacked widget
+        self.imgQualityCheckScreen = CheckImgQuality(self, self.config, self.ui_styles)  # Pass the stacked widget
         # Annotate image Screen
-        self.annotateImgSelectScreen = AnnotateImg(self.stackedWidget, self.config,self.dataset_manager, images_labeling_dir=cfg[LABELING_DIR])  # Pass the stacked widget
+        self.annotateImgSelectScreen = AnnotateImg(self, self.config,self.dataset_manager, self.ui_styles)  # Pass the stacked widget
 
         # Setting Screen
-        self.settingsScreen = SettingsWindow(self.stackedWidget, self.config,self.dataset_manager,self.active_project)
+        self.settingsScreen = SettingsWindow(self, self.config,self.dataset_manager,self.ui_styles,self.active_project)
 
         # Add Project Management Screen
-        self.projectManagementScreen = ProjectManagement(self.stackedWidget, self.config)
+        self.projectManagementScreen = ProjectManagement(self.ui.stackedWidget, self.config)
 
-        # Connect the signal from SettingsWindow to AnnotateImg
-        self.settingsScreen.dataset_updated.connect(self.annotateImgSelectScreen.refresh_labels)
+        # Create the main screen after the others (need them to be properly setted up)
+        self.main_screen = MainScreen(self, self.ui_styles)
+
+        self.main_screen.ui.project_label.setText(f'Currently working on: "{self.active_project["name"]}"')
 
         # Add the third screen (Generate Images) to the stacked widget
+        self.ui.stackedWidget.addWidget(self.main_screen)
+        self.ui.stackedWidget.addWidget(self.generator_window)
+        self.ui.stackedWidget.addWidget(self.imgQualityCheckScreen)
+        self.ui.stackedWidget.addWidget(self.annotateImgSelectScreen)
+        self.ui.stackedWidget.addWidget(self.settingsScreen)
+        self.ui.stackedWidget.addWidget(self.projectManagementScreen)  # Add the new screen
+
+    def change_current_screen(self, idx):
+        # 0 is the main screen
+        # 1 is generate images
+        # 2 is quality checkself.ui.main_screen
+        # 3 is annotate images
+        # 4 is settings 
+
+        if idx == 2:
+            self.imgQualityCheckScreen.refresh_window_info()
+        elif idx == 3:
+            self.annotateImgSelectScreen.refresh_window_info()
         
-        self.stackedWidget.addWidget(self.generator_window)  # Index 2 for Generate Images screen
-        self.stackedWidget.addWidget(self.imgQualityCheckScreen)
-        self.stackedWidget.addWidget(self.annotateImgSelectScreen)  # Add Annotate Image Select screen
-        self.stackedWidget.addWidget(self.settingsScreen)
-        self.stackedWidget.addWidget(self.projectManagementScreen)  # Add the new screen
-
-    def goToGenerateImages(self):
-        # Switch to the second screen
-        self.stackedWidget.setCurrentIndex(1)
-
-    def goToImgQualityCheckScreen(self):
-        # Switch back to the main screen
-        self.imgQualityCheckScreen.refresh_window_info()
-
-        self.stackedWidget.setCurrentIndex(2)
-
-    def goToAnnotateImgSelectScreen(self):
-        # Switch back to the main screen
-        self.annotateImgSelectScreen.refresh_window_info()
-
-        self.stackedWidget.setCurrentIndex(3)
-
-    def goToSettingScreen(self):
-        # Switch to the 'Generate Images' screen
-        self.stackedWidget.setCurrentIndex(4)
+        self.ui.stackedWidget.setCurrentIndex(idx)
     def goToProjectManagement(self):
         # Switch to the Project Management screen
         self.stackedWidget.setCurrentWidget(self.projectManagementScreen)
@@ -126,7 +129,7 @@ class MainWindow(QtWidgets.QMainWindow, Ui_MainWindow):
         self.active_project.clear()
 
         self.active_project.update(self.read_active_project())
-        self.currentProjectLabel.setText(f"Current Project: {self.active_project['name']}")
+        self.main_screen.ui.project_label.setText(f'Currently working on: "{self.active_project["name"]}"')
         config_path = os.path.join(self.active_project['path'], CONFIG_FILE)
         self.config.clear()  # Clear current config
         self.config.update(read_config(config_path))  # Update in place to preserve references
