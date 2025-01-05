@@ -21,13 +21,14 @@ from frontend.project_management_ui import Ui_ProjectManagement
 
 class ProjectManagement(QMainWindow):
     project_changed = pyqtSignal(dict)
-    def __init__(self, stacked_widget, config, parent=None):
+    def __init__(self, stacked_widget, config,ui_styles, parent=None):
         super().__init__(parent)
-        self.ui = Ui_ProjectManagement()
+        self.ui = Ui_ProjectManagement(config, ui_styles)
         self.ui.setupUi(self)
 
         self.stacked_widget = stacked_widget
         self.config = config
+        self.ui_styles = ui_styles
 
         self.projects_file = "projects/projects.json"
         self.projects = []
@@ -74,7 +75,7 @@ class ProjectManagement(QMainWindow):
         grid_layout.setAlignment(QtCore.Qt.AlignmentFlag.AlignTop | QtCore.Qt.AlignmentFlag.AlignLeft)
         self.ui.scrollContent.setLayout(grid_layout)
 
-        columns = 3
+        columns = self.ui_styles["grid"]["colunms"]
         row = 0
         for index, project in enumerate(self.projects):
             column = index % columns
@@ -92,59 +93,73 @@ class ProjectManagement(QMainWindow):
         grid_layout.setRowStretch(row, 0)  # No stretching for the last row either
 
     def create_project_card(self, project):
-        """Create a single project card with active state handling."""
-        card = QWidget()
-        card.setFixedSize(250, 250)
-        # Apply active or inactive color based on project state
-        if project.get("is_active", False):
-            card.setStyleSheet("""
-                QWidget {
-                    background-color: lightgreen;
-                    border: 1px solid #dcdcdc;
-                    border-radius: 8px;
-                    padding: 8px;
-                    margin: 4px;
-                    width: 50px;
-                    height: 50px;
-                }
-                QWidget:hover {
-                    background-color: #90e090;  # Slightly darker green on hover
-                }
-            """)
-        else:
-            card.setStyleSheet("""
-                QWidget {
-                    background-color: #ffffff;
-                    border: 1px solid #dcdcdc;
-                    border-radius: 8px;
-                    padding: 8px;
-                    margin: 4px;
-                    width: 50px;
-                    height: 50px;
-                }
-                QWidget:hover {
-                    background-color: #f0f0f0;  # Light gray on hover for inactive projects
-                }
-            """)
-
-        card_layout = QVBoxLayout(card)
+        """Create a single project card with active state handling using ui_styles."""
+        # First, retrieve or define the card style attributes
+        card_styles = self.ui_styles["card"]
         
-        # Project Name Label (Clickable)
+        # Card creation
+        card = QWidget()
+        card.setFixedSize(card_styles["width"], card_styles["height"])
+        
+        if card.layout() is not None:
+            card.setLayout(None)  # Remove any existing layout before setting a new one
+        
+        # Set the mousePressEvent to detect click on the entire card
+        card.mousePressEvent = lambda event, p=project: self.on_card_click(event, p)
+
+        # Decide which background colors to use (active vs. inactive)
+        if project.get("is_active", False):
+            bg_color = self.ui_styles["colors"]["green"]
+            hover_bg = self.ui_styles['colors']['green_pressed']
+        else:
+            bg_color = self.ui_styles['colors']['background']
+            hover_bg = self.ui_styles['colors']['light_gray_pressed']
+
+        # Convert placeholders if needed, or assume you already replaced them
+        # For example, if card_styles["border_style"] has placeholders, you might do:
+        # border_style = card_styles["border_style"].format(**self.ui_styles)
+        # but if you handle placeholders differently, adapt accordingly.
+        
+        margin = card_styles["margin"]
+        padding = card_styles["padding"]
+        border_thickness = self.ui_styles['borders']['default_border']
+        border_style = self.ui_styles['borders']['main_button_style']
+        border_radius = self.ui_styles['borders']['default_radius']
+        
+        # Apply stylesheet
+        card.setStyleSheet(f"""
+            QWidget {{
+                background-color: {bg_color};
+                border: {border_thickness}px {border_style};
+                border-radius: {border_radius}px;
+                padding: {padding}px;
+                margin: {margin}px;
+            }}
+            QWidget:hover {{
+                background-color: {hover_bg};
+            }}
+        """)
+
+        # Card layout
+        card_layout = QVBoxLayout(card)
+
+        # ==============================
+        # Example of using the fonts/colors from ui_styles
+        # ==============================
         project_label = QPushButton(f"Project Name: {project['name']}")
-        project_label.setStyleSheet("""
-            QPushButton {
+        project_label.setStyleSheet(f"""
+            QPushButton {{
                 background-color: transparent;
                 border: none;
-                font-size: 14px;
+                font-size: {self.ui_styles["fonts"]["text_font_size"]}px;
                 font-weight: bold;
                 text-align: center;
-                color: #333;
-            }
+                color: {self.ui_styles["colors"]["text_prompt"]}; /* #333333 */
+            }}
         """)
-        project_label.clicked.connect(lambda: self.set_active_project(project))
+        project_label.setAttribute(QtCore.Qt.WA_TransparentForMouseEvents, True)
         card_layout.addWidget(project_label)
 
-        # Created On Label
         created_on_label = QPushButton(f"Created On: {project['last_modified']}")
         created_on_label.setStyleSheet("""
             QPushButton {
@@ -153,54 +168,65 @@ class ProjectManagement(QMainWindow):
                 font-size: 10px;
                 font-weight: normal;
                 text-align: center;
-                color: #777;
+                color: #777; /* or reference a color from self.ui_styles if you prefer */
             }
         """)
+        created_on_label.setAttribute(QtCore.Qt.WA_TransparentForMouseEvents, True)
         created_on_label.setEnabled(False)
         card_layout.addWidget(created_on_label)
 
-        # Buttons Layout (Edit and Delete)
+        # Buttons Layout (Edit / Delete)
         button_layout = QHBoxLayout()
         button_layout.setContentsMargins(0, 0, 0, 0)
         button_layout.setSpacing(5)
 
+        # Edit Button
         edit_button = QPushButton("Edit")
-        edit_button.setStyleSheet("""
-            QPushButton {
-                background-color: #007bff;
-                color: white;
-                border-radius: 4px;
+        edit_button.setStyleSheet(f"""
+            QPushButton {{
+                background-color: {self.ui_styles["colors"]["blue"]};
+                color: {self.ui_styles["colors"]["black"]};
+                border-radius: {self.ui_styles["borders"]["default_radius"]}px;
                 padding: 5px 10px;
                 font-size: 10px;
-            }
-            QPushButton:hover {
-                background-color: #0056b3;
-            }
+            }}
+            QPushButton:hover {{
+                background-color: {self.ui_styles["colors"]["blue_pressed"]};
+            }}
         """)
 
+        # Delete Button
         delete_button = QPushButton("Delete")
-        delete_button.setStyleSheet("""
-            QPushButton {
-                background-color: #dc3545;
-                color: white;
-                border-radius: 4px;
+        delete_button.setStyleSheet(f"""
+            QPushButton {{
+                background-color: {self.ui_styles["colors"]["button_cancel"]};
+                color: {self.ui_styles["colors"]["black"]};
+                border-radius: {self.ui_styles["borders"]["default_radius"]}px;
                 padding: 5px 10px;
                 font-size: 10px;
-            }
-            QPushButton:hover {
-                background-color: #a71d2a;
-            }
+            }}
+            QPushButton:hover {{
+                background-color: {self.ui_styles["colors"]["red_pressed"]};
+            }}
         """)
 
         button_layout.addWidget(edit_button)
         button_layout.addWidget(delete_button)
         card_layout.addLayout(button_layout)
 
-        # Connect button signals
+        # Connect signals
         edit_button.clicked.connect(lambda: self.edit_project_name(project))
         delete_button.clicked.connect(lambda: self.delete_project(project))
 
         return card
+
+    def on_card_click(self, event, project):
+        """Handle click event on project card."""
+        # Print the name of the clicked card (project)
+        print(f"Card for project '{project['name']}' clicked!")
+
+        # Set the project as active when the card is clicked
+        self.set_active_project(project)
 
     def set_active_project(self, project):
         """Set a project as active."""
