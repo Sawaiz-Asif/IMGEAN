@@ -14,3 +14,4 @@ class MainScreen(QtWidgets.QWidget):
         self.ui.btn_quality.clicked.connect(lambda: main_window.change_current_screen(2))
         self.ui.btn_annotate.clicked.connect(lambda: main_window.change_current_screen(3))
         self.ui.btn_settings.clicked.connect(lambda: main_window.change_current_screen(4))
+        self.ui.change_project_btn.clicked.connect(lambda: main_window.change_current_screen(5))

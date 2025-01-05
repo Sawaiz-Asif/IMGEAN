@@ -126,8 +126,8 @@ class Ui_MainScreen(object):
         button_layout.addWidget(btn_settings, 1, 1, alignment=Qt.AlignLeft)
 
         # Current project info and button
-        project_label = QLabel('Currently working on: "My custom project 2.0":')
-        project_label.setStyleSheet(f"""
+        self.project_label = QLabel('Currently working on: "My custom project 2.0":')
+        self.project_label.setStyleSheet(f"""
             font-family: '{regular_font_family}';
             font-size: {self.ui_styles[FONTS][TITLE_FONT_SIZE]//4}px;
             text-align: center;
@@ -149,7 +149,7 @@ class Ui_MainScreen(object):
         self.change_project_btn = change_project_btn
 
         # Adding project info and button to lower layout
-        lower_layout.addWidget(project_label)
+        lower_layout.addWidget(self.project_label)
         lower_layout.addSpacing(10)
         lower_layout.addWidget(change_project_btn)
         lower_layout.setAlignment(Qt.AlignCenter)

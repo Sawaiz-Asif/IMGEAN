@@ -39,16 +39,16 @@ class DatasetManager:
                     return
 
             # Allowed formats (could be added to the config)
-            self.allowed_formats = ['.png', '.jpg']
+            self.allowed_formats = ['.png', '.jpg' , '.jpeg']
 
             # Constraints for image dimensions
-            self.image_height = self.config['DATASET']['HEIGHT']
-            self.image_width = self.config['DATASET']['WIDTH']
+            # self.image_height = self.config['DATASET']['HEIGHT']
+            # self.image_width = self.config['DATASET']['WIDTH']
 
             # Other config values
-            self.train_split = self.config['DATASET']['TRAIN_SPLIT']
-            self.val_split = self.config['DATASET']['VAL_SPLIT']
-            self.zero_shot = self.config['DATASET']['ZERO_SHOT']
+            # self.train_split = self.config['DATASET']['TRAIN_SPLIT']
+            # self.val_split = self.config['DATASET']['VAL_SPLIT']
+            # self.zero_shot = self.config['DATASET']['ZERO_SHOT']
 
             self.pickle_file = pickle_file
             if use_default_path:
@@ -138,7 +138,44 @@ class DatasetManager:
             'weight_train': [],
             'weight_trainval': []
         })
+    def update_with_new_file(self, new_pickle_file, description=None, reorder=None):
+        """
+        Updates the instance with data from a new pickle file.
 
+        Args:
+            new_pickle_file (str): The path to the new pickle file to load.
+            description (str, optional): A custom description for the new dataset. Defaults to None.
+            reorder (str, optional): A reorder value for the new dataset. Defaults to None.
+
+        Returns:
+            bool: True if successful, False otherwise.
+        """
+        try:
+            # Save the original state in case of failure
+            original_pickle_file = self.pickle_file
+            original_annotation = self.annotation
+
+            # Update pickle file path
+            self.pickle_file = new_pickle_file
+
+            # Load new annotation
+            success, new_annotation = self.load_annotation(description, reorder, self.root)
+            if not success:
+                logging.error("Failed to load new annotation. Reverting to original state.")
+                # Revert to original state
+                self.pickle_file = original_pickle_file
+                self.annotation = original_annotation
+                return False
+
+            # Update the instance variables with new data
+            self.annotation = new_annotation
+            logging.info(f"Successfully updated dataset with file: {new_pickle_file}")
+            return True
+
+        except Exception as e:
+            logging.error(f"Error in update_with_new_file: {e}")
+            return False
+        
     def save_annotation(self, annotation=None):
         """
         Saves the current annotation to the pickle file. Creates directories if they don't exist.

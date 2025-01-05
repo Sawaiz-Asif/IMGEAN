@@ -20,7 +20,7 @@ from config_constants import *
 class SettingsWindow(QtWidgets.QMainWindow):
     dataset_updated = pyqtSignal()# Signal to notify updates
 
-    def __init__(self, main_window, config, ui_styles):
+    def __init__(self, main_window, config,dataset_manager, ui_styles,active_project):
         super(SettingsWindow, self).__init__()
 
         self.ui = Ui_SettingsWindow(config, ui_styles)  # Initialize the UI
@@ -29,6 +29,8 @@ class SettingsWindow(QtWidgets.QMainWindow):
         self.main_window = main_window
         self.config = config
         self.ui_styles = ui_styles
+        self.active_project = active_project
+        self.dataset_manager = dataset_manager
 
         # Initialize DatasetManager
         # self.dataset_manager = DatasetManager(
@@ -36,7 +38,7 @@ class SettingsWindow(QtWidgets.QMainWindow):
         #     config=self.config,
         #     use_default_path=True
         # )
-        self.dataset_manager = DatasetManager(config[DATASET][PATH], config)
+        # self.dataset_manager = DatasetManager(config[DATASET][PATH], config)
         if not self.dataset_manager.initialized:
             QtWidgets.QMessageBox.critical(self, "Error", "Failed to initialize Dataset Manager.")
             return
@@ -164,6 +166,84 @@ class SettingsWindow(QtWidgets.QMainWindow):
         for function in functions:
             self.ui.qualityFunctionsList.addItem(function.get('name', 'Unknown Function'))
     
+    def refresh_ui(self):
+        """Refresh the UI elements with the updated configuration."""
+        
+        # Refresh Dataset Section
+        dataset_config = self.config.get('DATASET', {})
+        self.ui.descriptionLineEdit.setText(dataset_config.get('NAME', ''))
+        self.ui.pickleFilePathLineEdit.setText(dataset_config.get('PATH', ''))
+
+        # # Refresh Labels
+        # success, labels = self.dataset_manager.get_dataset_labels()
+        # if success:
+        #     self.labels = labels
+        #     self.ui.labelsListWidget.clear()
+        #     self.ui.labelsListWidget.addItems(self.labels)
+        # else:
+        #     QtWidgets.QMessageBox.warning(self, "Warning", "Failed to refresh labels from dataset.")
+
+         # Labels (use DatasetManager to get labels)
+        success, labels = self.dataset_manager.get_dataset_labels()
+        if success:
+            self.labels = labels
+            self.ui.labelsListWidget.clear()
+            self.ui.labelsListWidget.addItems(self.labels)
+        else:
+            self.labels = []
+            dialog = CustomQMessageBox(self.ui_styles)
+            dialog.warning(self, "Warning", "Failed to load labels from dataset.")
+
+        # Refresh Annotator Section
+        annotator_config = self.config.get('ANNOTATION', {})
+        self.annotator_data = annotator_config.get('MODELS', []).copy()
+        self.ui.annotatorModelsList.clear()
+        for model in self.annotator_data:
+            self.ui.annotatorModelsList.addItem(model.get('Name', 'Unnamed Model'))
+
+        self.ui.currentSelectionComboBox.clear()
+        for model in self.annotator_data:
+            self.ui.currentSelectionComboBox.addItem(model.get('Name', 'Unnamed Model'))
+        
+        current_selected = annotator_config.get('CURRENT_SELECTED', 0)
+        if 0 <= current_selected < len(self.annotator_data):
+            self.ui.currentSelectionComboBox.setCurrentIndex(current_selected)
+
+        self.ui.colorAssistCheckbox.setChecked(annotator_config.get('ColorAssist', False))
+
+        # Refresh Image Generator Section
+        self.temp_image_config = self.config.get('GENERATION', {}).copy()
+        self.ui.imageModelsList.clear()
+        models = self.temp_image_config.get('MODELS', [])
+        for model in models:
+            self.ui.imageModelsList.addItem(model.get('name', 'Unknown Model'))
+
+        self.ui.outputFolderLineEdit.setText(self.temp_image_config.get('BASE_OUTPUT_PATH', ''))
+        self.ui.comfyUiIpLineEdit.setText(self.temp_image_config.get('IP_COMFY', ''))
+
+        # Refresh Quality Checker Section
+        self.temp_quality_config = self.config.get('QUALITY_CHECKS', {}).copy()
+        self.ui.qualityFunctionsList.clear()
+        functions = self.temp_quality_config.get('FUNCTIONS', [])
+        for function in functions:
+            self.ui.qualityFunctionsList.addItem(function.get('name', 'Unknown Function'))
+
+        # Refresh Auto Label Section
+        auto_label_config = self.config.get('AUTO_LABEL', {})
+        self.ui.maxAutoLabelSpinBox.setValue(auto_label_config.get('MAX_AUTO_LABEL', 12))
+        self.ui.checkboxThresholdSpinBox.setValue(auto_label_config.get('CHECKBOX_THRESHOLD', 0.5))
+
+        default_color = auto_label_config.get('DEFAULT_COLOR', 'blue')
+        if default_color in [self.ui.defaultColorComboBox.itemText(i) for i in range(self.ui.defaultColorComboBox.count())]:
+            self.ui.defaultColorComboBox.setCurrentText(default_color)
+        else:
+            self.ui.defaultColorComboBox.setCurrentIndex(0)
+
+        self.temp_confidence_thresholds = auto_label_config.get('CONFIDENCE_THRESHOLDS', [])
+        self.ui.confidenceThresholdList.clear()
+        for threshold in self.temp_confidence_thresholds:
+            self.ui.confidenceThresholdList.addItem(f"{threshold['color']}: {threshold['value']}")
+
 
     def manage_image_model(self, model_index=None):
         """
@@ -239,6 +319,7 @@ class SettingsWindow(QtWidgets.QMainWindow):
             if success:
                 self.labels.append(text)
                 self.ui.labelsListWidget.addItem(text)
+                self.dataset_updated.emit()
             else:
                 dialog = CustomQMessageBox(self.ui_styles)
                 dialog.warning(self, "Warning", "Failed to load labels from dataset.")
@@ -256,6 +337,7 @@ class SettingsWindow(QtWidgets.QMainWindow):
                 if success:
                     self.labels[index] = text
                     item.setText(text)
+                    self.dataset_updated.emit()
                 else:
                     dialog = CustomQMessageBox(self.ui_styles)
                     dialog.warning(self, "Warning", "Failed to edit label.")
@@ -628,7 +710,9 @@ class SettingsWindow(QtWidgets.QMainWindow):
     # Config Saving Method
     def save_config(self):
         # Use the save_config function from config_reader.py
-        save_config(self.config, './config.yaml')
+        config_path = self.active_project["path"] + '/config.yaml'
+        save_config(self.config, config_path)
+        
     # General Methods
     def on_return(self):
         self.main_window.change_current_screen(0)

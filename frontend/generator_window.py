@@ -1,6 +1,6 @@
 from PyQt5 import QtWidgets, QtGui, QtCore
 from frontend.generator_window_ui import Ui_generate_images
-#from backend.image_generator.image_generation_thread import ImageGenerationThread
+from backend.image_generator.image_generation_thread import ImageGenerationThread
 # from backend.image_generator.comfyui_utils import execute_prompt
 from backend.config_reader import save_config
 import backend.file_utils as fu
@@ -11,13 +11,14 @@ from backend.quality_checker.quality_checker_loader import load_quality_checkers
 
 
 class GeneratorWindow(QtWidgets.QMainWindow):
-    def __init__(self, main_window, config, ui_styles):
+    def __init__(self, main_window, config, ui_styles,active_project):
         super(GeneratorWindow, self).__init__()
         self.config = config
         self.main_window = main_window
 
         self.ui = Ui_generate_images(config, ui_styles)  # Initialize the UI  # Reference to the QStackedWidget for navigation
         self.ui.setupUi(self)
+        self.active_project=active_project
 
         # Set up the QGraphicsScene
         self.scene = QGraphicsScene()
@@ -40,6 +41,7 @@ class GeneratorWindow(QtWidgets.QMainWindow):
 
         self.show_image()
         self.load_initial_values()
+    
 
     def load_initial_values(self):
         """Load saved values from the configuration."""
@@ -48,6 +50,9 @@ class GeneratorWindow(QtWidgets.QMainWindow):
         self.ui.text_negative_prompt.setPlainText(self.config['GENERATION']['PROMPTS'].get('negative', ''))
         self.ui.spin_images.setValue(self.config['GENERATION'].get('num_images', 1))
         self.ui.combo_model.setCurrentText(self.config['GENERATION'].get('model', ''))
+        # models = self.config.get('GENERATION', {}).get('MODELS', [])
+        # for model in models:
+        #     self.combo_model.addItem(model['name'])
         self.ui.spin_steps.setValue(self.config['GENERATION'].get('steps', 20))
         self.ui.text_filename.setText(self.config['GENERATION'].get('filename', 'generated_image'))
 
@@ -60,6 +65,9 @@ class GeneratorWindow(QtWidgets.QMainWindow):
         self.ui.checkbox_manual.setChecked(self.config['GENERATION'].get('manual_quality_check', False))
 
         # Load the automatic quality check items state using selected_checks list
+        # Get functions and selected states from the config
+        self.ui.auto_check_list.clear()
+        functions = self.config.get('QUALITY_CHECKS', {}).get('FUNCTIONS', [])
         selected_checks = self.config['QUALITY_CHECKS'].get('selected_checks', [])
         for i in range(self.ui.auto_check_list.count()):
             item = self.ui.auto_check_list.item(i)
@@ -98,13 +106,13 @@ class GeneratorWindow(QtWidgets.QMainWindow):
         self.ui.progress_bar.setTextVisible(True)
         self.ui.progress_bar.setFormat(f"Generating 0/{num_images}")
 
-        # self.generation_thread = ImageGenerationThread(
-        #     positive_prompt, negative_prompt, num_images, model_name, steps, filename, seed, self.config
-        # )
-        # self.generation_thread.progress_signal.connect(self.update_progress_bar)
-        # self.generation_thread.image_signal.connect(self.show_image)
-        # self.generation_thread.finished.connect(self.on_generation_complete)
-        # self.generation_thread.start()
+        self.generation_thread = ImageGenerationThread(
+            positive_prompt, negative_prompt, num_images, model_name, steps, filename, seed, self.config
+        )
+        self.generation_thread.progress_signal.connect(self.update_progress_bar)
+        self.generation_thread.image_signal.connect(self.show_image)
+        self.generation_thread.finished.connect(self.on_generation_complete)
+        self.generation_thread.start()
 
     def update_progress_bar(self, current, total):
         """Update the progress bar with 'Generating {current}/{total}'."""
@@ -247,7 +255,8 @@ class GeneratorWindow(QtWidgets.QMainWindow):
 
     def save_config(self):
         """Save the updated configuration to the YAML file."""
-        config_path = './config.yaml'
+        # config_path = './config.yaml'
+        config_path = self.active_project["path"] + '/config.yaml'
         save_config(self.config, config_path)
         print("Configuration saved!")
     

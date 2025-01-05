@@ -1,5 +1,5 @@
-from PyQt5 import QtCore, QtWidgets
-import backend.annotation_manager.dataset_utils as du
+from PyQt5 import QtCore, QtGui, QtWidgets
+# import backend.annotation_manager.dataset_utils as du
 
 from PyQt5 import QtCore, QtWidgets
 from ui_styles_constants import *
@@ -14,10 +14,11 @@ from PyQt5.QtGui import QFontDatabase
 from frontend.custom_ui_widgets import CustomCheckBox
 
 class Ui_AnnotateImg(object):
-    def __init__(self, config, ui_styles):
+    def __init__(self, config,dataset_manager,ui_styles):
         self.config = config
-        self.dataset_manager = du.DatasetManager(config["DATASET"]["PATH"], config)
+        self.dataset_manager =dataset_manager
         self.ui_styles = ui_styles
+        # self.dataset_manager = du.DatasetManager(config[DATASET][PATH], config)
 
         regular_font_id = QFontDatabase.addApplicationFont(self.ui_styles[FONTS][REGULAR_FONT_FILE])
         self.regular_font_family = QFontDatabase.applicationFontFamilies(regular_font_id)[0]
@@ -261,7 +262,7 @@ class Ui_AnnotateImg(object):
 #
             #layout.setAlignment(QtCore.Qt.AlignLeft)
             #layout.setContentsMargins(self.ui_styles[PADDINGS][LABELS_LEFT], self.ui_styles[PADDINGS][LABELS_UP], 0, 0)
-
+            self._CustomCheckBox= checkbox
             item = QtWidgets.QListWidgetItem()
             self.labelList.addItem(item)
             self.labelList.setItemWidget(item, checkbox)

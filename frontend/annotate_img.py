@@ -3,7 +3,9 @@ from frontend.annotate_img_ui import Ui_AnnotateImg  # Import the UI
 import os
 import backend.file_utils as fu
 from backend.annotation_manager.automatic_labeling import open_model,get_predictions_with_confidence
+from frontend.custom_ui_widgets import CustomCheckBox
 from config_constants import *
+from ui_styles_constants import *
 
 # Custom QLabel to handle image clicks
 class ClickableLabel(QtWidgets.QLabel):
@@ -14,13 +16,21 @@ class ClickableLabel(QtWidgets.QLabel):
         super().mousePressEvent(event)
 
 class AnnotateImg(QtWidgets.QMainWindow):
-    def __init__(self, main_window, config, ui_styles):
+    def __init__(self, main_window, config,dataset_manager, ui_styles):
         super(AnnotateImg, self).__init__()
-        self.ui = Ui_AnnotateImg(config, ui_styles)  # Initialize the UI
+        self.ui = Ui_AnnotateImg(config,dataset_manager, ui_styles)  # Initialize the UI
         self.ui.setupUi(self)
         self.main_window = main_window  # Reference to the QStackedWidget for navigation
 
         self.config = config
+        self.ui.dataset_manager = dataset_manager
+        # self.images_labeling_dir = images_labeling_dir
+
+        # self.ui = Ui_AnnotateImg(config,dataset_manager,ui_styles)  # Initialize the UI
+        # self.ui.setupUi(self)
+        # self.stacked_widget = stacked_widget  # Reference to the QStackedWidget for navigation
+
+
 
         self.images_labeling_dir = config[FILES][LABELING_DIR]
 
@@ -328,7 +338,7 @@ class AnnotateImg(QtWidgets.QMainWindow):
                         color = threshold.get('color', default_color)
                 custom_checkbox.modifyColor(color)
             else:
-                # No predictions, fall back to the dataset labels (default behavior)
+            #     # No predictions, fall back to the dataset labels (default behavior)
                 custom_checkbox.setChecked(bool(labels_select[i]))
 
                 # Reset the label text to its original without confidence score
@@ -402,33 +412,55 @@ class AnnotateImg(QtWidgets.QMainWindow):
         """Refresh labels from the DatasetManager."""
         _, self.labels = self.ui.dataset_manager.get_dataset_labels()
         self.update_ui_labels()
+    def refresh_on_project_change(self):
+        self.images_labeling_dir = self.config["FILES"]["LABELING_DIR"]
+        self.refresh_labels()
 
     def update_ui_labels(self):
-        """Update the label list in the annotation UI."""
-        self.ui.labelList.clear()
+        self.ui.labelList.clear()  # Clear the existing labels from the list
+
         for label in self.labels:
-            widget = QtWidgets.QWidget()
-            layout = QtWidgets.QHBoxLayout(widget)
-            checkbox = QtWidgets.QCheckBox()
-            label_widget = QtWidgets.QLabel(label)
-            layout.addWidget(checkbox)
-            layout.addWidget(label_widget)
-            layout.setAlignment(QtCore.Qt.AlignLeft)
-            layout.setContentsMargins(0, 0, 0, 0)
+            # Create a new CustomCheckBox for each label
+            checkbox = CustomCheckBox(
+                text=label,
+                width=self.ui.ui_styles[SIZES][DEFAULT_CHECKBOX][WIDTH],
+                height=self.ui.ui_styles[SIZES][DEFAULT_CHECKBOX][HEIGHT],
+                border=self.ui.ui_styles[BORDERS][DEFAULT_BORDER],
+                border_radious=self.ui.ui_styles[BORDERS][DEFAULT_RADIUS],
+                font=self.ui.ui_styles[FONTS][LABEL_FONT_SIZE],
+                font_family=self.ui.regular_font_family
+            )
+
+            # Create a list widget item and add the new checkbox as its widget
             item = QtWidgets.QListWidgetItem()
             self.ui.labelList.addItem(item)
-            self.ui.labelList.setItemWidget(item, widget)
-        """Update the label list in the annotation UI."""
-        self.ui.labelList.clear()
-        for label in self.labels:
-            widget = QtWidgets.QWidget()
-            layout = QtWidgets.QHBoxLayout(widget)
-            checkbox = QtWidgets.QCheckBox()
-            label_widget = QtWidgets.QLabel(label)
-            layout.addWidget(checkbox)
-            layout.addWidget(label_widget)
-            layout.setAlignment(QtCore.Qt.AlignLeft)
-            layout.setContentsMargins(0, 0, 0, 0)
-            item = QtWidgets.QListWidgetItem()
-            self.ui.labelList.addItem(item)
-            self.ui.labelList.setItemWidget(item, widget)
+            self.ui.labelList.setItemWidget(item, checkbox)
+    # def update_ui_labels(self):
+    #     """Update the label list in the annotation UI."""
+    #     self.ui.labelList.clear()
+    #     for label in self.labels:
+    #         widget = QtWidgets.QWidget()
+    #         layout = QtWidgets.QHBoxLayout(widget)
+    #         checkbox = self.ui._CustomCheckBox
+    #         label_widget = QtWidgets.QLabel(label)
+    #         layout.addWidget(checkbox)
+    #         layout.addWidget(label_widget)
+    #         layout.setAlignment(QtCore.Qt.AlignLeft)
+    #         layout.setContentsMargins(0, 0, 0, 0)
+    #         item = QtWidgets.QListWidgetItem()
+    #         self.ui.labelList.addItem(item)
+    #         self.ui.labelList.setItemWidget(item, checkbox)
+    #     """Update the label list in the annotation UI."""
+    #     self.ui.labelList.clear()
+    #     for label in self.labels:
+    #         widget = QtWidgets.QWidget()
+    #         layout = QtWidgets.QHBoxLayout(widget)
+    #         checkbox = self.ui._CustomCheckBox
+    #         label_widget = QtWidgets.QLabel(label)
+    #         layout.addWidget(checkbox)
+    #         layout.addWidget(label_widget)
+    #         layout.setAlignment(QtCore.Qt.AlignLeft)
+    #         layout.setContentsMargins(0, 0, 0, 0)
+    #         item = QtWidgets.QListWidgetItem()
+    #         self.ui.labelList.addItem(item)
+    #         self.ui.labelList.setItemWidget(item, checkbox)
