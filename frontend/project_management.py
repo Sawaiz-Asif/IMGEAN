@@ -282,6 +282,10 @@ class ProjectManagement(QMainWindow):
 
     def delete_project(self, project):
         """Handle deleting a project."""
+        # Check if there's only one project left
+        if len(self.projects) == 1:
+            QMessageBox.warning(self, "Error", "Cannot delete the last project.")
+            return
         confirm = QMessageBox.question(self, "Confirm Delete", f"Are you sure you want to delete '{project['name']}'?")
         if confirm == QMessageBox.Yes:
             # Check if the project to delete is the active project

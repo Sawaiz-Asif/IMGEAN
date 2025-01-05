@@ -3,6 +3,7 @@ import yaml
 import json
 import os
 from pathlib import Path
+from datetime import datetime
 
 def create_default_config(config_path):
     """Creates a new config file with default values if none exists."""
@@ -66,6 +67,40 @@ def create_default_config(config_path):
     # Save the config to the specified path
     save_config(default_config, config_path)
     print(f"New config file created at {config_path}")
+def create_projects_file():
+    """Create the projects.json file with the initial structure if it doesn't exist."""
+    projects_file = './projects/projects.json'
+    
+    # Check if the 'projects.json' file exists
+    if not os.path.exists(projects_file):
+        # Create the 'projects' directory if it doesn't exist
+        os.makedirs('./projects', exist_ok=True)
+
+        # Initial structure to create if the file doesn't exist
+        initial_data = {
+            "projects": [
+                {
+                    "name": "Project1",
+                    "path": "projects/Project1",
+                    "is_active": True,
+                    "last_modified": datetime.now().strftime("%Y-%m-%dT%H:%M:%S")
+                }
+            ]
+        }
+        
+        try:
+            # Write the initial data to the 'projects.json' file
+            with open(projects_file, 'w') as f:
+                json.dump(initial_data, f, indent=4)
+            print(f"Created the file {projects_file} with initial data.")
+            
+            # Now, create the project directory and the default config file
+            new_project_path = initial_data["projects"][0]["path"]
+            os.makedirs(new_project_path, exist_ok=True)  # Create the project folder
+            create_default_config(f"{new_project_path}/config.yaml")  # Create the default config file
+
+        except Exception as e:
+            print(f"Error creating the file: {e}")
 
 def read_active_project(projects_file):
     """Read the projects.json file and return the active project."""

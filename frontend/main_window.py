@@ -6,7 +6,7 @@ from frontend.annotate_img import AnnotateImg  # Import Annotate Image logic
 from frontend.generator_window import GeneratorWindow  # Import the logic class
 from frontend.project_management import ProjectManagement
 import backend.file_utils as fu
-from backend.config_reader import read_config
+from backend.config_reader import read_config,create_projects_file
 from frontend.main_screen import MainScreen
 from backend.annotation_manager.dataset_utils import DatasetManager
 import json
@@ -102,6 +102,10 @@ class MainWindow(QtWidgets.QMainWindow):
     def read_active_project(self):
         """Read the projects.json file and return the active project."""
         projects_file='./projects/projects.json'
+        # Check if the projects file exists
+        if not os.path.exists(projects_file):
+            print(f"{projects_file} not found. Creating the file...")
+            create_projects_file()  # Call the function to create the file and directories
         try:
             with open(projects_file, 'r') as f:
                 data = json.load(f)
