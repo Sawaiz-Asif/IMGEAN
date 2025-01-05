@@ -90,7 +90,7 @@ class CustomSpinBox(QWidget):
         return self.spin_box.value()
 
 class CustomCheckBox(QWidget):
-    def __init__(self, text='', width=150, height=40, border=1, border_radious=5, font=15, font_family=None):
+    def __init__(self, text='', width=150, height=40, border=1, border_radious=5, font=15, font_family=None, color_dict=None):
         super().__init__(None)
         
         self.checked = False
@@ -99,6 +99,7 @@ class CustomCheckBox(QWidget):
         self.set_height = height
         self.border = border
         self.border_radious = border_radious
+        self.color_dict = color_dict
 
         self.label = QLabel(text)
         self.label.setAlignment(Qt.AlignLeft | Qt.AlignVCenter)
@@ -158,6 +159,10 @@ class CustomCheckBox(QWidget):
             self.toggle_button.setText("")
 
     def modifyColor(self, color_code):
+
+        if self.color_dict and color_code in self.color_dict:
+            color_code = self.color_dict[color_code]
+
         self.toggle_button.setStyleSheet(f"""
             border-radius: {self.border_radious}px; 
             border: {self.border}px solid black; 

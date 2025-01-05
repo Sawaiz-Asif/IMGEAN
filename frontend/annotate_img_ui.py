@@ -254,7 +254,8 @@ class Ui_AnnotateImg(object):
                                   border=self.ui_styles[BORDERS][DEFAULT_BORDER], 
                                   border_radious=self.ui_styles[BORDERS][DEFAULT_RADIUS], 
                                   font=self.ui_styles[FONTS][LABEL_FONT_SIZE],
-                                  font_family=self.regular_font_family)
+                                  font_family=self.regular_font_family,
+                                  color_dict = self.ui_styles[COLORS])
 
             #layout.addWidget(checkbox)
 #

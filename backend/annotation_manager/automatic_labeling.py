@@ -82,7 +82,8 @@ def get_predictions_with_confidence(config, model, image_path, class_labels, mod
         logits, feat = model(image_tensor)
     
     # Apply softmax to get probabilities
-    probabilities = F.softmax(logits[0], dim=1)
+    logits = logits[0]
+    probabilities = logits.sigmoid()
     
     probabilities = probabilities.cpu().numpy().flatten()
     predictions_with_confidence = list(zip(class_labels, probabilities))

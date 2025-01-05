@@ -137,9 +137,11 @@ class AnnotateImg(QtWidgets.QMainWindow):
 
                 # Find the appropriate color based on confidence
                 color = default_color  # Default color if no threshold matches
+                max_threshold_value = float('-inf')
                 for threshold in thresholds:
-                    if confidence > threshold['value']:
-                        color = threshold.get('color', default_color)  # Use default if color is missing
+                    if confidence > threshold['value'] and threshold['value'] > max_threshold_value:
+                        max_threshold_value = threshold['value']
+                        color = threshold.get('color', default_color)
 
                 # Apply color to the label
                 custom_checkbox.modifyColor(color)
