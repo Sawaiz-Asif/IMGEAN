@@ -67,7 +67,11 @@ class GeneratorWindow(QtWidgets.QMainWindow):
         # Load the automatic quality check items state using selected_checks list
         # Get functions and selected states from the config
         self.ui.auto_check_list.clear()
-        functions = self.config.get('QUALITY_CHECKS', {}).get('FUNCTIONS', [])
+        self.ui.load_quality_checks()
+        # functions = self.config.get('QUALITY_CHECKS', {}).get('FUNCTIONS', [])
+        # Load manual quality check status
+
+
         selected_checks = self.config['QUALITY_CHECKS'].get('selected_checks', [])
         for i in range(self.ui.auto_check_list.count()):
             item = self.ui.auto_check_list.item(i)
