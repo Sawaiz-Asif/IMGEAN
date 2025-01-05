@@ -128,3 +128,12 @@ borders:
   default_radius: 5
 window_height: 720
 num_imgs_labeling_grid: 5
+grid:
+  colunms: 4
+card:
+  # Sizing
+  width: 305
+  height: 305
+  # Margins, paddings, borders
+  margin: 4
+  padding: 8

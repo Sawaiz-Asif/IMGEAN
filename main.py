@@ -12,7 +12,7 @@ if __name__ == "__main__":
     # config = read_config('./config.yaml')
     ui_styles = read_config('./ui_styles.yaml')
 
-    process = cu.start_comfyui_server()
+    # process = cu.start_comfyui_server()
     # import shutil
     # shutil.rmtree('./data', ignore_errors=True)
     # shutil.copytree('./data_start', './data')
@@ -30,4 +30,4 @@ if __name__ == "__main__":
     finally:
         pass
         
-        #cu.stop_comfyui_server(process)
+        # cu.stop_comfyui_server(process)
