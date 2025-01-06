@@ -130,7 +130,7 @@ class AnnotateImg(QtWidgets.QMainWindow):
 
         # Get confidence thresholds and colors from the config (list of thresholds and corresponding colors)
         thresholds = self.config['AUTO_LABEL']['CONFIDENCE_THRESHOLDS']
-        default_color = self.config['AUTO_LABEL'].get('DEFAULT_COLOR', 'black')  # Default to black if not found
+        default_color = self.config['AUTO_LABEL'].get('DEFAULT_COLOR', 'background')  # Default to black if not found
 
         # Get the checkbox threshold from the config
         checkbox_threshold = self.config['AUTO_LABEL'].get('CHECKBOX_THRESHOLD', 0.5)  # Default to 0.5 if not set
@@ -163,7 +163,8 @@ class AnnotateImg(QtWidgets.QMainWindow):
                         color = threshold.get('color', default_color)
 
                 # Apply color to the label
-                custom_checkbox.modifyColor(color)
+                if self.main_window.settingsScreen.ui.colorAssistCheckbox.checked:
+                    custom_checkbox.modifyColor(color)
 
             self.predictions_for_images[self.images_to_label[self.current_image_index]] = predictions
             dialog = CustomQMessageBox(self.ui_styles)
