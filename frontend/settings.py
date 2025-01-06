@@ -399,8 +399,9 @@ class SettingsWindow(QtWidgets.QMainWindow):
             )
             if confirm == QtWidgets.QMessageBox.Yes:
                 self.ui.qualityFunctionsList.takeItem(index)
-                del self.temp_quality_config[QUALITY_CHECKS][FUNCTIONS][index]
+                del self.temp_quality_config[FUNCTIONS][index]
 
+        self.main_window.generator_window.ui.load_quality_checks()
         self.config[QUALITY_CHECKS] = self.temp_quality_config.copy()  # Save temp_config to main config
         self.save_config()
 
