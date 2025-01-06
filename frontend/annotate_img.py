@@ -4,6 +4,7 @@ import os
 import backend.file_utils as fu
 from backend.annotation_manager.automatic_labeling import open_model,get_predictions_with_confidence
 from frontend.custom_ui_widgets import CustomCheckBox
+from frontend.custom_popups import CustomQMessageBox
 from config_constants import *
 from ui_styles_constants import *
 
@@ -23,6 +24,7 @@ class AnnotateImg(QtWidgets.QMainWindow):
         self.main_window = main_window  # Reference to the QStackedWidget for navigation
 
         self.config = config
+        self.ui_styles = ui_styles
         self.ui.dataset_manager = dataset_manager
         # self.images_labeling_dir = images_labeling_dir
 
@@ -103,7 +105,14 @@ class AnnotateImg(QtWidgets.QMainWindow):
         # Check if there are images to label
         if not self.images_to_label:
             print("No images to label.")
-            QtWidgets.QMessageBox.warning(self, "Warning", "No images to label.")
+            dialog = CustomQMessageBox(self.ui_styles)
+            dialog.warning(self, "Warning", "No images to label.")
+            return
+        
+        if len(self.config[ANNOTATION][MODELS]) == 0:
+            print("No model to label.")
+            dialog = CustomQMessageBox(self.ui_styles)
+            dialog.warning(self, "Warning", "No model to label.")
             return
 
         # Get the image path, construct full path only if it is not a dataset image (already full path in this case)
@@ -157,11 +166,13 @@ class AnnotateImg(QtWidgets.QMainWindow):
                 custom_checkbox.modifyColor(color)
 
             self.predictions_for_images[self.images_to_label[self.current_image_index]] = predictions
-            QtWidgets.QMessageBox.information(self, "Success", f"Auto-labeled image {self.current_image_index + 1}")
+            dialog = CustomQMessageBox(self.ui_styles)
+            dialog.warning(self, "Success", f"Auto-labeled image {self.current_image_index + 1}")
 
         except Exception as e:
             print(f"Error during auto-labeling: {str(e)}")
-            QtWidgets.QMessageBox.critical(self, "Error", f"Error during auto-labeling: {str(e)}")
+            dialog = CustomQMessageBox(self.ui_styles)
+            dialog.warning(self, "Error", f"Error during auto-labeling:\n{str(e)}")
 
     def on_auto_label_all_click(self):
         # Auto-label all images
@@ -170,7 +181,14 @@ class AnnotateImg(QtWidgets.QMainWindow):
         # Check if there are images to label
         if not self.images_to_label:
             print("No images to label.")
-            QtWidgets.QMessageBox.warning(self, "Warning", "No images to label.")
+            dialog = CustomQMessageBox(self.ui_styles)
+            dialog.warning(self, "Warning", "No images to label.")
+            return
+        
+        if len(self.config[ANNOTATION][MODELS]) == 0:
+            print("No model to label.")
+            dialog = CustomQMessageBox(self.ui_styles)
+            dialog.warning(self, "Warning", "No model to label.")
             return
 
         # Determine how many images to label, starting from the current index
@@ -219,11 +237,13 @@ class AnnotateImg(QtWidgets.QMainWindow):
                     # Update progress bar after each image is processed
                     progress_dialog.setValue(idx + 1)
 
-            QtWidgets.QMessageBox.information(self, "Success", f"Auto-labeled {num_images_to_label} images successfully.")
+            dialog = CustomQMessageBox(self.ui_styles)
+            dialog.warning(self, "Success", f"Auto-labeled {num_images_to_label}\nimages successfully.")
 
         except Exception as e:
             print(f"Error during auto-labeling: {str(e)}")
-            QtWidgets.QMessageBox.critical(self, "Error", f"Error during auto-labeling: {str(e)}")
+            dialog = CustomQMessageBox(self.ui_styles)
+            dialog.warning(self, "Error", f"Error during auto-labeling:\n{str(e)}")
 
         finally:
             # Hide the progress dialog when done
