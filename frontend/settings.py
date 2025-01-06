@@ -282,6 +282,9 @@ class SettingsWindow(QtWidgets.QMainWindow):
                 self.ui.imageModelsList.item(model_index).setText(new_name)
 
             # Save the updated configuration
+
+            self.main_window.generator_window.ui.load_models()
+
             dialog = CustomQMessageBox(self.ui_styles)
             dialog.warning(self, "Success", "Model settings\nsaved successfully.")
     def edit_selected_image_model(self):
