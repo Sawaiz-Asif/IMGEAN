@@ -416,6 +416,7 @@ class Ui_generate_images(object):
 
     def load_quality_checks(self):
         """Load quality checks from the configuration into the list."""
+        self.auto_check_list.clear()
         functions = self.config.get('QUALITY_CHECKS', {}).get('FUNCTIONS', [])
         for func in functions:
             custom_checkBox = CustomCheckBox(text=func['name'],

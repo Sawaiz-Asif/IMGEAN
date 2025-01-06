@@ -401,6 +401,9 @@ class SettingsWindow(QtWidgets.QMainWindow):
                 self.ui.qualityFunctionsList.takeItem(index)
                 del self.temp_quality_config[QUALITY_CHECKS][FUNCTIONS][index]
 
+        self.config[QUALITY_CHECKS] = self.temp_quality_config.copy()  # Save temp_config to main config
+        self.save_config()
+
     def save_quality_checker_settings(self):
         self.config[QUALITY_CHECKS] = self.temp_quality_config.copy()  # Save temp_config to main config
         self.save_config()  # Write to file
@@ -470,12 +473,14 @@ class SettingsWindow(QtWidgets.QMainWindow):
             # Validate inputs (file existence and function testing)
             if not dialog.validate_input():
                 return
-            try:
-                result = ast.literal_eval(new_args)  # Converts to [10, 20]
-                print(result)  # Output: [10, 20]
-                print(type(result))  # Output: <class 'list'>
-            except (ValueError, SyntaxError):
-                print("Invalid input!")
+            
+            if len(new_args) > 0:
+                try:
+                    result = ast.literal_eval(new_args)  # Converts to [10, 20]
+                    print(result)  # Output: [10, 20]
+                    print(type(result))  # Output: <class 'list'>
+                except (ValueError, SyntaxError):
+                    print("Invalid input!")
             
 
             # Handle file movement for new or updated functions
@@ -511,9 +516,12 @@ class SettingsWindow(QtWidgets.QMainWindow):
                 self.ui.qualityFunctionsList.item(function_index).setText(new_name)
             else:
                 function_entry = {'name': new_name, 'path': new_path, 'args': new_args}
-                self.temp_quality_config[QUALITY_CHECKS][FUNCTIONS].append(function_entry)
+                self.temp_quality_config[FUNCTIONS].append(function_entry)
                 self.ui.qualityFunctionsList.addItem(new_name)
 
+            self.main_window.generator_window.ui.load_quality_checks()
+            self.config[QUALITY_CHECKS] = self.temp_quality_config.copy()  # Save temp_config to main config
+            self.save_config()
             QtWidgets.QMessageBox.information(self, "Success", "Quality function settings saved successfully.")
 
     def edit_selected_quality_function(self):
