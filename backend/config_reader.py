@@ -21,7 +21,7 @@ def create_default_config(config_path):
         },
         'DATASET': {
             'NAME': None,
-            'PATH': os.path.join(base_dir, 'dataset_custom.pkl'),
+            'PATH': os.path.join(base_dir, 'dataset/dataset_custom.pkl'),
         },
         'ANNOTATION': {
             'BASE_DIR': os.path.join(base_dir, 'labeling'),
