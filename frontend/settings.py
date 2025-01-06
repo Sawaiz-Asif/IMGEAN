@@ -361,6 +361,8 @@ class SettingsWindow(QtWidgets.QMainWindow):
                     print(f"[SUCCESS] Label '{item.text()}' removed successfully.")
                     self.ui.labelsListWidget.takeItem(index)
                     self.dataset_updated.emit()  # Emit the signal to notify updates
+                    self.main_window.annotateImgSelectScreen.refresh_labels()
+                    self.main_window.annotateImgSelectScreen.update_ui_labels()
                     #del self.labels[index]
                 else:
                     print(f"[ERROR] Failed to remove label: '{item.text()}'.")
