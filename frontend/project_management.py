@@ -17,6 +17,7 @@ from PyQt5.QtWidgets import (
     QGridLayout
 )
 from frontend.project_management_ui import Ui_ProjectManagement
+from frontend.custom_popups import CustomQInputDialog, CustomQMessageBox
 
 
 class ProjectManagement(QMainWindow):
@@ -245,19 +246,22 @@ class ProjectManagement(QMainWindow):
 
     def add_new_project(self):
         """Handle adding a new project."""
-        name, ok = QInputDialog.getText(self, "Add New Project", "Enter project name:")
+        dialog = CustomQInputDialog(self.ui_styles)
+        name, ok = dialog.getText( "Add New Project", "Enter project name:")
         if ok and name:
             if not self.is_valid_project_name(name):
-                QMessageBox.warning(self, "Error", "Invalid project name. It may contain forbidden characters.")
+                dialog = CustomQMessageBox(self.ui_styles)
+                dialog.warning(self, "Error", "Invalid project name.\nIt may contain forbidden\ncharacters.")
                 return
             if any(p["name"] == name for p in self.projects):
-                QMessageBox.warning(self, "Error", f"Project '{name}' already exists.")
+                dialog = CustomQMessageBox(self.ui_styles)
+                dialog.warning(self, "Error", f"Project '{name}'\nalready exists.")
                 return
             new_base_dir = f"projects/{name}"
             new_project = {
                 "name": name,
                 "path": new_base_dir,
-                "last_modified": datetime.now().strftime("%Y-%m-%dT%H:%M:%S"),
+                "last_modified": datetime.now().strftime("%B %d, %Y, %I:%M %p"),
             }
             os.makedirs(new_project["path"], exist_ok=True)  # Create the project folder
             self.projects.append(new_project)
@@ -272,13 +276,16 @@ class ProjectManagement(QMainWindow):
 
     def edit_project_name(self, project):
         """Handle editing a project's name."""
-        new_name, ok = QInputDialog.getText(self, "Edit Project Name", "Enter new project name:", text=project["name"])
+        dialog = CustomQInputDialog(self.ui_styles)
+        new_name, ok = dialog.getText("Edit Project Name", "Enter new project name:", text=project["name"])
         if ok and new_name:
             if not self.is_valid_project_name(new_name):
-                QMessageBox.warning(self, "Error", "Invalid project name. It may contain forbidden characters.")
+                dialog = CustomQMessageBox(self.ui_styles)
+                dialog.warning(self, "Error", "Invalid project name.\nIt may contain forbidden\ncharacters.")
                 return
             if any(p["name"] == new_name for p in self.projects):
-                QMessageBox.warning(self, "Error", f"Project '{new_name}' already exists.")
+                dialog = CustomQMessageBox(self.ui_styles)
+                dialog.warning(self, "Error", f"Project '{new_name}'\nalready exists.")
                 return
             old_name = project["name"]
             project["name"] = new_name
@@ -303,16 +310,19 @@ class ProjectManagement(QMainWindow):
             try:
                 os.rename(old_path, new_path)
             except Exception as e:
-                QMessageBox.warning(self, "Error", f"Failed to rename folder: {e}")
+                dialog = CustomQMessageBox(self.ui_styles)
+                dialog.warning(self, "Error", f"Failed to rename folder:\n{e}")
                 return
 
     def delete_project(self, project):
         """Handle deleting a project."""
         # Check if there's only one project left
         if len(self.projects) == 1:
-            QMessageBox.warning(self, "Error", "Cannot delete the last project.")
+            dialog = CustomQMessageBox(self.ui_styles)
+            dialog.warning(self, "Error", "Cannot delete the last project.")
             return
-        confirm = QMessageBox.question(self, "Confirm Delete", f"Are you sure you want to delete '{project['name']}'?")
+        dialog = CustomQMessageBox(self.ui_styles)
+        confirm = dialog.question(self, "Confirm Delete", f"Are you sure you want to delete '{project['name']}'?")
         if confirm == QMessageBox.Yes:
             # Check if the project to delete is the active project
             was_active = project.get("is_active", False)
@@ -338,7 +348,8 @@ class ProjectManagement(QMainWindow):
             try:
                 shutil.rmtree(project_path)  # Remove the folder
             except Exception as e:
-                QMessageBox.warning(self, "Error", f"Failed to delete folder: {e}")
+                dialog = CustomQMessageBox(self.ui_styles)
+                dialog.warning(self, "Error", f"Failed to delete folder:\n{e}")
     def return_to_main(self):
         """Navigate back to the main screen."""
         if self.initial_active_project != self.current_active_project or self.check_change :

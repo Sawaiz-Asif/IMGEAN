@@ -410,6 +410,7 @@ class Ui_generate_images(object):
 
     def load_models(self):
         """Load models from the configuration into the combo box."""
+        self.combo_model.clear()
         models = self.config.get('GENERATION', {}).get('MODELS', [])
         for model in models:
             self.combo_model.addItem(model['name'])
