@@ -317,9 +317,11 @@ class SettingsWindow(QtWidgets.QMainWindow):
         if ok and text:
             success = self.dataset_manager.add_label(new_label=text)
             if success:
-                self.labels.append(text)
+                #self.labels.append(text)
                 self.ui.labelsListWidget.addItem(text)
                 self.dataset_updated.emit()
+                self.main_window.annotateImgSelectScreen.refresh_labels()
+                self.main_window.annotateImgSelectScreen.update_ui_labels()
             else:
                 dialog = CustomQMessageBox(self.ui_styles)
                 dialog.warning(self, "Warning", "Failed to load labels from dataset.")
