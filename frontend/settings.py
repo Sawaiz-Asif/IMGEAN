@@ -40,7 +40,8 @@ class SettingsWindow(QtWidgets.QMainWindow):
         # )
         # self.dataset_manager = DatasetManager(config[DATASET][PATH], config)
         if not self.dataset_manager.initialized:
-            QtWidgets.QMessageBox.critical(self, "Error", "Failed to initialize Dataset Manager.")
+            dialog = CustomQMessageBox(self.ui_styles)
+            dialog.warning(self, "Error", "Failed to initialize\nDataset Manager.")
             return
 
         self.initialize_ui()  # Initialize UI elements with config data
@@ -281,7 +282,8 @@ class SettingsWindow(QtWidgets.QMainWindow):
                 self.ui.imageModelsList.item(model_index).setText(new_name)
 
             # Save the updated configuration
-            QtWidgets.QMessageBox.information(self, "Success", "Model settings saved successfully.")
+            dialog = CustomQMessageBox(self.ui_styles)
+            dialog.warning(self, "Success", "Model settings\nsaved successfully.")
     def edit_selected_image_model(self):
         selected_items = self.ui.imageModelsList.selectedItems()
         if selected_items:
@@ -324,8 +326,7 @@ class SettingsWindow(QtWidgets.QMainWindow):
                 self.main_window.annotateImgSelectScreen.update_ui_labels()
             else:
                 dialog = CustomQMessageBox(self.ui_styles)
-                dialog.warning(self, "Warning", "Failed to load labels from dataset.")
-                QtWidgets.QMessageBox.warning(self, "Warning", "Failed to add label.")
+                dialog.warning(self, "Warning", "Failed to add label.")
 
     def edit_label(self):
         selected_items = self.ui.labelsListWidget.selectedItems()
@@ -384,8 +385,8 @@ class SettingsWindow(QtWidgets.QMainWindow):
         self.dataset_manager.save_annotation()
         # Save config file
         self.save_config()
-
-        QtWidgets.QMessageBox.information(self, "Success", "Dataset settings saved successfully.")
+        dialog = CustomQMessageBox(self.ui_styles)
+        dialog.warning(self, "Warning", "Dataset settings\nsaved successfully.")
 
     # Quality Checker Section Methods
     def remove_quality_function(self):
@@ -408,7 +409,8 @@ class SettingsWindow(QtWidgets.QMainWindow):
     def save_quality_checker_settings(self):
         self.config[QUALITY_CHECKS] = self.temp_quality_config.copy()  # Save temp_config to main config
         self.save_config()  # Write to file
-        QtWidgets.QMessageBox.information(self, "Success", "Quality checker settings saved successfully.")
+        dialog = CustomQMessageBox(self.ui_styles)
+        dialog.warning(self, "Success", "Quality checker settings\nsaved successfully.")
 
     def parse_args(self,args_string):
         """
@@ -504,7 +506,8 @@ class SettingsWindow(QtWidgets.QMainWindow):
                     os.replace(new_path, destination_path)
                     new_path = os.path.relpath(destination_path, start=os.path.abspath("."))
                 except Exception as e:
-                    QtWidgets.QMessageBox.critical(self, "Error", f"Failed to move the file: {e}")
+                    dialog = CustomQMessageBox(self.ui_styles)
+                    dialog.warning(self, "Error", f"Failed to move the\nfile: {e}")
                     return
 
             # Update or add the function entry in the config
@@ -523,7 +526,8 @@ class SettingsWindow(QtWidgets.QMainWindow):
             self.main_window.generator_window.ui.load_quality_checks()
             self.config[QUALITY_CHECKS] = self.temp_quality_config.copy()  # Save temp_config to main config
             self.save_config()
-            QtWidgets.QMessageBox.information(self, "Success", "Quality function settings saved successfully.")
+            dialog = CustomQMessageBox(self.ui_styles)
+            dialog.warning(self, "Success", "Quality function settings\nsaved successfully.")
 
     def edit_selected_quality_function(self):
         selected_items = self.ui.qualityFunctionsList.selectedItems()
@@ -570,7 +574,8 @@ class SettingsWindow(QtWidgets.QMainWindow):
         self.temp_image_config[IP_COMFY] = self.ui.comfyUiIpLineEdit.text()
         self.config[GENERATION] = self.temp_image_config
         self.save_config()
-        QtWidgets.QMessageBox.information(self, "Success", "Image generator settings saved successfully.")
+        dialog = CustomQMessageBox(self.ui_styles)
+        dialog.warning(self, "Success", "Image generator settings\nsaved successfully.")
 
 
     # Annotator Section Methods
@@ -685,7 +690,8 @@ class SettingsWindow(QtWidgets.QMainWindow):
             'CONFIDENCE_THRESHOLDS': self.temp_confidence_thresholds
         }
         self.save_config()
-        QtWidgets.QMessageBox.information(self, "Success", "Annotator settings saved successfully.")
+        dialog = CustomQMessageBox(self.ui_styles)
+        dialog.warning(self, "Success", "Annotator settings\nsaved successfully.")
 
     def add_confidence_threshold(self):
         """Add a new confidence threshold with a custom dialog."""
